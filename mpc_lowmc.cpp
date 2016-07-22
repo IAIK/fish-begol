@@ -1,4 +1,4 @@
-#include "lowmc.h"
+#include "mpc_lowmc.h"
 #include <bitset>
 
 mzd_t *mpc_add(mzd_t **result, mzd_t **first, mzd_t **second) {

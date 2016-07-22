@@ -9,7 +9,7 @@ typedef struct {
   size_t n;
   size_t r;
   size_t k;
-  mzd_t **key;
+  mzd_t *key;
   mzd_t **LMatrix;
   mzd_t **KMatrix;
   mzd_t **Constants;

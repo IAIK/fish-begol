@@ -1,2 +1,2 @@
 LDLIBS+=-lm4ri
-all: lowmc
+all: mpc_lowmc

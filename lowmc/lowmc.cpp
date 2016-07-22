@@ -1,31 +1,6 @@
 #include "lowmc.h"
 #include <bitset>
 
-mzd_t *mpc_add(mzd_t **result, mzd_t **first, mzd_t **second) {
-  for(unsigned i = 0; i < 3 ; i++)
-    mzd_add(result[i], first[i], second[i]);
-}
-
-mzd_t *mpc_const_add(mzd_t **result, mzd_t **first, mzd_t *second) {
-  for(unsigned i = 0; i < 3 ; i++) 
-    mzd_add(result[i], first[i], second);
-}
-
-mzd_t *mpc_const_mat_addmul(mzd_t** result, mzd_t *matrix, mzd_t **vector) {
-  for(unsigned i = 0; i < 3 ; i++)
-    mzd_addmul(result[i], matrix, vector[i], 0);
-}
-
-mzd_t *mpc_const_mat_mul(mzd_t** result, mzd_t *matrix, mzd_t **vector) {
-  for(unsigned i = 0; i < 3 ; i++)
-    mzd_mul(result[i], matrix, vector[i], 0);
-}
-
-void mpc_copy(mzd_t** out, mzd_t **in) {
-  for(unsigned i = 0; i < 3 ; i++)
-    mzd_copy(out[i], in[i]);
-}
-
 // Uses the Grain LSFR as self-shrinking generator to create pseudorandom bits
 bool getrandbit () {
   static std::bitset<80> state; //Keeps the 80 bit LSFR state
@@ -157,55 +132,6 @@ mzd_t *mzd_sample_kmatrix(rci_t n, rci_t k) {
   return B;
 };
 
-BIT* mpc_and_bit(BIT* a, BIT* b, BIT* r) {
-  BIT* wp = (BIT*)malloc(3 * sizeof(BIT));
-  for(unsigned i = 0 ; i < 3 ; i++) {
-    unsigned j = (i + 1) % 3;
-    wp[i] = (a[i] & b[i]) ^ (a[j] & b[i]) ^ (a[i] & b[j]) ^ r[i] ^ r[j];
-  }
-  return wp;
-}
-
-BIT* mpc_xor_bit(BIT* a, BIT* b) {
-  BIT* wp = (BIT*)malloc(3 * sizeof(BIT));
-  for(unsigned i = 0 ; i < 3 ; i++) {
-    wp[i] = a[i] ^ b[i];
-  }
-  return wp;
-}
-
-BIT *mpc_read_bit(mzd_t **vec, rci_t n) {
-  BIT *bit = (BIT*)malloc(3 * sizeof(BIT));
-  bit[0] = mzd_read_bit(vec[0], n, 0);
-  bit[1] = mzd_read_bit(vec[1], n, 0);
-  bit[2] = mzd_read_bit(vec[2], n, 0);
-
-  return bit;
-}
-
-void mpc_write_bit(mzd_t **vec, rci_t n, BIT *bit) {
-  mzd_write_bit(vec[0], n, 0, bit[0]);
-  mzd_write_bit(vec[1], n, 0, bit[1]);
-  mzd_write_bit(vec[2], n, 0, bit[2]);
-}
-
-void mpc_sbox_layer(mzd_t **out, mzd_t **in, rci_t m) {
-  mpc_copy(out, in);
-  mzd_t **rvec = mpc_init_random_vector(in[0]->nrows);
-  for(rci_t n=out[0]->nrows-3*m; n<out[0]->nrows; n+=3) {
-    BIT* x0 = mpc_read_bit(in, n+0);
-    BIT* x1 = mpc_read_bit(in, n+1);
-    BIT* x2 = mpc_read_bit(in, n+2);
-    BIT* r0  = mpc_read_bit(rvec, n+0);
-    BIT* r1  = mpc_read_bit(rvec, n+1);    
-    BIT* r2  = mpc_read_bit(rvec, n+2);
-    
-    // fix memory leaks due to nested calls
-    mpc_write_bit(out, n+0, mpc_xor_bit(mpc_and_bit(x1,x2,r0), x0));
-    mpc_write_bit(out, n+1, mpc_xor_bit(mpc_xor_bit(mpc_and_bit(x0,x2,r1),x0),x1));
-    mpc_write_bit(out, n+2, mpc_xor_bit(mpc_xor_bit(mpc_xor_bit(mpc_and_bit(x0,x1,r2),x0), x1), x2));
-  }
-}
 
 void sbox_layer(mzd_t *out, mzd_t *in, rci_t m) {
   mzd_copy(out, in);
@@ -240,19 +166,8 @@ lowmc_t *lowmc_init(size_t m, size_t n, size_t r, size_t k) {
     lowmc->KMatrix[i] = mzd_sample_kmatrix(n, k);
   }
 
-  lowmc->key = (mzd_t**)malloc(sizeof(mzd_t*));
-  lowmc->key[0] = mzd_init_random_vector(k);
+  lowmc->key = mzd_init_random_vector(k);
   return lowmc;
-}
-
-void lowmc_secret_share(lowmc_t *lowmc) {
-  lowmc->key = (mzd_t**)realloc(lowmc->key, 3 * sizeof(mzd_t*));
-  
-  lowmc->key[1] = mzd_init_random_vector(lowmc->k);
-  lowmc->key[2] = mzd_init_random_vector(lowmc->k);
-  
-  mzd_add(lowmc->key[0], lowmc->key[0], lowmc->key[1]);
-  mzd_add(lowmc->key[0], lowmc->key[0], lowmc->key[2]);
 }
 
 mzd_t *lowmc_call(lowmc_t *lowmc, mzd_t *p) {
@@ -263,16 +178,15 @@ mzd_t *lowmc_call(lowmc_t *lowmc, mzd_t *p) {
   mzd_t *z = mzd_init(lowmc->n,1);
 
   mzd_copy(x, p);
-  mzd_addmul(x, lowmc->KMatrix[0], lowmc->key[0], 0);
+  mzd_addmul(x, lowmc->KMatrix[0], lowmc->key, 0);
 
   for(int i=0; i<lowmc->r; i++) {
     sbox_layer(y, x, lowmc->m);
     mzd_mul(z, lowmc->LMatrix[i], y, 0);
     mzd_add(z, z, lowmc->Constants[i]);
-    mzd_addmul(z, lowmc->KMatrix[i+1], lowmc->key[0], 0);
+    mzd_addmul(z, lowmc->KMatrix[i+1], lowmc->key, 0);
     mzd_copy(x, z);
   }
- 
   mzd_copy(c, x);
 
   mzd_free(z);
@@ -281,31 +195,11 @@ mzd_t *lowmc_call(lowmc_t *lowmc, mzd_t *p) {
   return c;
 }
 
-mzd_t **mpc_lowmc_call(lowmc_t *lowmc, mzd_t *p) {
-  lowmc_secret_share(lowmc);
-
-  mzd_t **c = mpc_init_empty_share_vector(lowmc->n);
-
-  mzd_t **x = mpc_init_plain_share_vector(p);
-  mzd_t **y = mpc_init_empty_share_vector(lowmc->n);
-  mzd_t **z = mpc_init_empty_share_vector(lowmc->n);
-
-  mpc_const_mat_addmul(x, lowmc->KMatrix[0], lowmc->key);
-
-  for(int i=0; i<lowmc->r; i++) {
-    mpc_sbox_layer(y, x, lowmc->m);
-    mpc_const_mat_mul(z, lowmc->LMatrix[i], y);
-    mpc_const_add(z, z, lowmc->Constants[i]);
-    mpc_const_mat_addmul(z, lowmc->KMatrix[i+1], lowmc->key);
-    mpc_copy(x, z);
-  }
-
-  mpc_copy(c, x);
-
-  mpc_free(z);
-  mpc_free(y);
-  mpc_free(x);
-  return c;
+int main(int argc, char **argv) {
+  lowmc_t *lowmc = lowmc_init(63, 256, 12, 128);
+  mzd_t *p       = mzd_init_random_vector(256); 
+  mzd_t *c       = lowmc_call(lowmc, p);
+  return 0;
 }
 
 void lowmc_free(lowmc_t *lowmc) {
@@ -320,67 +214,3 @@ void lowmc_free(lowmc_t *lowmc) {
   free(lowmc->KMatrix);
   free(lowmc);
 }
-
-void test_mpc_share() {
-  mzd_t *t1    = mzd_init_random_vector(10);
-  mzd_t **s1   = mpc_init_share_vector(t1);
-  mzd_t *t1cmb = mpc_reconstruct_from_share(s1); 
-
-  if(mzd_cmp(t1, t1cmb) == 0)
-    printf("Share test successful.\n");  
-
-  mzd_free(t1);
-  for(unsigned i = 0 ; i < 3 ; i++)
-    mzd_free(s1[i]);
-  mzd_free(t1cmb);
-}
-
-void test_mpc_add() {
-  mzd_t *t1 = mzd_init_random_vector(10);
-  mzd_t *t2 = mzd_init_random_vector(10);
-  mzd_t *res = mzd_add(0, t1, t2);
-
-  mzd_t **s1 = mpc_init_share_vector(t1);
-  mzd_t **s2 = mpc_init_share_vector(t2);
-  mzd_t **ress = mpc_init_empty_share_vector(10);
-  mpc_add(ress, s1, s2);
-  
-  mzd_t *cmp = mpc_reconstruct_from_share(ress);
-
-  if(mzd_cmp(res, cmp) == 0)
-    printf("Shared add test successful.\n");
-
-  mzd_free(t1);
-  mzd_free(t2);
-  mzd_free(res);
-  for(unsigned i = 0 ; i < 3 ; i++) {
-    mzd_free(s1[i]);
-    mzd_free(s2[i]);
-    mzd_free(ress[i]);
-  }
-  mzd_free(cmp);
-}
-
-int main(int argc, char **argv) {
-  lowmc_t *lowmc = lowmc_init(63, 256, 12, 128);
-  mzd_t *p       = mzd_init_random_vector(256); 
-  mzd_t *c       = lowmc_call(lowmc, p);
-  mzd_t **c_mpc  = mpc_lowmc_call(lowmc, p);
-  mzd_t *c_mpcr  = mpc_reconstruct_from_share(c_mpc); 
- 
-  
-
-  if(mzd_cmp(c, c_mpcr) == 0)
-    printf("Success.\n");
-
-  test_mpc_share();
-  test_mpc_add();
-  
-//  mzd_t *c_mpc = mpc_lowmc_call(lowmc, p);
-
-  return 0;
-}
-
-
-
-
