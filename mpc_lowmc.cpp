@@ -367,8 +367,6 @@ int main(int argc, char **argv) {
   mzd_t *c       = lowmc_call(lowmc, p);
   mzd_t **c_mpc  = mpc_lowmc_call(lowmc, p);
   mzd_t *c_mpcr  = mpc_reconstruct_from_share(c_mpc); 
- 
-  
 
   if(mzd_cmp(c, c_mpcr) == 0)
     printf("Success.\n");
