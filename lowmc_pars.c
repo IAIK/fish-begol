@@ -80,6 +80,7 @@ void lowmc_free(lowmc_t *lowmc) {
     mzd_free(lowmc->key[1]);
     mzd_free(lowmc->key[2]);
   }
+  free(lowmc->key);
   
   free(lowmc);
 }
