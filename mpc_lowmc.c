@@ -39,6 +39,7 @@ void mpc_sbox_layer(mzd_t **out, mzd_t **in, rci_t m) {
     free(r1);
     free(r2);
   }
+  mpc_free(rvec);
 }
 
 mzd_t **mpc_lowmc_call(lowmc_t *lowmc, mzd_t *p) {

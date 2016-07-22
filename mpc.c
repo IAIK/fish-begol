@@ -87,6 +87,7 @@ void mpc_free(mzd_t **vec) {
   mzd_free(vec[0]);
   mzd_free(vec[1]);
   mzd_free(vec[2]);
+  free(vec);
 }
 
 mzd_t **mpc_init_empty_share_vector(rci_t n) {

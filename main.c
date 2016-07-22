@@ -15,6 +15,13 @@ int main(int argc, char **argv) {
   if(mzd_cmp(c, c_mpcr) == 0)
     printf("Success.\n");
 
+  mzd_free(p);
+  mzd_free(c);
+  mpc_free(c_mpc);
+  mzd_free(c_mpcr);
+
+  lowmc_free(lowmc);
+   
   //test_mpc_share();
   //test_mpc_add();
   
