@@ -1,2 +1,9 @@
+CC=g++
+
 LDLIBS+=-lm4ri
-all: mpc_lowmc mpc
+
+all: 
+	$(CC) *.c *.cpp *.h $(LDLIBS) -o mpc_lowmc
+
+clean:
+	rm -f *.o mpc_lowmc
