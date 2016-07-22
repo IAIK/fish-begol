@@ -15,8 +15,8 @@ int main(int argc, char **argv) {
   if(mzd_cmp(c, c_mpcr) == 0)
     printf("Success.\n");
 
-  test_mpc_share();
-  test_mpc_add();
+  //test_mpc_share();
+  //test_mpc_add();
   
   return 0;
 }
