@@ -18,7 +18,5 @@ int main(int argc, char **argv) {
   test_mpc_share();
   test_mpc_add();
   
-//  mzd_t *c_mpc = mpc_lowmc_call(lowmc, p);
-
   return 0;
 }
