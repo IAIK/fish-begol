@@ -27,6 +27,9 @@ mzd_t **mpc_lowmc_call(lowmc_t *lowmc, mzd_t *p) {
   mzd_t **c = mpc_init_empty_share_vector(lowmc->n);
 
   mzd_t **x = mpc_init_plain_share_vector(p);
+  // Uncomment the following two lines if plaintext should additionally be secret shared
+  // mpc_free(x);
+  // x = mpc_init_share_vector(p);
   mzd_t **y = mpc_init_empty_share_vector(lowmc->n);
   mzd_t **z = mpc_init_empty_share_vector(lowmc->n);
 
