@@ -1,0 +1,1 @@
+This code represents a portation of the LowMC implementation from https://bitbucket.org/malb/lowmc-helib/src to the setting described in https://eprint.iacr.org/2016/163.pdf. Some of the code, and in particular the basic LowMC related methods are taken from https://bitbucket.org/malb/lowmc-helib/src.
