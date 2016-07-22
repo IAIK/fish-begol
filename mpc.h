@@ -94,7 +94,7 @@ void mpc_write_bit(mzd_t **vec, rci_t n, BIT *bit);
  * \param  second the second operand
  * \return        the result of the computation
  */
-mzd_t *mpc_add(mzd_t **result, mzd_t **first, mzd_t **second);
+mzd_t **mpc_add(mzd_t **result, mzd_t **first, mzd_t **second);
 
 /**
  * Computes the addition in GF(2) of a secret shared 
@@ -106,7 +106,7 @@ mzd_t *mpc_add(mzd_t **result, mzd_t **first, mzd_t **second);
  * \param  second the second operand
  * \return        the result of the computation
  */
-mzd_t *mpc_const_add(mzd_t **result, mzd_t **first, mzd_t *second);
+mzd_t **mpc_const_add(mzd_t **result, mzd_t **first, mzd_t *second);
 
 /**
  * Computes result = result + first * second in GF(2) of a 
@@ -118,7 +118,7 @@ mzd_t *mpc_const_add(mzd_t **result, mzd_t **first, mzd_t *second);
  * \param  vector the secret shared vector
  * \return        the result of the computation
  */
-mzd_t *mpc_const_mat_addmul(mzd_t** result, mzd_t *matrix, mzd_t **vector);
+mzd_t **mpc_const_mat_addmul(mzd_t** result, mzd_t *matrix, mzd_t **vector);
 
 /**
  * Computes result = first * second in GF(2) of a 
@@ -130,7 +130,7 @@ mzd_t *mpc_const_mat_addmul(mzd_t** result, mzd_t *matrix, mzd_t **vector);
  * \param  vector the secret shared vector
  * \return        the result of the computation
  */
-mzd_t *mpc_const_mat_mul(mzd_t** result, mzd_t *matrix, mzd_t **vector);
+mzd_t **mpc_const_mat_mul(mzd_t** result, mzd_t *matrix, mzd_t **vector);
 
 /**
  * Deep copies a secret shared vector

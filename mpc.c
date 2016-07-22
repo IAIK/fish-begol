@@ -33,24 +33,36 @@ void mpc_write_bit(mzd_t **vec, rci_t n, BIT *bit) {
   mzd_write_bit(vec[2], n, 0, bit[2]);
 }
 
-mzd_t *mpc_add(mzd_t **result, mzd_t **first, mzd_t **second) {
+mzd_t **mpc_add(mzd_t **result, mzd_t **first, mzd_t **second) {
+  if(result == 0)
+    result = mpc_init_empty_share_vector(first[0]->nrows);
   for(unsigned i = 0; i < 3 ; i++)
     mzd_add(result[i], first[i], second[i]);
+  return result;
 }
 
-mzd_t *mpc_const_add(mzd_t **result, mzd_t **first, mzd_t *second) {
+mzd_t **mpc_const_add(mzd_t **result, mzd_t **first, mzd_t *second) {
+  if(result == 0)
+    result = mpc_init_empty_share_vector(first[0]->nrows);
   for(unsigned i = 0; i < 3 ; i++) 
     mzd_add(result[i], first[i], second);
+  return result;
 }
 
-mzd_t *mpc_const_mat_addmul(mzd_t** result, mzd_t *matrix, mzd_t **vector) {
+mzd_t **mpc_const_mat_addmul(mzd_t** result, mzd_t *matrix, mzd_t **vector) {
+  if(result == 0)
+    result = mpc_init_empty_share_vector(vector[0]->nrows);
   for(unsigned i = 0; i < 3 ; i++)
     mzd_addmul(result[i], matrix, vector[i], 0);
+  return result;
 }
 
-mzd_t *mpc_const_mat_mul(mzd_t** result, mzd_t *matrix, mzd_t **vector) {
+mzd_t **mpc_const_mat_mul(mzd_t** result, mzd_t *matrix, mzd_t **vector) {
+  if(result == 0)
+    result = mpc_init_empty_share_vector(vector[0]->nrows);
   for(unsigned i = 0; i < 3 ; i++)
     mzd_mul(result[i], matrix, vector[i], 0);
+  return result;
 }
 
 void mpc_copy(mzd_t** out, mzd_t **in) {
