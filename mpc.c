@@ -1,21 +1,22 @@
 #include "mpc.h"
 #include "mzd_additional.h"
 
-BIT* mpc_and_bit(BIT* a, BIT* b, BIT* r) {
+void mpc_and_bit(BIT* a, BIT* b, BIT* r) {
   BIT* wp = (BIT*)malloc(3 * sizeof(BIT));
   for(unsigned i = 0 ; i < 3 ; i++) {
     unsigned j = (i + 1) % 3;
     wp[i] = (a[i] & b[i]) ^ (a[j] & b[i]) ^ (a[i] & b[j]) ^ r[i] ^ r[j];
   }
-  return wp;
+  a[0] = wp[0];
+  a[1] = wp[1];
+  a[2] = wp[2];
+  free(wp);
 }
 
-BIT* mpc_xor_bit(BIT* a, BIT* b) {
-  BIT* wp = (BIT*)malloc(3 * sizeof(BIT));
+void mpc_xor_bit(BIT* a, BIT* b) {
   for(unsigned i = 0 ; i < 3 ; i++) {
-    wp[i] = a[i] ^ b[i];
+    a[i] ^= b[i];
   }
-  return wp;
 }
 
 BIT *mpc_read_bit(mzd_t **vec, rci_t n) {

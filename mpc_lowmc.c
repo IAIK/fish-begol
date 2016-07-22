@@ -13,11 +13,31 @@ void mpc_sbox_layer(mzd_t **out, mzd_t **in, rci_t m) {
     BIT* r0  = mpc_read_bit(rvec, n+0);
     BIT* r1  = mpc_read_bit(rvec, n+1);    
     BIT* r2  = mpc_read_bit(rvec, n+2);
-    
-    // fix memory leaks due to nested calls
-    mpc_write_bit(out, n+0, mpc_xor_bit(mpc_and_bit(x1,x2,r0), x0));
-    mpc_write_bit(out, n+1, mpc_xor_bit(mpc_xor_bit(mpc_and_bit(x0,x2,r1),x0),x1));
-    mpc_write_bit(out, n+2, mpc_xor_bit(mpc_xor_bit(mpc_xor_bit(mpc_and_bit(x0,x1,r2),x0), x1), x2));
+     
+    BIT tmp1[3] = {x1[0], x1[1], x1[2] };
+    mpc_and_bit(tmp1,x2,r0);
+    mpc_xor_bit(tmp1, x0);
+    mpc_write_bit(out, n+0, tmp1);
+
+    BIT tmp2[3] = { x0[0], x0[1], x0[2] };
+    mpc_and_bit(tmp2,x2,r1);
+    mpc_xor_bit(tmp2,x0);
+    mpc_xor_bit(tmp2,x1);
+    mpc_write_bit(out, n+1, tmp2);
+
+    BIT tmp3[3] = {x0[0], x0[1], x0[2] };
+    mpc_and_bit(tmp3,x1,r2);
+    mpc_xor_bit(tmp3,x0);
+    mpc_xor_bit(tmp3, x1);
+    mpc_xor_bit(tmp3, x2);
+    mpc_write_bit(out, n+2, tmp3);
+
+    free(x0);
+    free(x1);
+    free(x2);
+    free(r0);
+    free(r1);
+    free(r2);
   }
 }
 

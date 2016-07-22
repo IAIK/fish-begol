@@ -46,25 +46,23 @@ mzd_t **mpc_init_empty_share_vector(rci_t n);
 mzd_t *mpc_reconstruct_from_share(mzd_t** shared_vec);
 
 /**
- * Computes the AND on two secret shared bits according to
+ * Computes the a &= b on two secret shared bits according to
  * https://eprint.iacr.org/2016/163.pdf
  * 
  * \param  a the three shares of the first bit
  * \param  b the three shares of the second bit
  * \param  r the three shares containing the randomness
- * \return the resulting shared bit
  */
-BIT* mpc_and_bit(BIT* a, BIT* b, BIT* r);
+void mpc_and_bit(BIT* a, BIT* b, BIT* r);
 
 /**
- * Computes the XOR on two secret shared bits according to
+ * Computes a ^= b on two secret shared bits according to
  * https://eprint.iacr.org/2016/163.pdf
  * 
  * \param  a the three shares of the first bit
  * \param  b the three shares of the second bit
- * \return the resulting shared bit
  */
-BIT* mpc_xor_bit(BIT* a, BIT* b);
+void mpc_xor_bit(BIT* a, BIT* b);
 
 /**
  * Reads a secret shared bit from a given vector
