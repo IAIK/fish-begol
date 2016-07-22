@@ -6,7 +6,8 @@
 /**
  * Represents the LowMC parameters as in https://bitbucket.org/malb/lowmc-helib/src,
  * with the difference that key is a two dimensional array to allow for secret shared
- * keys 
+ * keys and an additional field indicating whether a variable is secret shared or 
+ * not
  */
 typedef struct {
   size_t m;
@@ -14,9 +15,11 @@ typedef struct {
   size_t r;
   size_t k;
   mzd_t **key;
+  BIT secret_shared;
   mzd_t **LMatrix;
   mzd_t **KMatrix;
   mzd_t **Constants;
+
   
 } lowmc_t;
 

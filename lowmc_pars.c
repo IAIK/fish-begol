@@ -59,6 +59,8 @@ lowmc_t *lowmc_init(size_t m, size_t n, size_t r, size_t k) {
 
   lowmc->key = (mzd_t**)malloc(sizeof(mzd_t*));
   lowmc->key[0] = mzd_init_random_vector(k);
+  
+  lowmc->secret_shared = 0;
   return lowmc;
 }
 
@@ -72,6 +74,13 @@ void lowmc_free(lowmc_t *lowmc) {
   free(lowmc->Constants);
   free(lowmc->LMatrix);
   free(lowmc->KMatrix);
+
+  mzd_free(lowmc->key[0]);
+  if(lowmc->secret_shared) {
+    mzd_free(lowmc->key[1]);
+    mzd_free(lowmc->key[2]);
+  }
+  
   free(lowmc);
 }
 
@@ -84,4 +93,6 @@ void lowmc_secret_share(lowmc_t *lowmc) {
   
   mzd_add(lowmc->key[0], lowmc->key[0], lowmc->key[1]);
   mzd_add(lowmc->key[0], lowmc->key[0], lowmc->key[2]);
+
+  lowmc->secret_shared = 1;
 }
