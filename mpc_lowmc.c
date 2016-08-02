@@ -79,10 +79,9 @@ mzd_t **mpc_lowmc_call(lowmc_t *lowmc, lowmc_key_t *lowmc_key, mzd_t *p, view_t 
     mpc_copy(x, z, sc);
   }
 
-  for(unsigned i = 0 ; i < sc ; i++) {
+  for(unsigned i = 0 ; i < sc ; i++) 
     views[vcnt].s[i] = c[i];  
-  }
-
+  
   mpc_copy(c, x, sc);
 
   mpc_free(z, sc);

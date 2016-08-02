@@ -4,6 +4,7 @@
 #include "mpc_lowmc.h"
 #include "mzd_additional.h"
 #include "mpc.h"
+#include "time.h"
 
 int main(int argc, char **argv) {
   lowmc_t *lowmc         = lowmc_init(63, 256, 12, 128);
@@ -13,15 +14,23 @@ int main(int argc, char **argv) {
 
 
   view_t views[2 + lowmc->r];
+
+  clock_t beginRand = clock();
   mzd_t ***rvec = (mzd_t***)malloc(lowmc->r * sizeof(mzd_t**));
   for(unsigned i = 0 ; i < lowmc->r ; i++)
     rvec[i] = mpc_init_random_vector(lowmc->n, 3);
+  clock_t deltaRand = clock() - beginRand;
+  printf("Randomess generated...%lums\n", deltaRand * 1000 / CLOCKS_PER_SEC);
 
+  clock_t beginLowmc = clock();
   mzd_t **c_mpc  = mpc_lowmc_call(lowmc, lowmc_key, p, views, rvec, 3);
+  clock_t deltaLowmc = clock() - beginLowmc;
+
+  printf("Secret shared LowMC execution...%lums\n", deltaLowmc * 1000 / CLOCKS_PER_SEC);
   mzd_t *c_mpcr  = mpc_reconstruct_from_share(c_mpc); 
 
   if(mzd_cmp(c, c_mpcr) == 0)
-    printf("Success.\n");
+    printf("Ciphertext matches with reference implementation.\n");
 
   mzd_free(p);
   mzd_free(c);
