@@ -39,4 +39,6 @@ mzd_t **mpc_init_views(lowmc_t *lowmc);
  */
 mzd_t **mpc_lowmc_call(lowmc_t *lowmc, lowmc_key_t *lowmc_key, mzd_t *p, view_t *views, mzd_t ***rvec, unsigned sc);
 
+unsigned mpc_lowmc_verify(lowmc_t *lowmc, mzd_t *p, view_t *views,  mzd_t ***rvec, view_t v0);
+
 #endif

@@ -52,7 +52,6 @@ void mpc_sbox_layer(mzd_t **out, mzd_t **in, rci_t m, view_t *views, int *i, mzd
 
 mzd_t **mpc_lowmc_call(lowmc_t *lowmc, lowmc_key_t *lowmc_key, mzd_t *p, view_t *views, mzd_t ***rvec, unsigned sc) {
   int vcnt = 0;
-  lowmc_secret_share(lowmc, lowmc_key);
   
   for(unsigned i = 0 ; i < sc ; i++) {
     views[vcnt].s[i] = lowmc_key->key[i];
@@ -90,8 +89,17 @@ mzd_t **mpc_lowmc_call(lowmc_t *lowmc, lowmc_key_t *lowmc_key, mzd_t *p, view_t 
   return c;
 }
 
-unsigned mpc_lowmc_verify(lowmc_t *lowmc, mzd_t *p, view_t *views) {
-  // TODO remove key from lowmc struct
+unsigned mpc_lowmc_verify(lowmc_t *lowmc, mzd_t *p, view_t *views,  mzd_t ***rvec, view_t v0) {
+  
+  //initialize two key shares from v0
+  lowmc_key_t *lowmc_key = (lowmc_key_t*)malloc(sizeof(lowmc_key));
+  lowmc_key->key = (mzd_t**)malloc(2 * sizeof(mzd_t*));
+  lowmc_key->key[0] = v0.s[0];
+  lowmc_key->key[1] = v0.s[1];  
+  lowmc_key->sharecount = 2;
+
+  mpc_free(mpc_lowmc_call(lowmc, lowmc_key, p, views, rvec, 2), 2);
+  
   return 0;
 }
 

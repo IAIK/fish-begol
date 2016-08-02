@@ -21,7 +21,7 @@ typedef struct {
 
 typedef struct {
   mzd_t **key;
-  BIT secret_shared;
+  unsigned sharecount;
 } lowmc_key_t;
 
 /**
