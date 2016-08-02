@@ -20,6 +20,6 @@ void sbox_layer(mzd_t *out, mzd_t *in, rci_t m);
  * \param  p     the plaintext
  * \return       the ciphertext      
  */
-mzd_t *lowmc_call(lowmc_t *lowmc, mzd_t *p);
+mzd_t *lowmc_call(lowmc_t *lowmc, lowmc_key_t *lowmc_key, mzd_t *p);
 
 #endif

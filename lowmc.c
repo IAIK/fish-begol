@@ -15,7 +15,7 @@ void sbox_layer(mzd_t *out, mzd_t *in, rci_t m) {
   }
 }
 
-mzd_t *lowmc_call(lowmc_t *lowmc, mzd_t *p) {
+mzd_t *lowmc_call(lowmc_t *lowmc, lowmc_key_t *lowmc_key, mzd_t *p) {
   mzd_t *c = mzd_init(lowmc->n,1);
 
   mzd_t *x = mzd_init(lowmc->n,1);
@@ -23,13 +23,13 @@ mzd_t *lowmc_call(lowmc_t *lowmc, mzd_t *p) {
   mzd_t *z = mzd_init(lowmc->n,1);
 
   mzd_copy(x, p);
-  mzd_addmul(x, lowmc->KMatrix[0], lowmc->key[0], 0);
+  mzd_addmul(x, lowmc->KMatrix[0], lowmc_key->key[0], 0);
 
   for(unsigned i=0; i<lowmc->r; i++) {
     sbox_layer(y, x, lowmc->m);
     mzd_mul(z, lowmc->LMatrix[i], y, 0);
     mzd_add(z, z, lowmc->Constants[i]);
-    mzd_addmul(z, lowmc->KMatrix[i+1], lowmc->key[0], 0);
+    mzd_addmul(z, lowmc->KMatrix[i+1], lowmc_key->key[0], 0);
     mzd_copy(x, z);
   }
  

@@ -50,12 +50,12 @@ void mpc_sbox_layer(mzd_t **out, mzd_t **in, rci_t m, view_t *views, int *i, mzd
   (*i)++;
 }
 
-mzd_t **mpc_lowmc_call(lowmc_t *lowmc, mzd_t *p, view_t *views, mzd_t ***rvec, unsigned sc) {
+mzd_t **mpc_lowmc_call(lowmc_t *lowmc, lowmc_key_t *lowmc_key, mzd_t *p, view_t *views, mzd_t ***rvec, unsigned sc) {
   int vcnt = 0;
-  lowmc_secret_share(lowmc);
+  lowmc_secret_share(lowmc, lowmc_key);
   
   for(unsigned i = 0 ; i < sc ; i++) {
-    views[vcnt].s[i] = lowmc->key[i];
+    views[vcnt].s[i] = lowmc_key->key[i];
   }  
   vcnt++;
 
@@ -65,7 +65,7 @@ mzd_t **mpc_lowmc_call(lowmc_t *lowmc, mzd_t *p, view_t *views, mzd_t ***rvec, u
   mzd_t **y = mpc_init_empty_share_vector(lowmc->n, sc);
   mzd_t **z = mpc_init_empty_share_vector(lowmc->n, sc);
 
-  mpc_const_mat_mul(x, lowmc->KMatrix[0], lowmc->key, sc);
+  mpc_const_mat_mul(x, lowmc->KMatrix[0], lowmc_key->key, sc);
   mpc_const_add(x, x, p, sc);
 
   for(unsigned i=0; i<lowmc->r; i++) {
@@ -73,7 +73,7 @@ mzd_t **mpc_lowmc_call(lowmc_t *lowmc, mzd_t *p, view_t *views, mzd_t ***rvec, u
     mpc_const_mat_mul(z, lowmc->LMatrix[i], y, sc);
     mpc_const_add(z, z, lowmc->Constants[i], sc);
     mzd_t **t = mpc_init_empty_share_vector(lowmc->n, sc);
-    mpc_const_mat_mul(t, lowmc->KMatrix[i+1], lowmc->key, sc);
+    mpc_const_mat_mul(t, lowmc->KMatrix[i+1], lowmc_key->key, sc);
     mpc_add(z, z, t, sc);
     mpc_free(t, sc);
     mpc_copy(x, z, sc);

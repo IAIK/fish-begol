@@ -57,14 +57,17 @@ lowmc_t *lowmc_init(size_t m, size_t n, size_t r, size_t k) {
     lowmc->KMatrix[i] = mzd_sample_kmatrix(n, k);
   }
 
-  lowmc->key = (mzd_t**)malloc(sizeof(mzd_t*));
-  lowmc->key[0] = mzd_init_random_vector(k);
-  
-  lowmc->secret_shared = 0;
   return lowmc;
 }
 
-void lowmc_free(lowmc_t *lowmc) {
+lowmc_key_t *lowmc_keygen(lowmc_t *lowmc) {
+  lowmc_key_t *lowmc_key = (lowmc_key_t*)malloc(sizeof(lowmc_key));
+  lowmc_key->key = (mzd_t**)malloc(sizeof(mzd_t*));
+  lowmc_key->key[0] = mzd_init_random_vector(lowmc->k);
+  lowmc_key->secret_shared = 0;
+}
+
+void lowmc_free(lowmc_t *lowmc, lowmc_key_t *lowmc_key) {
   for(unsigned i=0; i<lowmc->r; i++) {
     mzd_free(lowmc->Constants[i]);
     mzd_free(lowmc->KMatrix[i]);
@@ -75,25 +78,26 @@ void lowmc_free(lowmc_t *lowmc) {
   free(lowmc->LMatrix);
   free(lowmc->KMatrix);
 
-  mzd_free(lowmc->key[0]);
-  if(lowmc->secret_shared) {
-    mzd_free(lowmc->key[1]);
-    mzd_free(lowmc->key[2]);
+  mzd_free(lowmc_key->key[0]);
+  if(lowmc_key->secret_shared) {
+    mzd_free(lowmc_key->key[1]);
+    mzd_free(lowmc_key->key[2]);
   }
-  free(lowmc->key);
+  free(lowmc_key->key);
   
   free(lowmc);
+  free(lowmc_key);
 }
 
 
-void lowmc_secret_share(lowmc_t *lowmc) {
-  lowmc->key = (mzd_t**)realloc(lowmc->key, 3 * sizeof(mzd_t*));
+void lowmc_secret_share(lowmc_t *lowmc, lowmc_key_t *lowmc_key) {
+  lowmc_key->key = (mzd_t**)realloc(lowmc_key->key, 3 * sizeof(mzd_t*));
   
-  lowmc->key[1] = mzd_init_random_vector(lowmc->k);
-  lowmc->key[2] = mzd_init_random_vector(lowmc->k);
+  lowmc_key->key[1] = mzd_init_random_vector(lowmc->k);
+  lowmc_key->key[2] = mzd_init_random_vector(lowmc->k);
   
-  mzd_add(lowmc->key[0], lowmc->key[0], lowmc->key[1]);
-  mzd_add(lowmc->key[0], lowmc->key[0], lowmc->key[2]);
+  mzd_add(lowmc_key->key[0], lowmc_key->key[0], lowmc_key->key[1]);
+  mzd_add(lowmc_key->key[0], lowmc_key->key[0], lowmc_key->key[2]);
 
-  lowmc->secret_shared = 1;
+  lowmc_key->secret_shared = 1;
 }

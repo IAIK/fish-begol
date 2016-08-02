@@ -5,23 +5,24 @@
 
 /**
  * Represents the LowMC parameters as in https://bitbucket.org/malb/lowmc-helib/src,
- * with the difference that key is a two dimensional array to allow for secret shared
- * keys and an additional field indicating whether a variable is secret shared or 
- * not
+ * with the difference that key in a separate struct
  */
 typedef struct {
   size_t m;
   size_t n;
   size_t r;
   size_t k;
-  mzd_t **key;
-  BIT secret_shared;
   mzd_t **LMatrix;
   mzd_t **KMatrix;
   mzd_t **Constants;
 
   
 } lowmc_t;
+
+typedef struct {
+  mzd_t **key;
+  BIT secret_shared;
+} lowmc_key_t;
 
 /**
  * Samples the L matrix for the LowMC instance
@@ -48,12 +49,15 @@ mzd_t *mzd_sample_kmatrix(rci_t n, rci_t k);
  */
 lowmc_t *lowmc_init(size_t m, size_t n, size_t r, size_t k);
 
+
+lowmc_key_t *lowmc_keygen(lowmc_t *lowmc);
+
 /**
  * Frees the allocated LowMC parameters
  * 
  * \param lowmc the LowMC parameters to be freed
  */
-void lowmc_free(lowmc_t *lowmc);
+void lowmc_free(lowmc_t *lowmc, lowmc_key_t *lowmc_key);
 
 /**
  * Updates a given LowMC parameter instance so that the key is 
@@ -62,6 +66,6 @@ void lowmc_free(lowmc_t *lowmc);
  * 
  * \param lowmc the LowMC parameters
  */
-void lowmc_secret_share(lowmc_t *lowmc);
+void lowmc_secret_share(lowmc_t *lowmc, lowmc_key_t *lowmc_key);
 
 #endif
