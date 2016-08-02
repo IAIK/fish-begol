@@ -24,7 +24,7 @@ void test_mpc_add() {
 
   mzd_t **s1 = mpc_init_share_vector(t1);
   mzd_t **s2 = mpc_init_share_vector(t2);
-  mzd_t **ress = mpc_init_empty_share_vector(10);
+  mzd_t **ress = mpc_init_empty_share_vector(10, 3);
   mpc_add(ress, s1, s2);
   
   mzd_t *cmp = mpc_reconstruct_from_share(ress);

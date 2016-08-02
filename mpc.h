@@ -27,7 +27,7 @@ mzd_t **mpc_init_plain_share_vector(mzd_t *v);
  * \param  n the vector length
  * \return a random vector shared in three components
  */
-mzd_t **mpc_init_random_vector(rci_t n);
+mzd_t **mpc_init_random_vector(rci_t n, unsigned sc);
  
 /**
  * Initializes an array of three empty vectors
@@ -35,7 +35,7 @@ mzd_t **mpc_init_random_vector(rci_t n);
  * \param  n the vector length
  * \param    the array of vectors
  */
-mzd_t **mpc_init_empty_share_vector(rci_t n);
+mzd_t **mpc_init_empty_share_vector(rci_t n, unsigned sc);
 
 /**
  * Reconstructs a vector from three shares
@@ -53,7 +53,7 @@ mzd_t *mpc_reconstruct_from_share(mzd_t** shared_vec);
  * \param  b the three shares of the second bit
  * \param  r the three shares containing the randomness
  */
-void mpc_and_bit(BIT* a, BIT* b, BIT* r);
+void mpc_and_bit(BIT* a, BIT* b, BIT* r, unsigned sc);
 
 /**
  * Computes a ^= b on two secret shared bits according to
@@ -62,7 +62,7 @@ void mpc_and_bit(BIT* a, BIT* b, BIT* r);
  * \param  a the three shares of the first bit
  * \param  b the three shares of the second bit
  */
-void mpc_xor_bit(BIT* a, BIT* b);
+void mpc_xor_bit(BIT* a, BIT* b, unsigned sc);
 
 /**
  * Reads a secret shared bit from a given vector
@@ -72,7 +72,7 @@ void mpc_xor_bit(BIT* a, BIT* b);
  *
  * \return    the secret shared bit
  */
-BIT *mpc_read_bit(mzd_t **vec, rci_t n);
+BIT *mpc_read_bit(mzd_t **vec, rci_t n, unsigned sc);
 
 /**
  * Writes a secret shared bit to a given vector
@@ -81,7 +81,7 @@ BIT *mpc_read_bit(mzd_t **vec, rci_t n);
  * \param n   the position of the bit
  * \param bit the secret shared bit
  */
-void mpc_write_bit(mzd_t **vec, rci_t n, BIT *bit);
+void mpc_write_bit(mzd_t **vec, rci_t n, BIT *bit, unsigned sc);
 
 /**
  * Computes the addition in GF(2) of two secret shared 
@@ -104,7 +104,7 @@ mzd_t **mpc_add(mzd_t **result, mzd_t **first, mzd_t **second);
  * \param  second the second operand
  * \return        the result of the computation
  */
-mzd_t **mpc_const_add(mzd_t **result, mzd_t **first, mzd_t *second);
+mzd_t **mpc_const_add(mzd_t **result, mzd_t **first, mzd_t *second, unsigned sc);
 
 /**
  * Computes result = result + first * second in GF(2) of a 
@@ -128,7 +128,7 @@ mzd_t **mpc_const_mat_addmul(mzd_t** result, mzd_t *matrix, mzd_t **vector);
  * \param  vector the secret shared vector
  * \return        the result of the computation
  */
-mzd_t **mpc_const_mat_mul(mzd_t** result, mzd_t *matrix, mzd_t **vector);
+mzd_t **mpc_const_mat_mul(mzd_t** result, mzd_t *matrix, mzd_t **vector, unsigned sc);
 
 /**
  * Deep copies a secret shared vector
@@ -136,7 +136,7 @@ mzd_t **mpc_const_mat_mul(mzd_t** result, mzd_t *matrix, mzd_t **vector);
  * \param out the destination
  * \param in  the source
  */
-void mpc_copy(mzd_t** out, mzd_t **in);
+void mpc_copy(mzd_t** out, mzd_t **in, unsigned sc);
 
 /**
  * Prints a secret shared vector
