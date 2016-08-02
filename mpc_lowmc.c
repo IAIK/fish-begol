@@ -3,7 +3,7 @@
 #include "mpc.h"
 #include "lowmc_pars.h"
 
-void mpc_sbox_layer(mzd_t **out, mzd_t **in, rci_t m) {
+void mpc_sbox_layer(mzd_t **out, mzd_t **in, rci_t m, View *views, int *i) {
   mpc_copy(out, in);
   mzd_t **rvec = mpc_init_random_vector(in[0]->nrows);
   for(rci_t n=out[0]->nrows-3*m; n<out[0]->nrows; n+=3) {
@@ -40,29 +40,55 @@ void mpc_sbox_layer(mzd_t **out, mzd_t **in, rci_t m) {
     free(r2);
   }
   mpc_free(rvec);
+
+  // TODO: is it enough to store this view here?
+  views[*i].s[0] = out[0];
+  views[*i].s[1] = out[1];
+  views[*i].s[2] = out[2];
+  views[*i].r[0] = rvec[0];
+  views[*i].r[1] = rvec[1];
+  views[*i].r[2] = rvec[2];
+  (*i)++;
 }
 
-mzd_t **mpc_lowmc_call(lowmc_t *lowmc, mzd_t *p) {
+mzd_t **mpc_lowmc_call(lowmc_t *lowmc, mzd_t *p, View *views) {
+  int vcnt = 0;
   lowmc_secret_share(lowmc);
+  
+  views[vcnt].s[0] = lowmc->key[0];
+  views[vcnt].s[1] = lowmc->key[1];
+  views[vcnt].s[2] = lowmc->key[2];
+  views[vcnt].r[0] = 0;
+  views[vcnt].r[1] = 0;
+  views[vcnt].r[2] = 0;   
+  vcnt++;
 
   mzd_t **c = mpc_init_empty_share_vector(lowmc->n);
 
-  mzd_t **x = mpc_init_plain_share_vector(p);
-  // Uncomment the following two lines if plaintext should additionally be secret shared
-  // mpc_free(x);
-  // x = mpc_init_share_vector(p);
+  mzd_t **x = mpc_init_empty_share_vector(lowmc->n);
   mzd_t **y = mpc_init_empty_share_vector(lowmc->n);
   mzd_t **z = mpc_init_empty_share_vector(lowmc->n);
 
-  mpc_const_mat_addmul(x, lowmc->KMatrix[0], lowmc->key);
+  mpc_const_mat_mul(x, lowmc->KMatrix[0], lowmc->key);
+  mpc_const_add(x, x, p);
 
   for(int i=0; i<lowmc->r; i++) {
-    mpc_sbox_layer(y, x, lowmc->m);
+    mpc_sbox_layer(y, x, lowmc->m, views, &vcnt);
     mpc_const_mat_mul(z, lowmc->LMatrix[i], y);
     mpc_const_add(z, z, lowmc->Constants[i]);
-    mpc_const_mat_addmul(z, lowmc->KMatrix[i+1], lowmc->key);
+    mzd_t **t = mpc_init_empty_share_vector(lowmc->n);
+    mpc_const_mat_mul(t, lowmc->KMatrix[i+1], lowmc->key);
+    mpc_add(z, z, t);
+    mpc_free(t);
     mpc_copy(x, z);
   }
+
+  views[vcnt].s[0] = lowmc->key[0];
+  views[vcnt].s[1] = lowmc->key[1];
+  views[vcnt].s[2] = lowmc->key[2];
+  views[vcnt].r[0] = 0;
+  views[vcnt].r[1] = 0;
+  views[vcnt].r[2] = 0;
 
   mpc_copy(c, x);
 

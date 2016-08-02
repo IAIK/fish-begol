@@ -45,8 +45,7 @@ mzd_t **mpc_add(mzd_t **result, mzd_t **first, mzd_t **second) {
 mzd_t **mpc_const_add(mzd_t **result, mzd_t **first, mzd_t *second) {
   if(result == 0)
     result = mpc_init_empty_share_vector(first[0]->nrows);
-  for(unsigned i = 0; i < 3 ; i++) 
-    mzd_add(result[i], first[i], second);
+  mzd_add(result[0], first[0], second);
   return result;
 }
 
