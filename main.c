@@ -9,8 +9,14 @@ int main(int argc, char **argv) {
   lowmc_t *lowmc = lowmc_init(63, 256, 12, 128);
   mzd_t *p       = mzd_init_random_vector(256); 
   mzd_t *c       = lowmc_call(lowmc, p);
+
+
   view_t views[2 + lowmc->r];
-  mzd_t **c_mpc  = mpc_lowmc_call(lowmc, p, views, 3);
+  mzd_t ***rvec = (mzd_t***)malloc(lowmc->r * sizeof(mzd_t**));
+  for(unsigned i = 0 ; i < lowmc->r ; i++)
+    rvec[i] = mpc_init_random_vector(lowmc->n, 3);
+
+  mzd_t **c_mpc  = mpc_lowmc_call(lowmc, p, views, rvec, 3);
   mzd_t *c_mpcr  = mpc_reconstruct_from_share(c_mpc); 
 
   if(mzd_cmp(c, c_mpcr) == 0)
@@ -18,8 +24,11 @@ int main(int argc, char **argv) {
 
   mzd_free(p);
   mzd_free(c);
-  mpc_free(c_mpc);
+  mpc_free(c_mpc, 3);
   mzd_free(c_mpcr);
+  for(unsigned i  = 0 ; i < lowmc->r ; i++) 
+    mpc_free(rvec[i], 3);
+  free(rvec);
 
   lowmc_free(lowmc);
    

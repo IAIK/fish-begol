@@ -45,15 +45,15 @@ lowmc_t *lowmc_init(size_t m, size_t n, size_t r, size_t k) {
   lowmc->k = k;
 
   lowmc->LMatrix = (mzd_t**)calloc(sizeof(mzd_t*),r);
-  for(int i=0; i<r; i++)
+  for(unsigned i=0; i<r; i++)
     lowmc->LMatrix[i] = mzd_sample_lmatrix(n);
 
   lowmc->Constants = (mzd_t**)calloc(sizeof(mzd_t*),r);
-  for(int i=0; i<r; i++) {
+  for(unsigned i=0; i<r; i++) {
     lowmc->Constants[i] = mzd_init_random_vector(n);
   }
   lowmc->KMatrix = (mzd_t**)calloc(sizeof(mzd_t*), r+1);
-  for(int i=0; i<r+1; i++) {
+  for(unsigned i=0; i<r+1; i++) {
     lowmc->KMatrix[i] = mzd_sample_kmatrix(n, k);
   }
 
@@ -65,7 +65,7 @@ lowmc_t *lowmc_init(size_t m, size_t n, size_t r, size_t k) {
 }
 
 void lowmc_free(lowmc_t *lowmc) {
-  for(int i=0; i<lowmc->r; i++) {
+  for(unsigned i=0; i<lowmc->r; i++) {
     mzd_free(lowmc->Constants[i]);
     mzd_free(lowmc->KMatrix[i]);
     mzd_free(lowmc->LMatrix[i]);

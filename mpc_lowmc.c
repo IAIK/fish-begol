@@ -3,10 +3,8 @@
 #include "mpc.h"
 #include "lowmc_pars.h"
 
-void mpc_sbox_layer(mzd_t **out, mzd_t **in, rci_t m, view_t *views, int *i, int sc) {
+void mpc_sbox_layer(mzd_t **out, mzd_t **in, rci_t m, view_t *views, int *i, mzd_t **rvec, unsigned sc) {
   mpc_copy(out, in, sc);
-  // TODO move randomness to method signature
-  mzd_t **rvec = mpc_init_random_vector(in[0]->nrows, sc);
   for(rci_t n=out[0]->nrows-3*m; n<out[0]->nrows; n+=3) {
     BIT* x0 = mpc_read_bit(in, n+0, sc);
     BIT* x1 = mpc_read_bit(in, n+1, sc);
@@ -46,22 +44,18 @@ void mpc_sbox_layer(mzd_t **out, mzd_t **in, rci_t m, view_t *views, int *i, int
     free(r1);
     free(r2);
   }
-  mpc_free(rvec);
 
-  for(unsigned j = 0 ; j < sc ; j++) {
+  for(unsigned j = 0 ; j < sc ; j++) 
     views[*i].s[j] = out[j];
-    views[*i].r[j] = rvec[j];
-  }
   (*i)++;
 }
 
-mzd_t **mpc_lowmc_call(lowmc_t *lowmc, mzd_t *p, view_t *views, unsigned sc) {
+mzd_t **mpc_lowmc_call(lowmc_t *lowmc, mzd_t *p, view_t *views, mzd_t ***rvec, unsigned sc) {
   int vcnt = 0;
   lowmc_secret_share(lowmc);
   
   for(unsigned i = 0 ; i < sc ; i++) {
     views[vcnt].s[i] = lowmc->key[i];
-    views[vcnt].r[i] = 0; 
   }  
   vcnt++;
 
@@ -74,32 +68,31 @@ mzd_t **mpc_lowmc_call(lowmc_t *lowmc, mzd_t *p, view_t *views, unsigned sc) {
   mpc_const_mat_mul(x, lowmc->KMatrix[0], lowmc->key, sc);
   mpc_const_add(x, x, p, sc);
 
-  for(int i=0; i<lowmc->r; i++) {
-    mpc_sbox_layer(y, x, lowmc->m, views, &vcnt, sc);
+  for(unsigned i=0; i<lowmc->r; i++) {
+    mpc_sbox_layer(y, x, lowmc->m, views, &vcnt, rvec[i], sc);
     mpc_const_mat_mul(z, lowmc->LMatrix[i], y, sc);
     mpc_const_add(z, z, lowmc->Constants[i], sc);
     mzd_t **t = mpc_init_empty_share_vector(lowmc->n, sc);
     mpc_const_mat_mul(t, lowmc->KMatrix[i+1], lowmc->key, sc);
-    mpc_add(z, z, t);
-    mpc_free(t);
+    mpc_add(z, z, t, sc);
+    mpc_free(t, sc);
     mpc_copy(x, z, sc);
   }
 
   for(unsigned i = 0 ; i < sc ; i++) {
     views[vcnt].s[i] = c[i];  
-    views[vcnt].r[i] = 0;
   }
 
   mpc_copy(c, x, sc);
 
-  mpc_free(z);
-  mpc_free(y);
-  mpc_free(x);
+  mpc_free(z, sc);
+  mpc_free(y, sc);
+  mpc_free(x, sc);
   return c;
 }
 
 unsigned mpc_lowmc_verify(lowmc_t *lowmc, mzd_t *p, view_t *views) {
   // TODO remove key from lowmc struct
-  
+  return 0;
 }
 

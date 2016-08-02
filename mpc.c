@@ -20,7 +20,7 @@ void mpc_xor_bit(BIT* a, BIT* b, unsigned sc) {
 
 BIT *mpc_read_bit(mzd_t **vec, rci_t n, unsigned sc) {
   BIT *bit = (BIT*)malloc(sc * sizeof(BIT));
-  for(int i = 0 ; i < sc ; i++)
+  for(unsigned i = 0 ; i < sc ; i++)
     bit[i] = mzd_read_bit(vec[i], n, 0);
 
   return bit;
@@ -31,10 +31,10 @@ void mpc_write_bit(mzd_t **vec, rci_t n, BIT *bit, unsigned sc) {
     mzd_write_bit(vec[i], n, 0, bit[i]);
 }
 
-mzd_t **mpc_add(mzd_t **result, mzd_t **first, mzd_t **second) {
+mzd_t **mpc_add(mzd_t **result, mzd_t **first, mzd_t **second, unsigned sc) {
   if(result == 0)
-    result = mpc_init_empty_share_vector(first[0]->nrows, 3);
-  for(unsigned i = 0; i < 3 ; i++)
+    result = mpc_init_empty_share_vector(first[0]->nrows, sc);
+  for(unsigned i = 0; i < sc ; i++)
     mzd_add(result[i], first[i], second[i]);
   return result;
 }
@@ -79,10 +79,9 @@ void mpc_print(mzd_t **shared_vec) {
   mzd_free(r);
 }
 
-void mpc_free(mzd_t **vec) {
-  mzd_free(vec[0]);
-  mzd_free(vec[1]);
-  mzd_free(vec[2]);
+void mpc_free(mzd_t **vec, unsigned sc) {
+  for(unsigned i = 0 ; i < sc ; i++)
+    mzd_free(vec[i]);
   free(vec);
 }
 

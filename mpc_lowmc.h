@@ -6,7 +6,6 @@
 
 typedef struct {
   mzd_t *s[3];
-  mzd_t *r[3];
 } view_t;
 
 /**
@@ -19,7 +18,7 @@ typedef struct {
  * \param views the views
  * \param i     the current view
  */
-void mpc_sbox_layer(mzd_t **out, mzd_t **in, rci_t m, view_t *views, int *i);
+void mpc_sbox_layer(mzd_t **out, mzd_t **in, rci_t m, view_t *views, int *i, mzd_t **rvec, unsigned sc);
 
 /**
  * Initializes the views for the MPC execution of LowMC
@@ -38,6 +37,6 @@ mzd_t **mpc_init_views(lowmc_t *lowmc);
  * \param  views the views
  * \return       the ciphertext      
  */
-mzd_t **mpc_lowmc_call(lowmc_t *lowmc, mzd_t *p, view_t *views, unsigned sc);
+mzd_t **mpc_lowmc_call(lowmc_t *lowmc, mzd_t *p, view_t *views, mzd_t ***rvec, unsigned sc);
 
 #endif

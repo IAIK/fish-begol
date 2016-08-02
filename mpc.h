@@ -92,7 +92,7 @@ void mpc_write_bit(mzd_t **vec, rci_t n, BIT *bit, unsigned sc);
  * \param  second the second operand
  * \return        the result of the computation
  */
-mzd_t **mpc_add(mzd_t **result, mzd_t **first, mzd_t **second);
+mzd_t **mpc_add(mzd_t **result, mzd_t **first, mzd_t **second, unsigned sc);
 
 /**
  * Computes the addition in GF(2) of a secret shared 
@@ -148,6 +148,6 @@ void mpc_print(mzd_t **shared_vec);
 /**
  * Frees a secret shared vector
  */
-void mpc_free(mzd_t **vec);
+void mpc_free(mzd_t **vec, unsigned sc);
 
 #endif
