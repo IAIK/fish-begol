@@ -1,7 +1,7 @@
 #include "mpc.h"
 #include "mzd_additional.h"
 
-void mpc_and_bit(BIT* a, BIT* b, BIT* r, unsigned sc) {
+void mpc_and_bit(BIT* a, BIT* b, BIT* r, view_t *views, int *i, unsigned bp, unsigned sc) {
   BIT* wp = (BIT*)malloc(sc * sizeof(BIT));
   for(unsigned i = 0 ; i < sc ; i++) {
     unsigned j = (i + 1) % 3;
@@ -9,6 +9,18 @@ void mpc_and_bit(BIT* a, BIT* b, BIT* r, unsigned sc) {
   }
   for(unsigned i = 0 ; i < sc ; i++) 
     a[i] = wp[i];
+  free(wp);
+}
+
+void mpc_and_bit_verify(BIT* a, BIT* b, BIT* r, view_t *views, int *i, unsigned bp, unsigned sc) {
+  BIT* wp = (BIT*)malloc(sc * sizeof(BIT));
+  for(unsigned m = 0 ; m < sc - 1 ; m++) {
+    unsigned j = m + 1;
+    wp[m] = (a[m] & b[m]) ^ (a[j] & b[m]) ^ (a[m] & b[j]) ^ r[m] ^ r[j];
+  }
+  wp[sc - 1] = mzd_read_bit(views[*i].s[sc - 1], bp ,1);
+  for(unsigned m = 0 ; m < sc - 1 ; m++) 
+    a[m] = wp[m];
   free(wp);
 }
 

@@ -2,6 +2,7 @@
 #define MPC_H
 
 #include "m4ri/m4ri.h"
+#include "mpc_lowmc.h"
 
 /**
  * Linearly secret shares the vector v 
@@ -53,7 +54,9 @@ mzd_t *mpc_reconstruct_from_share(mzd_t** shared_vec);
  * \param  b the three shares of the second bit
  * \param  r the three shares containing the randomness
  */
-void mpc_and_bit(BIT* a, BIT* b, BIT* r, unsigned sc);
+void mpc_and_bit(BIT* a, BIT* b, BIT* r, view_t *views, int *i, unsigned bp, unsigned sc);
+
+void mpc_and_bit_verify(BIT* a, BIT* b, BIT* r, view_t *views, int *i, unsigned bp, unsigned sc);
 
 /**
  * Computes a ^= b on two secret shared bits according to
