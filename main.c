@@ -8,7 +8,7 @@
 
 int main(int argc, char **argv) {
   clock_t beginSetup = clock();
-  lowmc_t *lowmc     = lowmc_init(63, 256, 12, 16);
+  lowmc_t *lowmc     = lowmc_init(63, 256, 12, 128);
   clock_t deltaSetup = clock() - beginSetup;
   printf("LowMC setup                   %4lums\n", deltaSetup * 1000 / CLOCKS_PER_SEC);
 
