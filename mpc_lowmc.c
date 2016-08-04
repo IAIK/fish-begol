@@ -13,29 +13,27 @@ void mpc_sbox_layer(mzd_t **out, mzd_t **in, rci_t m, view_t *views, int *i, mzd
     BIT* r1  = mpc_read_bit(rvec, n+1, sc);    
     BIT* r2  = mpc_read_bit(rvec, n+2, sc);
      
-    BIT tmp1[sc]; 
-    for(unsigned m = 0 ; m < sc ; m++)
+    BIT tmp1[sc], tmp2[sc], tmp3[sc]; 
+    for(unsigned m = 0 ; m < sc ; m++) {
       tmp1[m] = x1[m];
-    andBitPtr(tmp1, x2, r0, views, i, n, sc);
-    mpc_xor_bit(tmp1, x0, sc);
-    mpc_write_bit(out, n+0, tmp1, sc);
-
-    BIT tmp2[sc];
-    for(unsigned m = 0 ; m < sc ; m++)
       tmp2[m] = x0[m];
-    andBitPtr(tmp2,x2,r1, views, i, n, sc);
-    mpc_xor_bit(tmp2,x0, sc);
-    mpc_xor_bit(tmp2,x1, sc);
-    mpc_write_bit(out, n+1, tmp2, sc);
-
-    BIT tmp3[sc]; 
-    for(unsigned m = 0 ; m < sc ; m++)
       tmp3[m] = x0[m];
-    andBitPtr(tmp3,x1,r2, views, i, n, sc);
-    mpc_xor_bit(tmp3,x0, sc);
+    }
+    andBitPtr(tmp1, x2, r0, views, i, n, sc);
+    andBitPtr(tmp2, x2, r1, views, i, n + 1, sc);
+    andBitPtr(tmp3, x1, r2, views, i, n + 2, sc); 
+
+    mpc_xor_bit(tmp1, x0, sc);
+    mpc_write_bit(out, n + 0, tmp1, sc);
+  
+    mpc_xor_bit(tmp2, x0, sc);
+    mpc_xor_bit(tmp2, x1, sc);
+    mpc_write_bit(out, n + 1, tmp2, sc);
+ 
+    mpc_xor_bit(tmp3, x0, sc);
     mpc_xor_bit(tmp3, x1, sc);
     mpc_xor_bit(tmp3, x2, sc);
-    mpc_write_bit(out, n+2, tmp3, sc);
+    mpc_write_bit(out, n + 2, tmp3, sc);
 
     free(x0);
     free(x1);
@@ -45,8 +43,6 @@ void mpc_sbox_layer(mzd_t **out, mzd_t **in, rci_t m, view_t *views, int *i, mzd
     free(r2);
   }
 
-  for(unsigned j = 0 ; j < sc ; j++) 
-    views[*i].s[j] = out[j];
   (*i)++;
 }
 
@@ -90,7 +86,6 @@ mzd_t **mpc_lowmc_call(lowmc_t *lowmc, lowmc_key_t *lowmc_key, mzd_t *p, view_t 
 }
 
 unsigned mpc_lowmc_verify(lowmc_t *lowmc, mzd_t *p, view_t *views,  mzd_t ***rvec, view_t v0) {
-  
   //initialize two key shares from v0
   lowmc_key_t *lowmc_key = (lowmc_key_t*)malloc(sizeof(lowmc_key));
   lowmc_key->key = (mzd_t**)malloc(2 * sizeof(mzd_t*));

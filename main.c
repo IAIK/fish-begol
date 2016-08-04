@@ -8,7 +8,7 @@
 
 int main(int argc, char **argv) {
   clock_t beginSetup     = clock();
-  lowmc_t *lowmc         = lowmc_init(63, 256, 12, 128);
+  lowmc_t *lowmc         = lowmc_init(63, 256, 12, 16);
   clock_t deltaSetup     = clock() - beginSetup;
   printf("LowMC setup                   %4lums\n", deltaSetup * 1000 / CLOCKS_PER_SEC);
 
@@ -33,6 +33,9 @@ int main(int argc, char **argv) {
 
   clock_t beginShare = clock();  
   view_t views[2 + lowmc->r];
+  for(unsigned n = 0 ; n < 2 + lowmc->r ; n++)
+    for(unsigned m = 0 ; m < 3 ; m++)
+      views[n].s[m] = mzd_init(lowmc->n, 1);
   lowmc_secret_share(lowmc, lowmc_key);
   clock_t deltaShare = clock() - beginShare;
   printf("MPC secret sharing            %4lums\n", deltaShare * 1000 / CLOCKS_PER_SEC);
@@ -52,11 +55,10 @@ int main(int argc, char **argv) {
 
 
   //todo replace views[0] with view where one slot is actually missing.
-  //view_t viewsVrfy[2 + lowmc->r];
-  //mpc_lowmc_verify(lowmc, p, viewsVrfy, rvec, views[0]);
+  mpc_lowmc_verify(lowmc, p, views, rvec, views[0]);
 
-  //if(mzd_cmp(c_mpc[0], viewsVrfy[1 + lowmc->r].s[0]) == 0)
-  //  printf("[ OK ] First share matches with reconstructed share in proof verification.\n");
+  if(mzd_cmp(c_mpc[0], views[1 + lowmc->r].s[0]) == 0)
+    printf("[ OK ] First share matches with reconstructed share in proof verification.\n");
 
   mzd_free(p);
   mzd_free(c);
