@@ -7,9 +7,9 @@
 #include "time.h"
 
 int main(int argc, char **argv) {
-  clock_t beginSetup     = clock();
-  lowmc_t *lowmc         = lowmc_init(63, 256, 12, 16);
-  clock_t deltaSetup     = clock() - beginSetup;
+  clock_t beginSetup = clock();
+  lowmc_t *lowmc     = lowmc_init(63, 256, 12, 16);
+  clock_t deltaSetup = clock() - beginSetup;
   printf("LowMC setup                   %4lums\n", deltaSetup * 1000 / CLOCKS_PER_SEC);
 
   clock_t beginKeygen    = clock();
@@ -17,10 +17,10 @@ int main(int argc, char **argv) {
   clock_t deltaKeygen    = clock() - beginKeygen;
   printf("LowMC key generation          %4lums\n", deltaKeygen * 1000 / CLOCKS_PER_SEC);
 
-  clock_t beginRef       = clock();
-  mzd_t *p               = mzd_init_random_vector(256); 
-  mzd_t *c               = lowmc_call(lowmc, lowmc_key, p);
-  clock_t deltaRef       = clock() - beginRef;
+  clock_t beginRef = clock();
+  mzd_t *p         = mzd_init_random_vector(256); 
+  mzd_t *c         = lowmc_call(lowmc, lowmc_key, p);
+  clock_t deltaRef = clock() - beginRef;
   printf("LowMC reference encryption    %4lums\n", deltaRef * 1000 / CLOCKS_PER_SEC);
   
   clock_t beginRand = clock();  
@@ -41,7 +41,7 @@ int main(int argc, char **argv) {
   printf("MPC secret sharing            %4lums\n", deltaShare * 1000 / CLOCKS_PER_SEC);
   
   clock_t beginLowmc = clock();
-  mzd_t **c_mpc  = mpc_lowmc_call(lowmc, lowmc_key, p, views, rvec, 3, &mpc_and_bit);
+  mzd_t **c_mpc = mpc_lowmc_call(lowmc, lowmc_key, p, views, rvec, 3, &mpc_and_bit);
   clock_t deltaLowmc = clock() - beginLowmc;
   printf("MPC LowMC encryption          %4lums\n", deltaLowmc * 1000 / CLOCKS_PER_SEC);
   

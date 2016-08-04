@@ -19,8 +19,13 @@ void mpc_and_bit_verify(BIT* a, BIT* b, BIT* r, view_t *views, int *i, unsigned 
     unsigned j = m + 1;
     wp[m] = (a[m] & b[m]) ^ (a[j] & b[m]) ^ (a[m] & b[j]) ^ r[m] ^ r[j];
   }
-  for(unsigned m = 0 ; m < sc - 1 ; m++) 
+  for(unsigned m = 0 ; m < sc - 1 ; m++) {
     a[m] = wp[m];
+    if(a[m] != mzd_read_bit(views[*i].s[m], bp, 0)) {
+      printf("Verification mismatch!\n");
+      exit(-1);
+    }
+  }
   a[sc - 1] = mzd_read_bit(views[*i].s[sc - 1], bp, 0);
   free(wp);
 }
