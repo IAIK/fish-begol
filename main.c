@@ -41,7 +41,7 @@ int main(int argc, char **argv) {
   printf("MPC secret sharing            %4lums\n", deltaShare * 1000 / CLOCKS_PER_SEC);
   
   clock_t beginLowmc = clock();
-  mzd_t **c_mpc = mpc_lowmc_call(lowmc, lowmc_key, p, views, rvec, 3, &mpc_and_bit);
+  mzd_t **c_mpc = mpc_lowmc_call(lowmc, lowmc_key, p, views, rvec);
   clock_t deltaLowmc = clock() - beginLowmc;
   printf("MPC LowMC encryption          %4lums\n", deltaLowmc * 1000 / CLOCKS_PER_SEC);
   

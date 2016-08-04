@@ -26,6 +26,7 @@ mzd_t **mpc_init_plain_share_vector(mzd_t *v);
  * vector
  *
  * \param  n the vector length
+ * \param  sc    the share count
  * \return a random vector shared in three components
  */
 mzd_t **mpc_init_random_vector(rci_t n, unsigned sc);
@@ -35,6 +36,7 @@ mzd_t **mpc_init_random_vector(rci_t n, unsigned sc);
  * 
  * \param  n the vector length
  * \param    the array of vectors
+ * \param  sc    the share count
  */
 mzd_t **mpc_init_empty_share_vector(rci_t n, unsigned sc);
 
@@ -50,9 +52,13 @@ mzd_t *mpc_reconstruct_from_share(mzd_t** shared_vec);
  * Computes the a &= b on two secret shared bits according to
  * https://eprint.iacr.org/2016/163.pdf
  * 
- * \param  a the three shares of the first bit
- * \param  b the three shares of the second bit
- * \param  r the three shares containing the randomness
+ * \param  a     the three shares of the first bit
+ * \param  b     the three shares of the second bit
+ * \param  r     the three shares containing the randomness
+ * \param  views the views
+ * \param  i     the current view index
+ * \param  bp    the position of the current bit within the view
+ * \param  sc    the share count  
  */
 void mpc_and_bit(BIT* a, BIT* b, BIT* r, view_t *views, int *i, unsigned bp, unsigned sc);
 
@@ -62,8 +68,9 @@ void mpc_and_bit_verify(BIT* a, BIT* b, BIT* r, view_t *views, int *i, unsigned 
  * Computes a ^= b on two secret shared bits according to
  * https://eprint.iacr.org/2016/163.pdf
  * 
- * \param  a the three shares of the first bit
- * \param  b the three shares of the second bit
+ * \param  a  the three shares of the first bit
+ * \param  b  the three shares of the second bit
+ * \param  sc the share count
  */
 void mpc_xor_bit(BIT* a, BIT* b, unsigned sc);
 
@@ -72,6 +79,7 @@ void mpc_xor_bit(BIT* a, BIT* b, unsigned sc);
  * 
  * \param vec the secret shared vector
  * \param n   the position of the bit
+ * \param sc  the share count
  *
  * \return    the secret shared bit
  */
@@ -83,6 +91,7 @@ BIT *mpc_read_bit(mzd_t **vec, rci_t n, unsigned sc);
  * \param vec the secret shared vector
  * \param n   the position of the bit
  * \param bit the secret shared bit
+ * \param sc  the share count
  */
 void mpc_write_bit(mzd_t **vec, rci_t n, BIT *bit, unsigned sc);
 
@@ -93,6 +102,7 @@ void mpc_write_bit(mzd_t **vec, rci_t n, BIT *bit, unsigned sc);
  * \param  result the result of the computation
  * \param  first  the first operand
  * \param  second the second operand
+ * \param  sc     the share count
  * \return        the result of the computation
  */
 mzd_t **mpc_add(mzd_t **result, mzd_t **first, mzd_t **second, unsigned sc);
@@ -105,6 +115,7 @@ mzd_t **mpc_add(mzd_t **result, mzd_t **first, mzd_t **second, unsigned sc);
  * \param  result the result of the computation
  * \param  first  the first operand
  * \param  second the second operand
+ * \param  sc     the share count
  * \return        the result of the computation
  */
 mzd_t **mpc_const_add(mzd_t **result, mzd_t **first, mzd_t *second, unsigned sc);
@@ -129,6 +140,7 @@ mzd_t **mpc_const_mat_addmul(mzd_t** result, mzd_t *matrix, mzd_t **vector);
  * \param  result the result of the computation
  * \param  matrix the matrix
  * \param  vector the secret shared vector
+ * \param  sc     the share count
  * \return        the result of the computation
  */
 mzd_t **mpc_const_mat_mul(mzd_t** result, mzd_t *matrix, mzd_t **vector, unsigned sc);
@@ -138,6 +150,8 @@ mzd_t **mpc_const_mat_mul(mzd_t** result, mzd_t *matrix, mzd_t **vector, unsigne
  * 
  * \param out the destination
  * \param in  the source
+ * \param  sc    the share count
+ *
  */
 void mpc_copy(mzd_t** out, mzd_t **in, unsigned sc);
 
