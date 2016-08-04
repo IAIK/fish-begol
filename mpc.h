@@ -60,9 +60,9 @@ mzd_t *mpc_reconstruct_from_share(mzd_t** shared_vec);
  * \param  bp    the position of the current bit within the view
  * \param  sc    the share count  
  */
-void mpc_and_bit(BIT* a, BIT* b, BIT* r, view_t *views, int *i, unsigned bp, unsigned sc);
+int mpc_and_bit(BIT* a, BIT* b, BIT* r, view_t *views, int *i, unsigned bp, unsigned sc);
 
-void mpc_and_bit_verify(BIT* a, BIT* b, BIT* r, view_t *views, int *i, unsigned bp, unsigned sc);
+int mpc_and_bit_verify(BIT* a, BIT* b, BIT* r, view_t *views, int *i, unsigned bp, unsigned sc);
 
 /**
  * Computes a ^= b on two secret shared bits according to

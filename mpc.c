@@ -1,7 +1,7 @@
 #include "mpc.h"
 #include "mzd_additional.h"
 
-void mpc_and_bit(BIT* a, BIT* b, BIT* r, view_t *views, int *i, unsigned bp, unsigned sc) {
+int mpc_and_bit(BIT* a, BIT* b, BIT* r, view_t *views, int *i, unsigned bp, unsigned sc) {
   BIT* wp = (BIT*)malloc(sc * sizeof(BIT));
   for(unsigned m = 0 ; m < sc ; m++) {
     unsigned j = (m + 1) % 3;
@@ -11,9 +11,10 @@ void mpc_and_bit(BIT* a, BIT* b, BIT* r, view_t *views, int *i, unsigned bp, uns
     a[m] = wp[m];
   mpc_write_bit(views[*i].s, bp, a, sc);
   free(wp);
+  return 0;
 }
 
-void mpc_and_bit_verify(BIT* a, BIT* b, BIT* r, view_t *views, int *i, unsigned bp, unsigned sc) {
+int mpc_and_bit_verify(BIT* a, BIT* b, BIT* r, view_t *views, int *i, unsigned bp, unsigned sc) {
   BIT* wp = (BIT*)malloc(sc * sizeof(BIT));
   for(unsigned m = 0 ; m < sc - 1 ; m++) {
     unsigned j = m + 1;
@@ -21,13 +22,12 @@ void mpc_and_bit_verify(BIT* a, BIT* b, BIT* r, view_t *views, int *i, unsigned 
   }
   for(unsigned m = 0 ; m < sc - 1 ; m++) {
     a[m] = wp[m];
-    if(a[m] != mzd_read_bit(views[*i].s[m], bp, 0)) {
-      printf("Verification mismatch!\n");
-      exit(-1);
-    }
+    if(a[m] != mzd_read_bit(views[*i].s[m], bp, 0)) 
+      return -1;
   }
   a[sc - 1] = mzd_read_bit(views[*i].s[sc - 1], bp, 0);
   free(wp);
+  return 0;
 }
 
 void mpc_xor_bit(BIT* a, BIT* b, unsigned sc) {

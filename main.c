@@ -55,11 +55,11 @@ int main(int argc, char **argv) {
 
 
   //todo replace views[0] with view where one slot is actually missing.
-  mpc_lowmc_verify(lowmc, p, views, rvec, views[0]);
-
-  if(mzd_cmp(c_mpc[0], views[1 + lowmc->r].s[0]) == 0)
+  if(!mpc_lowmc_verify(lowmc, p, views, rvec, views[0]) && mzd_cmp(c_mpc[0], views[1 + lowmc->r].s[0]) == 0)
     printf("[ OK ] First share matches with reconstructed share in proof verification.\n");
-
+  else
+    printf("[FAIL] Verification failed.\n");   
+ 
   mzd_free(p);
   mzd_free(c);
   mpc_free(c_mpc, 3);
