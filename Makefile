@@ -1,9 +1,9 @@
-CC=g++
+CC=gcc
 
-LDLIBS+=-lm4ri
+LDLIBS+=-lm4ri -lcrypto
 
 all: 
-	$(CC) *.c *.cpp *.h $(LDLIBS) -o mpc_lowmc
+	$(CC) *.c *.h $(LDLIBS) -o mpc_lowmc
 
 clean:
 	rm -f *.o *.gch mpc_lowmc
