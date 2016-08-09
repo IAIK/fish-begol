@@ -8,6 +8,11 @@ typedef struct {
   mzd_t *s[3];
 } view_t;
 
+typedef struct {
+  view_t *view_t;
+  unsigned vcnt;
+} proof_t;
+
 /**
  * Initializes the views for the MPC execution of LowMC
  *
