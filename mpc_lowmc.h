@@ -3,6 +3,9 @@
 
 #include "m4ri/m4ri.h"
 #include "lowmc_pars.h"
+#include "openssl/sha.h"
+
+#define NUM_ROUNDS 137
 
 typedef struct {
   mzd_t **s;
@@ -16,8 +19,9 @@ typedef struct {
   view_t **views;
   unsigned char ***keys;
   unsigned char ***r;
-  unsigned char ***hashes;
+  unsigned char hashes[NUM_ROUNDS][3][SHA256_DIGEST_LENGTH];
   unsigned *ch;
+  mzd_t **y;
 } proof_t;
 
 /**
