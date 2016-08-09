@@ -91,9 +91,13 @@ proof_t *prove(lowmc_t *lowmc, lowmc_key_t *lowmc_key, mzd_t *p) {
     printf("[FAIL] MPC ciphertext does not match reference implementation.\n");
 
   proof_t *proof = (proof_t*)malloc(sizeof(proof_t));
+
   proof->views = (view_t**)malloc(NUM_ROUNDS * sizeof(view_t*));
+  
   proof->r = (unsigned char***)malloc(NUM_ROUNDS * sizeof(unsigned char**));
   proof->keys = (unsigned char***)malloc(NUM_ROUNDS * sizeof(unsigned char**));
+  proof->hashes = (unsigned char***)malloc(NUM_ROUNDS * sizeof(unsigned char**));
+    
   proof->ch = (unsigned*)malloc(NUM_ROUNDS * sizeof(unsigned));
   memcpy(proof->ch, ch, NUM_ROUNDS * sizeof(unsigned));
 
@@ -112,6 +116,12 @@ proof_t *prove(lowmc_t *lowmc, lowmc_key_t *lowmc_key, mzd_t *p) {
     proof->keys[i][1] = (unsigned char*)malloc(16 * sizeof(unsigned char));
     memcpy(proof->keys[i][0], keys[i][a], 16 * sizeof(char));
     memcpy(proof->keys[i][1], keys[i][b], 16 * sizeof(char));
+
+    proof->hashes[i] = (unsigned char**)malloc(2 * sizeof(unsigned char*));
+    proof->hashes[i][0] = (unsigned char*)malloc(SHA256_DIGEST_LENGTH * sizeof(unsigned char));
+    proof->hashes[i][1] = (unsigned char*)malloc(SHA256_DIGEST_LENGTH * sizeof(unsigned char));
+    memcpy(proof->hashes[i][0], hashes[i][a], SHA256_DIGEST_LENGTH * sizeof(char));
+    memcpy(proof->hashes[i][1], hashes[i][b], SHA256_DIGEST_LENGTH * sizeof(char));
    
     proof->views[i] = (view_t*)malloc((2 + lowmc->r) * sizeof(view_t));
     for(unsigned j = 0 ; j < 2 + lowmc->r ; j++) {
@@ -136,18 +146,36 @@ proof_t *prove(lowmc_t *lowmc, lowmc_key_t *lowmc_key, mzd_t *p) {
 }
 
 int verify(lowmc_t *lowmc, mzd_t *p, proof_t *prf) {
+  clock_t beginHash = clock();
+  unsigned char hash[SHA256_DIGEST_LENGTH];
+  #pragma omp parallel for
+  for(unsigned i = 0 ; i < NUM_ROUNDS ; i++) {
+    H(prf->keys[i][0], prf->views[i], 0, 2 + lowmc->r, prf->r[i][0], hash);
+    if(0 != memcmp(hash, prf->hashes[i][0], SHA256_DIGEST_LENGTH)) {
+      printf("Error verifying hash\n");
+      exit(-1);
+    } 
+    H(prf->keys[i][1], prf->views[i], 1, 2 + lowmc->r, prf->r[i][1], hash);
+    if(0 != memcmp(hash, prf->hashes[i][1], SHA256_DIGEST_LENGTH)) {
+      printf("Error verifying hash\n");
+      exit(-1);
+    }
+  }
+  clock_t deltaHash = clock() - beginHash;
+  printf("Verifying hashes              %4lums\n", deltaHash * 1000 / CLOCKS_PER_SEC);
+
   mzd_t **rv[NUM_ROUNDS][2];
   rv[0][0] = mzd_init_random_vectors_from_seed(prf->keys[0][0], lowmc->n, lowmc->r);
   rv[0][1] = mzd_init_random_vectors_from_seed(prf->keys[0][1], lowmc->n, lowmc->r);
   
   mzd_t *c_ch = mzd_init(lowmc->n, 1);
   mzd_copy(c_ch, prf->views[0][lowmc->r + 1].s[0]);
-  
+
   if(!mpc_lowmc_verify(lowmc, p, prf->views[0], rv[0], prf->ch[0]) && mzd_cmp(c_ch, prf->views[0][1 + lowmc->r].s[0]) == 0)
     printf("[ OK ] Share %d matches with reconstructed share in proof verification.\n", prf->ch[0]);
   else
     printf("[FAIL] Verification failed.\n");   
-
+  
   mzd_free(c_ch);
 }
 

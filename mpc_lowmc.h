@@ -16,6 +16,7 @@ typedef struct {
   view_t **views;
   unsigned char ***keys;
   unsigned char ***r;
+  unsigned char ***hashes;
   unsigned *ch;
 } proof_t;
 

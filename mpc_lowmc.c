@@ -84,7 +84,7 @@ mzd_t **_mpc_lowmc_call(lowmc_t *lowmc, lowmc_key_t *lowmc_key, mzd_t *p, view_t
   }
   
   mpc_copy(c, x, sc);
-  mpc_copy(views[vcnt].s, c, sc);
+  mpc_copy(views[vcnt].s, c, sc); 
 
   mpc_free(z, sc);
   mpc_free(y, sc);
