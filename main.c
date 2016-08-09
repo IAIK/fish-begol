@@ -74,11 +74,10 @@ int main(int argc, char **argv) {
   mpc_free(c_mpc, 3);
   mzd_free(c_mpcr);
 
-  for(unsigned j = 0 ; j < NUM_ROUNDS ; j++) {
+  for(unsigned j = 0 ; j < NUM_ROUNDS ; j++) 
     for(unsigned i  = 0 ; i < 3 ; i++) 
       mpc_free(rvec[j][i], lowmc->r);
-  }
-
+  
   lowmc_free(lowmc, lowmc_key);
    
   //test_mpc_share();
