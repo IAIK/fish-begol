@@ -20,7 +20,6 @@ typedef struct {
   unsigned char ***keys;
   unsigned char ***r;
   unsigned char hashes[NUM_ROUNDS][3][SHA256_DIGEST_LENGTH];
-  unsigned *ch;
   mzd_t **y;
 } proof_t;
 

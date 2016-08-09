@@ -85,9 +85,6 @@ proof_t *prove(lowmc_t *lowmc, lowmc_key_t *lowmc_key, mzd_t *p) {
   proof->keys = (unsigned char***)malloc(NUM_ROUNDS * sizeof(unsigned char**));
   memcpy(proof->hashes, hashes, NUM_ROUNDS * 3 * SHA256_DIGEST_LENGTH * sizeof(char));
 
-  proof->ch = (unsigned*)malloc(NUM_ROUNDS * sizeof(unsigned));
-  memcpy(proof->ch, ch, NUM_ROUNDS * sizeof(unsigned));
-
   for(unsigned i = 0 ; i < NUM_ROUNDS ; i++) { 
     int a = ch[i];
     int b = (a + 1) % 3;
@@ -164,7 +161,7 @@ int verify(lowmc_t *lowmc, mzd_t *p, mzd_t *c, proof_t *prf) {
   mzd_t *c_ch = mzd_init(lowmc->n, 1);
   mzd_copy(c_ch, prf->views[0][lowmc->r + 1].s[0]);
 
-  if(!mpc_lowmc_verify(lowmc, p, prf->views[0], rv[0], prf->ch[0]) && mzd_cmp(c_ch, prf->views[0][1 + lowmc->r].s[0]) == 0)
+  if(!mpc_lowmc_verify(lowmc, p, prf->views[0], rv[0], ch[0]) && mzd_cmp(c_ch, prf->views[0][1 + lowmc->r].s[0]) == 0)
     printf("[ OK ] Share %d matches with reconstructed share in proof verification.\n", ch[0]);
   else
     printf("[FAIL] Verification failed.\n");   
