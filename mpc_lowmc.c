@@ -66,8 +66,12 @@ mzd_t **_mpc_lowmc_call(lowmc_t *lowmc, lowmc_key_t *lowmc_key, mzd_t *p, view_t
   mpc_const_mat_mul(x, lowmc->KMatrix[0], lowmc_key->key, sc);
   mpc_const_add(x, x, p, sc);
 
-  for(unsigned i=0; i<lowmc->r; i++) {
-    if(_mpc_sbox_layer(y, x, lowmc->m, views, &vcnt, rvec[i], sc, andBitPtr)) {
+  mzd_t *r[3];
+  for(unsigned i=0; i<lowmc->r; i++) {  
+    r[0] = rvec[0][i];
+    r[1] = rvec[1][i];
+    r[2] = rvec[2][i]; 
+    if(_mpc_sbox_layer(y, x, lowmc->m, views, &vcnt, r, sc, andBitPtr)) {
       *status = -1;
       return 0;
     }

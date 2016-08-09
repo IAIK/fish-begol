@@ -24,9 +24,10 @@ int main(int argc, char **argv) {
   printf("LowMC reference encryption    %4lums\n", deltaRef * 1000 / CLOCKS_PER_SEC);
   
   clock_t beginRand = clock();  
-  mzd_t ***rvec = (mzd_t***)malloc(lowmc->r * sizeof(mzd_t**));
-  for(unsigned i = 0 ; i < lowmc->r ; i++)
-    rvec[i] = mpc_init_random_vector(lowmc->n, 3);
+  mzd_t ***rvec = (mzd_t***)malloc(3 * sizeof(mzd_t**));
+  rvec[0] = mzd_init_random_vectors_from_seed("1234567890123456", lowmc->n, lowmc->r);
+  rvec[1] = mzd_init_random_vectors_from_seed("1234567890123457", lowmc->n, lowmc->r);
+  rvec[2] = mzd_init_random_vectors_from_seed("1234567890123458", lowmc->n, lowmc->r);
   clock_t deltaRand = clock() - beginRand;
   printf("MPC randomess generation      %4lums\n", deltaRand * 1000 / CLOCKS_PER_SEC);
 
@@ -64,8 +65,9 @@ int main(int argc, char **argv) {
   mzd_free(c);
   mpc_free(c_mpc, 3);
   mzd_free(c_mpcr);
-  for(unsigned i  = 0 ; i < lowmc->r ; i++) 
-    mpc_free(rvec[i], 3);
+
+  for(unsigned i  = 0 ; i < 3 ; i++) 
+    mpc_free(rvec[i], lowmc->r);
   free(rvec);
 
   lowmc_free(lowmc, lowmc_key);
