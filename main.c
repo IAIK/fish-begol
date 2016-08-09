@@ -26,7 +26,7 @@ int main(int argc, char **argv) {
   printf("LowMC reference encryption    %4lums\n", deltaRef * 1000 / CLOCKS_PER_SEC);
   
   clock_t beginRand = clock();
-  mzd_t **rvec[NUM_ROUNDS * sizeof(mzd_t***)][3];
+  mzd_t **rvec[NUM_ROUNDS][3];
   for(unsigned i = 0 ; i < NUM_ROUNDS ; i++) {
     rvec[i][0] = mzd_init_random_vectors_from_seed("1234567890123456", lowmc->n, lowmc->r);
     rvec[i][1] = mzd_init_random_vectors_from_seed("1234567890123457", lowmc->n, lowmc->r);
