@@ -137,18 +137,25 @@ int verify(lowmc_t *lowmc, mzd_t *p, mzd_t *c, proof_t *prf) {
   #pragma omp parallel for
   for(unsigned i = 0 ; i < NUM_ROUNDS ; i++) {
     H(prf->keys[i][0], prf->views[i], 0, 2 + lowmc->r, prf->r[i][0], hash);
-    if(0 != memcmp(hash, prf->hashes[i][prf->ch[i]], SHA256_DIGEST_LENGTH)) {
+    if(0 != memcmp(hash, prf->hashes[i][ch[i]], SHA256_DIGEST_LENGTH)) {
       printf("Error verifying hash1\n");
       exit(-1);
     } 
     H(prf->keys[i][1], prf->views[i], 1, 2 + lowmc->r, prf->r[i][1], hash);
-    if(0 != memcmp(hash, prf->hashes[i][(prf->ch[i] + 1) % 3], SHA256_DIGEST_LENGTH)) {
+    if(0 != memcmp(hash, prf->hashes[i][(ch[i] + 1) % 3], SHA256_DIGEST_LENGTH)) {
       printf("Error verifying hash2\n");
       exit(-1);
     }
   }
   clock_t deltaHash = clock() - beginHash;
   printf("Verifying hashes              %4lums\n", deltaHash * 1000 / CLOCKS_PER_SEC);
+
+  mzd_t *c_mpcr  = mpc_reconstruct_from_share(prf->y); 
+  
+  if(mzd_cmp(c, c_mpcr) == 0)
+    printf("[ OK ] MPC ciphertext match.\n");
+  else
+    printf("[FAIL] MPC ciphertext does not match reference implementation.\n");
 
   mzd_t **rv[NUM_ROUNDS][2];
   rv[0][0] = mzd_init_random_vectors_from_seed(prf->keys[0][0], lowmc->n, lowmc->r);
@@ -158,17 +165,11 @@ int verify(lowmc_t *lowmc, mzd_t *p, mzd_t *c, proof_t *prf) {
   mzd_copy(c_ch, prf->views[0][lowmc->r + 1].s[0]);
 
   if(!mpc_lowmc_verify(lowmc, p, prf->views[0], rv[0], prf->ch[0]) && mzd_cmp(c_ch, prf->views[0][1 + lowmc->r].s[0]) == 0)
-    printf("[ OK ] Share %d matches with reconstructed share in proof verification.\n", prf->ch[0]);
+    printf("[ OK ] Share %d matches with reconstructed share in proof verification.\n", ch[0]);
   else
     printf("[FAIL] Verification failed.\n");   
   /*
-  mzd_t *c_mpcr  = mpc_reconstruct_from_share(c_mpc[0]); 
-  printf("\n");
   
-  if(mzd_cmp(c, c_mpcr) == 0)
-    printf("[ OK ] MPC ciphertext matches with reference implementation.\n");
-  else
-    printf("[FAIL] MPC ciphertext does not match reference implementation.\n");
 
   mzd_free(c);
   mzd_free(c_mpcr);
