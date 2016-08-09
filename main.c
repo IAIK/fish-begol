@@ -94,6 +94,8 @@ proof_t *prove(lowmc_t *lowmc, lowmc_key_t *lowmc_key, mzd_t *p) {
   proof->views = (view_t**)malloc(NUM_ROUNDS * sizeof(view_t*));
   proof->r = (unsigned char***)malloc(NUM_ROUNDS * sizeof(unsigned char**));
   proof->keys = (unsigned char***)malloc(NUM_ROUNDS * sizeof(unsigned char**));
+  proof->ch = (unsigned*)malloc(NUM_ROUNDS * sizeof(unsigned));
+  memcpy(proof->ch, ch, NUM_ROUNDS * sizeof(unsigned));
 
   for(unsigned i = 0 ; i < NUM_ROUNDS ; i++) { 
     int a = ch[i];
@@ -120,8 +122,6 @@ proof_t *prove(lowmc_t *lowmc, lowmc_key_t *lowmc_key, mzd_t *p) {
     }
   }
 
-  proof->ch = ch[0];
-
   mzd_free(c);
   mzd_free(c_mpcr);
 
@@ -140,13 +140,15 @@ int verify(lowmc_t *lowmc, mzd_t *p, proof_t *prf) {
   rv[0][0] = mzd_init_random_vectors_from_seed(prf->keys[0][0], lowmc->n, lowmc->r);
   rv[0][1] = mzd_init_random_vectors_from_seed(prf->keys[0][1], lowmc->n, lowmc->r);
   
-  int ch = prf->ch; 
-
-  if(!mpc_lowmc_verify(lowmc, p, prf->views[0], rv[0], ch) /*&& mzd_cmp(c_mpc[0][ch], prf->views[0][1 + lowmc->r].s[0]) == 0*/)
-    printf("[ OK ] Share %d matches with reconstructed share in proof verification.\n", ch);
+  mzd_t *c_ch = mzd_init(lowmc->n, 1);
+  mzd_copy(c_ch, prf->views[0][lowmc->r + 1].s[0]);
+  
+  if(!mpc_lowmc_verify(lowmc, p, prf->views[0], rv[0], prf->ch[0]) && mzd_cmp(c_ch, prf->views[0][1 + lowmc->r].s[0]) == 0)
+    printf("[ OK ] Share %d matches with reconstructed share in proof verification.\n", prf->ch[0]);
   else
     printf("[FAIL] Verification failed.\n");   
 
+  mzd_free(c_ch);
 }
 
 int main(int argc, char **argv) {
