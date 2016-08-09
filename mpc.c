@@ -64,8 +64,8 @@ mzd_t **mpc_const_add(mzd_t **result, mzd_t **first, mzd_t *second, unsigned sc,
     result = mpc_init_empty_share_vector(first[0]->nrows, sc);
   if(c == 0)
     mzd_add(result[0], first[0], second);
-  else if(c == 2)
-    mzd_add(result[1], first[1], second);
+  else if(c == sc)
+    mzd_add(result[sc - 1], first[sc - 1], second);
   return result;
 }
 
