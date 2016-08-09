@@ -49,7 +49,7 @@ int _mpc_sbox_layer(mzd_t **out, mzd_t **in, rci_t m, view_t *views, int *i, mzd
   return 0;
 }
 
-mzd_t **_mpc_lowmc_call(lowmc_t *lowmc, lowmc_key_t *lowmc_key, mzd_t *p, view_t *views, mzd_t ***rvec, unsigned sc, int (*andBitPtr)(BIT*, BIT*, BIT*, view_t*, int*, unsigned, unsigned), int *status) {
+mzd_t **_mpc_lowmc_call(lowmc_t *lowmc, lowmc_key_t *lowmc_key, mzd_t *p, view_t *views, mzd_t ***rvec, unsigned sc, unsigned ch, int (*andBitPtr)(BIT*, BIT*, BIT*, view_t*, int*, unsigned, unsigned), int *status) {
   int vcnt = 0;
   
   for(unsigned i = 0 ; i < sc ; i++) {
@@ -64,7 +64,7 @@ mzd_t **_mpc_lowmc_call(lowmc_t *lowmc, lowmc_key_t *lowmc_key, mzd_t *p, view_t
   mzd_t **z = mpc_init_empty_share_vector(lowmc->n, sc);
 
   mpc_const_mat_mul(x, lowmc->KMatrix[0], lowmc_key->key, sc);
-  mpc_const_add(x, x, p, sc);
+  mpc_const_add(x, x, p, sc, ch);
 
   mzd_t *r[3];
   for(unsigned i = 0 ; i < lowmc->r ; i++) {  
@@ -75,7 +75,7 @@ mzd_t **_mpc_lowmc_call(lowmc_t *lowmc, lowmc_key_t *lowmc_key, mzd_t *p, view_t
       return 0;
     }
     mpc_const_mat_mul(z, lowmc->LMatrix[i], y, sc);
-    mpc_const_add(z, z, lowmc->Constants[i], sc);
+    mpc_const_add(z, z, lowmc->Constants[i], sc, ch);
     mzd_t **t = mpc_init_empty_share_vector(lowmc->n, sc);
     mpc_const_mat_mul(t, lowmc->KMatrix[i+1], lowmc_key->key, sc);
     mpc_add(z, z, t, sc);
@@ -93,23 +93,23 @@ mzd_t **_mpc_lowmc_call(lowmc_t *lowmc, lowmc_key_t *lowmc_key, mzd_t *p, view_t
 }
 
 mzd_t **mpc_lowmc_call(lowmc_t *lowmc, lowmc_key_t *lowmc_key, mzd_t *p, view_t *views, mzd_t ***rvec) {
-  return _mpc_lowmc_call(lowmc, lowmc_key, p, views, rvec, 3, &mpc_and_bit, 0); 
+  return _mpc_lowmc_call(lowmc, lowmc_key, p, views, rvec, 3, 0, &mpc_and_bit, 0); 
 }
 
-mzd_t **_mpc_lowmc_call_verify(lowmc_t *lowmc, lowmc_key_t *lowmc_key, mzd_t *p, view_t *views, mzd_t ***rvec, int *status) {
-  return _mpc_lowmc_call(lowmc, lowmc_key, p, views, rvec, 2, &mpc_and_bit_verify, status); 
+mzd_t **_mpc_lowmc_call_verify(lowmc_t *lowmc, lowmc_key_t *lowmc_key, mzd_t *p, view_t *views, mzd_t ***rvec, int *status, int c) {
+  return _mpc_lowmc_call(lowmc, lowmc_key, p, views, rvec, 2, c, &mpc_and_bit_verify, status); 
 }
 
-int mpc_lowmc_verify(lowmc_t *lowmc, mzd_t *p, view_t *views, mzd_t ***rvec, view_t v0) {
+int mpc_lowmc_verify(lowmc_t *lowmc, mzd_t *p, view_t *views, mzd_t ***rvec, int c) {
   //initialize two key shares from v0
   lowmc_key_t *lowmc_key = (lowmc_key_t*)malloc(sizeof(lowmc_key));
   lowmc_key->key = (mzd_t**)malloc(2 * sizeof(mzd_t*));
-  lowmc_key->key[0] = v0.s[0];
-  lowmc_key->key[1] = v0.s[1];  
+  lowmc_key->key[0] = views[0].s[0];
+  lowmc_key->key[1] = views[0].s[1];  
   lowmc_key->sharecount = 2;
   
   int status = 0;
-  mzd_t ** v = _mpc_lowmc_call_verify(lowmc, lowmc_key, p, views, rvec, &status);
+  mzd_t ** v = _mpc_lowmc_call_verify(lowmc, lowmc_key, p, views, rvec, &status, c);
   if(v)
     mpc_free(v, 2);
 

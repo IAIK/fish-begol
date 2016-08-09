@@ -74,11 +74,11 @@ proof_t *prove(lowmc_t *lowmc, lowmc_key_t *lowmc_key, mzd_t *p) {
   clock_t deltaHash = clock() - beginHash;
   printf("Hashing views                 %4lums\n", deltaHash * 1000 / CLOCKS_PER_SEC);
 
-  clock_t beginCh = clock(), deltaE;
+  clock_t beginCh = clock();
   int ch[NUM_ROUNDS];
   H3(hashes, ch);
-  deltaE = clock() - beginCh;
-  printf("Generating challenge          %4lums\n", deltaE * 1000 / CLOCKS_PER_SEC);
+  clock_t deltaCh = clock() - beginCh;
+  printf("Generating challenge          %4lums\n", deltaCh * 1000 / CLOCKS_PER_SEC);
 
   mzd_t *c_mpcr  = mpc_reconstruct_from_share(c_mpc[0]); 
   printf("\n");
@@ -88,11 +88,28 @@ proof_t *prove(lowmc_t *lowmc, lowmc_key_t *lowmc_key, mzd_t *p) {
   else
     printf("[FAIL] MPC ciphertext does not match reference implementation.\n");
 
-  if(!mpc_lowmc_verify(lowmc, p, views[0], rvec[0], views[0][0]) && mzd_cmp(c_mpc[0][0], views[0][1 + lowmc->r].s[0]) == 0)
+  proof_t *proof = (proof_t*)malloc(sizeof(proof_t));
+  proof->views = (view_v_t**)malloc(NUM_ROUNDS * sizeof(view_v_t*));
+  
+  mzd_t **rv[NUM_ROUNDS][2];
+  for(unsigned i = 0 ; i < NUM_ROUNDS ; i++) { 
+    int a = ch[i];
+    int b = (a + 1) % 3;
+    proof->views[i] = (view_v_t*)malloc((2 + lowmc->r) * sizeof(view_v_t));
+    for(unsigned j = 0 ; j < 2 + lowmc->r ; j++) {
+      proof->views[i][j].s[0] = views[i][j].s[a];
+      proof->views[i][j].s[1] = views[i][j].s[b % 3];
+      //mzd_free(views[i][j].s[(ch[i] + 2) % 3]);
+    }
+    rv[i][0] = mzd_init_random_vectors_from_seed(keys[i][a], lowmc->n, lowmc->r);
+    rv[i][1] = mzd_init_random_vectors_from_seed(keys[i][b], lowmc->n, lowmc->r);
+  }
+ 
+  if(!mpc_lowmc_verify(lowmc, p, proof->views[0], rv[0], ch[0]) && mzd_cmp(c_mpc[0][ch[0]], proof->views[0][1 + lowmc->r].s[0]) == 0)
     printf("[ OK ] First share matches with reconstructed share in proof verification.\n");
   else
     printf("[FAIL] Verification failed.\n");   
- 
+
   mzd_free(p);
   mzd_free(c);
   mzd_free(c_mpcr);

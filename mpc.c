@@ -22,8 +22,10 @@ int mpc_and_bit_verify(BIT* a, BIT* b, BIT* r, view_t *views, int *i, unsigned b
   }
   for(unsigned m = 0 ; m < sc - 1 ; m++) {
     a[m] = wp[m];
-    if(a[m] != mzd_read_bit(views[*i].s[m], bp, 0)) 
+    if(a[m] != mzd_read_bit(views[*i].s[m], bp, 0)) {
+      printf("here we go\n");
       return -1;
+    }
   }
   a[sc - 1] = mzd_read_bit(views[*i].s[sc - 1], bp, 0);
   free(wp);
@@ -57,10 +59,13 @@ mzd_t **mpc_add(mzd_t **result, mzd_t **first, mzd_t **second, unsigned sc) {
   return result;
 }
 
-mzd_t **mpc_const_add(mzd_t **result, mzd_t **first, mzd_t *second, unsigned sc) {
+mzd_t **mpc_const_add(mzd_t **result, mzd_t **first, mzd_t *second, unsigned sc, unsigned c) {
   if(result == 0)
     result = mpc_init_empty_share_vector(first[0]->nrows, sc);
-  mzd_add(result[0], first[0], second);
+  if(c == 0)
+    mzd_add(result[0], first[0], second);
+  else if(c == 2)
+    mzd_add(result[1], first[1], second);
   return result;
 }
 

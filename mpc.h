@@ -116,9 +116,10 @@ mzd_t **mpc_add(mzd_t **result, mzd_t **first, mzd_t **second, unsigned sc);
  * \param  first  the first operand
  * \param  second the second operand
  * \param  sc     the share count
+ * \param  c      the callenge for verification (0 if in proving mode)
  * \return        the result of the computation
  */
-mzd_t **mpc_const_add(mzd_t **result, mzd_t **first, mzd_t *second, unsigned sc);
+mzd_t **mpc_const_add(mzd_t **result, mzd_t **first, mzd_t *second, unsigned sc, unsigned c);
 
 /**
  * Computes result = result + first * second in GF(2) of a 
