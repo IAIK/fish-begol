@@ -5,10 +5,31 @@
 #include "mzd_additional.h"
 #include "mpc.h"
 #include "time.h"
+#include "openssl/rand.h"
+#include "randomness.h"
 
 #define NUM_ROUNDS 1
 
 int main(int argc, char **argv) {
+  init_EVP();
+  
+  unsigned char rs[NUM_ROUNDS][3][4];
+  unsigned char keys[NUM_ROUNDS][3][16];
+
+  //Generating keys
+  clock_t beginCrypto = clock(), deltaCrypto;
+  if(RAND_bytes((unsigned char*) keys, NUM_ROUNDS * 3 * 16) != 1) {
+    printf("RAND_bytes failed crypto, aborting\n");
+    return 0;
+  }
+
+  if(RAND_bytes((unsigned char*) rs, NUM_ROUNDS * 3 * 4) != 1) {
+    printf("RAND_bytes failed crypto, aborting\n");
+    return 0;
+  }
+  deltaCrypto = clock() - beginCrypto;
+  int inMilliCrypto = deltaCrypto * 1000 / CLOCKS_PER_SEC;
+ 
   clock_t beginSetup = clock();
   lowmc_t *lowmc     = lowmc_init(63, 256, 12, 128);
   clock_t deltaSetup = clock() - beginSetup;
@@ -28,9 +49,9 @@ int main(int argc, char **argv) {
   clock_t beginRand = clock();
   mzd_t **rvec[NUM_ROUNDS][3];
   for(unsigned i = 0 ; i < NUM_ROUNDS ; i++) {
-    rvec[i][0] = mzd_init_random_vectors_from_seed("1234567890123456", lowmc->n, lowmc->r);
-    rvec[i][1] = mzd_init_random_vectors_from_seed("1234567890123457", lowmc->n, lowmc->r);
-    rvec[i][2] = mzd_init_random_vectors_from_seed("1234567890123458", lowmc->n, lowmc->r);
+    rvec[i][0] = mzd_init_random_vectors_from_seed(keys[i][0], lowmc->n, lowmc->r);
+    rvec[i][1] = mzd_init_random_vectors_from_seed(keys[i][1], lowmc->n, lowmc->r);
+    rvec[i][2] = mzd_init_random_vectors_from_seed(keys[i][2], lowmc->n, lowmc->r);
   }
   clock_t deltaRand = clock() - beginRand;
   printf("MPC randomess generation      %4lums\n", deltaRand * 1000 / CLOCKS_PER_SEC);
@@ -82,6 +103,7 @@ int main(int argc, char **argv) {
    
   //test_mpc_share();
   //test_mpc_add();
-  
+
+  cleanup_EVP();
   return 0;
 }

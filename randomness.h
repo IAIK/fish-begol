@@ -6,6 +6,10 @@
 #include <openssl/err.h>
 #include "m4ri/m4ri.h"
 
+void init_EVP();
+
+void cleanup_EVP();
+
 /**
  * Returns a random bit
  */
