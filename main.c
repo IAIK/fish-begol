@@ -48,9 +48,11 @@ proof_t *prove(lowmc_t *lowmc, lowmc_key_t *lowmc_key, mzd_t *p) {
   view_t views[NUM_ROUNDS][2 + lowmc->r];
   #pragma omp parallel for
   for(unsigned i = 0 ; i < NUM_ROUNDS ; i++)
-    for(unsigned n = 0 ; n < 2 + lowmc->r ; n++)
+    for(unsigned n = 0 ; n < 2 + lowmc->r ; n++) {
+      views[i][n].s = (mzd_t**)malloc(3 * sizeof(mzd_t*));
       for(unsigned m = 0 ; m < 3 ; m++)
         views[i][n].s[m] = mzd_init(lowmc->n, 1);
+    }
   lowmc_secret_share(lowmc, lowmc_key);
   clock_t deltaShare = clock() - beginShare;
   printf("MPC secret sharing            %4lums\n", deltaShare * 1000 / CLOCKS_PER_SEC);
@@ -89,14 +91,30 @@ proof_t *prove(lowmc_t *lowmc, lowmc_key_t *lowmc_key, mzd_t *p) {
     printf("[FAIL] MPC ciphertext does not match reference implementation.\n");
 
   proof_t *proof = (proof_t*)malloc(sizeof(proof_t));
-  proof->views = (view_v_t**)malloc(NUM_ROUNDS * sizeof(view_v_t*));
-  
+  proof->views = (view_t**)malloc(NUM_ROUNDS * sizeof(view_t*));
+  proof->r = (unsigned char***)malloc(NUM_ROUNDS * sizeof(unsigned char**));
+  proof->keys = (unsigned char***)malloc(NUM_ROUNDS * sizeof(unsigned char**));
+
   mzd_t **rv[NUM_ROUNDS][2];
   for(unsigned i = 0 ; i < NUM_ROUNDS ; i++) { 
     int a = ch[i];
     int b = (a + 1) % 3;
-    proof->views[i] = (view_v_t*)malloc((2 + lowmc->r) * sizeof(view_v_t));
+
+    proof->r[i] = (unsigned char**)malloc(2 * sizeof(unsigned char*));
+    proof->r[i][0] = (unsigned char*)malloc(4 * sizeof(unsigned char));
+    proof->r[i][1] = (unsigned char*)malloc(4 * sizeof(unsigned char));
+    memcpy(proof->r[i][0], r[i][a], 4 * sizeof(char));
+    memcpy(proof->r[i][1], r[i][b], 4 * sizeof(char));
+
+    proof->keys[i] = (unsigned char**)malloc(2 * sizeof(unsigned char*));
+    proof->keys[i][0] = (unsigned char*)malloc(16 * sizeof(unsigned char));
+    proof->keys[i][1] = (unsigned char*)malloc(16 * sizeof(unsigned char));
+    memcpy(proof->keys[i][0], keys[i][a], 16 * sizeof(char));
+    memcpy(proof->keys[i][1], keys[i][b], 16 * sizeof(char));
+
+    proof->views[i] = (view_t*)malloc((2 + lowmc->r) * sizeof(view_t));
     for(unsigned j = 0 ; j < 2 + lowmc->r ; j++) {
+      proof->views[i][j].s = (mzd_t**)malloc(2 * sizeof(mzd_t*));
       proof->views[i][j].s[0] = views[i][j].s[a];
       proof->views[i][j].s[1] = views[i][j].s[b % 3];
       //mzd_free(views[i][j].s[(ch[i] + 2) % 3]);
@@ -106,7 +124,7 @@ proof_t *prove(lowmc_t *lowmc, lowmc_key_t *lowmc_key, mzd_t *p) {
   }
  
   if(!mpc_lowmc_verify(lowmc, p, proof->views[0], rv[0], ch[0]) && mzd_cmp(c_mpc[0][ch[0]], proof->views[0][1 + lowmc->r].s[0]) == 0)
-    printf("[ OK ] First share matches with reconstructed share in proof verification.\n");
+    printf("[ OK ] Share %d matches with reconstructed share in proof verification.\n", ch[0]);
   else
     printf("[FAIL] Verification failed.\n");   
 
