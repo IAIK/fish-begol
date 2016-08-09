@@ -6,9 +6,9 @@
 #include "mpc.h"
 #include "time.h"
 #include "openssl/rand.h"
+#include "openssl/sha.h"
 #include "randomness.h"
-
-#define NUM_ROUNDS 1
+#include "hashing_util.h"
 
 proof_t *prove(lowmc_t *lowmc, lowmc_key_t *lowmc_key, mzd_t *p) { 
   clock_t beginRef = clock(); 
@@ -16,8 +16,7 @@ proof_t *prove(lowmc_t *lowmc, lowmc_key_t *lowmc_key, mzd_t *p) {
   clock_t deltaRef = clock() - beginRef;
   printf("LowMC reference encryption    %4lums\n", deltaRef * 1000 / CLOCKS_PER_SEC);
 
- 
-  unsigned char rs[NUM_ROUNDS][3][4];
+  unsigned char r[NUM_ROUNDS][3][4];
   unsigned char keys[NUM_ROUNDS][3][16];
 
   //Generating keys
@@ -27,7 +26,7 @@ proof_t *prove(lowmc_t *lowmc, lowmc_key_t *lowmc_key, mzd_t *p) {
     return 0;
   }
 
-  if(RAND_bytes((unsigned char*) rs, NUM_ROUNDS * 3 * 4) != 1) {
+  if(RAND_bytes((unsigned char*) r, NUM_ROUNDS * 3 * 4) != 1) {
     printf("RAND_bytes failed crypto, aborting\n");
     return 0;
   }
@@ -36,6 +35,7 @@ proof_t *prove(lowmc_t *lowmc, lowmc_key_t *lowmc_key, mzd_t *p) {
 
   clock_t beginRand = clock();
   mzd_t **rvec[NUM_ROUNDS][3];
+  #pragma omp parallel for
   for(unsigned i = 0 ; i < NUM_ROUNDS ; i++) {
     rvec[i][0] = mzd_init_random_vectors_from_seed(keys[i][0], lowmc->n, lowmc->r);
     rvec[i][1] = mzd_init_random_vectors_from_seed(keys[i][1], lowmc->n, lowmc->r);
@@ -46,6 +46,7 @@ proof_t *prove(lowmc_t *lowmc, lowmc_key_t *lowmc_key, mzd_t *p) {
 
   clock_t beginShare = clock();  
   view_t views[NUM_ROUNDS][2 + lowmc->r];
+  #pragma omp parallel for
   for(unsigned i = 0 ; i < NUM_ROUNDS ; i++)
     for(unsigned n = 0 ; n < 2 + lowmc->r ; n++)
       for(unsigned m = 0 ; m < 3 ; m++)
@@ -55,11 +56,31 @@ proof_t *prove(lowmc_t *lowmc, lowmc_key_t *lowmc_key, mzd_t *p) {
   printf("MPC secret sharing            %4lums\n", deltaShare * 1000 / CLOCKS_PER_SEC);
   
   clock_t beginLowmc = clock();
-  mzd_t **c_mpc = mpc_lowmc_call(lowmc, lowmc_key, p, views[0], rvec[0]);
+  mzd_t **c_mpc[NUM_ROUNDS];
+  #pragma omp parallel for
+  for(unsigned i = 0 ; i < NUM_ROUNDS ; i++)
+    c_mpc[i] = mpc_lowmc_call(lowmc, lowmc_key, p, views[i], rvec[i]);
   clock_t deltaLowmc = clock() - beginLowmc;
   printf("MPC LowMC encryption          %4lums\n", deltaLowmc * 1000 / CLOCKS_PER_SEC);
   
-  mzd_t *c_mpcr  = mpc_reconstruct_from_share(c_mpc); 
+  clock_t beginHash = clock();
+  unsigned char hashes[NUM_ROUNDS][3][SHA256_DIGEST_LENGTH];
+  #pragma omp parallel for
+  for(unsigned i = 0 ; i < NUM_ROUNDS ; i++) {
+    H(keys[i][0], views[i], 0, 2 + lowmc->r, r[i][0], hashes[i][0]);
+    H(keys[i][1], views[i], 1, 2 + lowmc->r, r[i][1], hashes[i][1]);
+    H(keys[i][2], views[i], 2, 2 + lowmc->r, r[i][2], hashes[i][2]);
+  }
+  clock_t deltaHash = clock() - beginHash;
+  printf("Hashing views                 %4lums\n", deltaHash * 1000 / CLOCKS_PER_SEC);
+
+  clock_t beginCh = clock(), deltaE;
+  int ch[NUM_ROUNDS];
+  H3(hashes, ch);
+  deltaE = clock() - beginCh;
+  printf("Generating challenge          %4lums\n", deltaE * 1000 / CLOCKS_PER_SEC);
+
+  mzd_t *c_mpcr  = mpc_reconstruct_from_share(c_mpc[0]); 
   printf("\n");
   
   if(mzd_cmp(c, c_mpcr) == 0)
@@ -67,19 +88,21 @@ proof_t *prove(lowmc_t *lowmc, lowmc_key_t *lowmc_key, mzd_t *p) {
   else
     printf("[FAIL] MPC ciphertext does not match reference implementation.\n");
 
-  if(!mpc_lowmc_verify(lowmc, p, views[0], rvec[0], views[0][0]) && mzd_cmp(c_mpc[0], views[0][1 + lowmc->r].s[0]) == 0)
+  if(!mpc_lowmc_verify(lowmc, p, views[0], rvec[0], views[0][0]) && mzd_cmp(c_mpc[0][0], views[0][1 + lowmc->r].s[0]) == 0)
     printf("[ OK ] First share matches with reconstructed share in proof verification.\n");
   else
     printf("[FAIL] Verification failed.\n");   
  
   mzd_free(p);
   mzd_free(c);
-  mpc_free(c_mpc, 3);
   mzd_free(c_mpcr);
 
-  for(unsigned j = 0 ; j < NUM_ROUNDS ; j++) 
+  #pragma omp parallel for
+  for(unsigned j = 0 ; j < NUM_ROUNDS ; j++) {
+    mpc_free(c_mpc[j], 3);
     for(unsigned i  = 0 ; i < 3 ; i++) 
       mpc_free(rvec[j][i], lowmc->r);
+  }
 }
 
 int main(int argc, char **argv) {
