@@ -232,7 +232,7 @@ int main(int argc, char **argv) {
   printf("Setup:\n");
   
   clock_t beginSetup = clock();
-  lowmc_t *lowmc     = lowmc_init(63, 256, 12, 128);
+  lowmc_t *lowmc     = lowmc_init(63, 256, 14, 128);
   clock_t deltaSetup = clock() - beginSetup;
   printf("LowMC setup                   %4lums\n", deltaSetup * 1000 / CLOCKS_PER_SEC);
 
