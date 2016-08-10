@@ -6,7 +6,6 @@ void prepareMasks(mzd_t *first, mzd_t *second, mzd_t *third, mzd_t *mask, rci_t 
   if(0 != n % (8 * sizeof(word)))
     return;
 
-  mzd_t *test = mzd_init(1, first->ncols);
   for(int i = 0 ; i < n - 3 * m ; i++) {
     mzd_write_bit(mask, 0, i, 1);
   }
@@ -14,10 +13,20 @@ void prepareMasks(mzd_t *first, mzd_t *second, mzd_t *third, mzd_t *mask, rci_t 
     mzd_write_bit(first,   0, i    , 1);
     mzd_write_bit(second,  0, i + 1, 1);
     mzd_write_bit(third,   0, i + 2, 1);
-    mzd_write_bit(test,   0, i, 1);
-    mzd_write_bit(test,   0, i + 1, 1);
-    mzd_write_bit(test,   0, i + 2, 1);
   }
+}
+
+mzd_t *mzd_shift_right(mzd_t* res, mzd_t *val, unsigned count) {
+  word prev = 0;
+  if(res == 0) 
+    res = mzd_init(1, val->ncols);
+  
+  for(int i = 0 ; i < val->ncols / (8 * sizeof(word)); i++) {
+    res->rows[0][i] = (val->rows[0][i] >> count) | prev;
+    prev = val->rows[0][i] << (8 * sizeof(word) - count);
+  }
+
+  return res;
 }
 
 void sbox_layer_bitsliced(mzd_t *out, mzd_t *in, rci_t m) {
@@ -76,7 +85,7 @@ void sbox_layer(mzd_t *out, mzd_t *in, rci_t m) {
 
 mzd_t *lowmc_call(lowmc_t *lowmc, lowmc_key_t *lowmc_key, mzd_t *p) {
   mzd_t *c = mzd_init(1, lowmc->n);
-
+  
   mzd_t *x = mzd_init(1, lowmc->n);
   mzd_t *y = mzd_init(1, lowmc->n);
   mzd_t *z = mzd_init(1, lowmc->n);
