@@ -131,56 +131,82 @@ int verify(lowmc_t *lowmc, mzd_t *p, mzd_t *c, proof_t *prf) {
 
   clock_t beginHash = clock();
   unsigned char hash[SHA256_DIGEST_LENGTH];
+  int hash_status = 0;
   #pragma omp parallel for
   for(unsigned i = 0 ; i < NUM_ROUNDS ; i++) {
     H(prf->keys[i][0], prf->y[i], prf->views[i], 0, 2 + lowmc->r, prf->r[i][0], hash);
     if(0 != memcmp(hash, prf->hashes[i][ch[i]], SHA256_DIGEST_LENGTH)) {
-      printf("Error verifying hash1\n");
-      exit(-1);
+      hash_status = -1;
     } 
     H(prf->keys[i][1], prf->y[i], prf->views[i], 1, 2 + lowmc->r, prf->r[i][1], hash);
     if(0 != memcmp(hash, prf->hashes[i][(ch[i] + 1) % 3], SHA256_DIGEST_LENGTH)) {
-      printf("Error verifying hash2\n");
-      exit(-1);
+      hash_status = -1;
     }
   }
   clock_t deltaHash = clock() - beginHash;
   printf("Verifying hashes              %4lums\n", deltaHash * 1000 / CLOCKS_PER_SEC);
 
-  mzd_t *c_mpcr  = mpc_reconstruct_from_share(prf->y[0]); 
-  
-  if(mzd_cmp(c, c_mpcr) == 0)
-    printf("[ OK ] MPC ciphertext match.\n");
-  else
-    printf("[FAIL] MPC ciphertext does not match reference implementation.\n");
+  int reconstruct_status = 0;
+  for(int i = 0 ; i < NUM_ROUNDS ; i++) {
+    mzd_t *c_mpcr  = mpc_reconstruct_from_share(prf->y[0]); 
+    if(mzd_cmp(c, c_mpcr) != 0)
+      reconstruct_status = -1;
+    mzd_free(c_mpcr);
+  }
  
-  int status = 0;
+  int output_share_status = 0;
   for(int i = 0 ; i < NUM_ROUNDS ; i++) 
     if(mzd_cmp(prf->y[i][ch[i]], prf->views[i][lowmc->r + 1].s[0]) || mzd_cmp(prf->y[i][(ch[i] + 1) % 3], prf->views[i][lowmc->r + 1].s[1])) 
-      status = -1;  
+      output_share_status = -1;  
 
-  if(status) 
-    printf("[FAIL] Output share mismatch\n");    
-  else
-    printf("[ OK ] Output share match.\n");
-  mzd_t **rv[NUM_ROUNDS][2];
-  rv[0][0] = mzd_init_random_vectors_from_seed(prf->keys[0][0], lowmc->n, lowmc->r);
-  rv[0][1] = mzd_init_random_vectors_from_seed(prf->keys[0][1], lowmc->n, lowmc->r);
   
-  mzd_t *c_ch = mzd_init(lowmc->n, 1);
-  mzd_copy(c_ch, prf->views[0][lowmc->r + 1].s[0]);
+  mzd_t **rv[2];
+  int view_verify_status = 0;
 
-  if(!mpc_lowmc_verify(lowmc, p, prf->views[0], rv[0], ch[0]) && mzd_cmp(c_ch, prf->views[0][1 + lowmc->r].s[0]) == 0)
-    printf("[ OK ] Share %d matches with reconstructed share in proof verification.\n", ch[0]);
+  for(int i = 0 ; i < NUM_ROUNDS ; i++) {
+    rv[0] = mzd_init_random_vectors_from_seed(prf->keys[i][0], lowmc->n, lowmc->r);
+    rv[1] = mzd_init_random_vectors_from_seed(prf->keys[i][1], lowmc->n, lowmc->r);
+  
+    mzd_t *c_ch[2];
+    c_ch[0] = mzd_init(lowmc->n, 1);
+    c_ch[1] = mzd_init(lowmc->n, 1);
+    mzd_copy(c_ch[0], prf->views[i][lowmc->r + 1].s[0]);
+    mzd_copy(c_ch[1], prf->views[i][lowmc->r + 1].s[1]);
+
+    if(mpc_lowmc_verify(lowmc, p, prf->views[i], rv, ch[i]) || mzd_cmp(c_ch[0], prf->views[i][1 + lowmc->r].s[0]) || mzd_cmp(c_ch[1], prf->views[i][1 + lowmc->r].s[1]))
+      view_verify_status = -1;
+
+    mzd_free(c_ch[0]);
+    mzd_free(c_ch[1]);
+  }
+   
+  if(hash_status)
+    printf("[FAIL] Commitments did not open correctly\n");
   else
-    printf("[FAIL] Verification failed.\n");   
+    printf("[ OK ] Commitments open correctly\n");
+  
+  if(output_share_status) 
+    printf("[FAIL] Output shares do not match\n");    
+  else
+    printf("[ OK ] Output shares match.\n");
+ 
+  if(reconstruct_status)
+    printf("[FAIL] MPC ciphertext does not match reference implementation.\n");
+  else
+    printf("[ OK ] MPC ciphertext match.\n");
+
+  if(view_verify_status)
+    printf("[FAIL] Proof does not match reconstructed views.\n");
+  else
+    printf("[ OK ] Proof matches reconstructed views.\n");   
+
   /*
   
 
   mzd_free(c);
   mzd_free(c_mpcr);
  */
-  mzd_free(c_ch);
+  
 }
 
 int main(int argc, char **argv) {
@@ -216,3 +242,4 @@ int main(int argc, char **argv) {
   cleanup_EVP();
   return 0;
 }
+
