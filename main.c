@@ -213,13 +213,8 @@ int verify(lowmc_t *lowmc, mzd_t *p, mzd_t *c, proof_t *prf) {
   else
     printf("[ OK ] Proof matches reconstructed views.\n");   
 
-  /*
-  
 
-  mzd_free(c);
-  mzd_free(c_mpcr);
- */
-  
+  return hash_status || output_share_status || reconstruct_status || view_verify_status;
 }
 
 int main(int argc, char **argv) {
