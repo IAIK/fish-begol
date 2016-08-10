@@ -16,7 +16,7 @@ void prepareMasks(mzd_t *first, mzd_t *second, mzd_t *third, mzd_t *mask, rci_t 
   }
 }
 
-mzd_t *mzd_shift_right(mzd_t* res, mzd_t *val, unsigned count) {
+word mzd_shift_right(mzd_t* res, mzd_t *val, unsigned count) {
   word prev = 0;
   if(res == 0) 
     res = mzd_init(1, val->ncols);
@@ -26,7 +26,7 @@ mzd_t *mzd_shift_right(mzd_t* res, mzd_t *val, unsigned count) {
     prev = val->rows[0][i] << (8 * sizeof(word) - count);
   }
 
-  return res;
+  return prev;
 }
 
 void sbox_layer_bitsliced(mzd_t *out, mzd_t *in, rci_t m) {
