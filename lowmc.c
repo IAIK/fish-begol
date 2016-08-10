@@ -54,7 +54,7 @@ void sbox_layer_bitsliced(mzd_t *out, mzd_t *in, rci_t m) {
     word t2 = (x00 & x10) ^ x00 ^ x10 ^ x20;
  
     out->rows[0][i] &= mask->rows[0][i];
-    out->rows[0][i] |= t0 | (t1 << 1) | (t2 << 2) | prev0 | prev1;  
+    out->rows[0][i] ^= t0 ^ (t1 << 1) ^ (t2 << 2) ^ prev0 ^ prev1;  
    
     prev0 = (t1 & 0x8000000000000000) ? 1 : 0;
     prev1 = (t2 & 0x8000000000000000) ? 2 : (t2 & 0x4000000000000000) ? 1 : 0;
