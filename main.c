@@ -11,6 +11,7 @@
 #include "hashing_util.h"
 
 proof_t *prove(lowmc_t *lowmc, lowmc_key_t *lowmc_key, mzd_t *p) { 
+  printf("Prove:\n");
   unsigned char r[NUM_ROUNDS][3][4];
   unsigned char keys[NUM_ROUNDS][3][16];
 
@@ -118,11 +119,13 @@ proof_t *prove(lowmc_t *lowmc, lowmc_key_t *lowmc_key, mzd_t *p) {
     for(unsigned i  = 0 ; i < 3 ; i++) 
       mpc_free(rvec[j][i], lowmc->r);
   }
-
+   
+  printf("\n");
   return proof;
 }
 
 int verify(lowmc_t *lowmc, mzd_t *p, mzd_t *c, proof_t *prf) {
+  printf("Verify:\n");
   clock_t beginCh = clock();
   int ch[NUM_ROUNDS];
   H3(prf->hashes, ch);
@@ -187,7 +190,9 @@ int verify(lowmc_t *lowmc, mzd_t *p, mzd_t *c, proof_t *prf) {
   }
   clock_t deltaViewVrfy = clock() - beginViewVrfy;
   printf("Verifying views               %4lums\n", deltaViewVrfy * 1000 / CLOCKS_PER_SEC);
-   
+
+  printf("\n");   
+
   if(hash_status)
     printf("[FAIL] Commitments did not open correctly\n");
   else
@@ -220,6 +225,8 @@ int verify(lowmc_t *lowmc, mzd_t *p, mzd_t *c, proof_t *prf) {
 int main(int argc, char **argv) {
   init_EVP();
   
+  printf("Setup:\n");
+  
   clock_t beginSetup = clock();
   lowmc_t *lowmc     = lowmc_init(63, 256, 12, 128);
   clock_t deltaSetup = clock() - beginSetup;
@@ -237,7 +244,7 @@ int main(int argc, char **argv) {
   clock_t deltaRef = clock() - beginRef;
   printf("LowMC reference encryption    %4lums\n", deltaRef * 1000 / CLOCKS_PER_SEC);
 
-  
+  printf("\n");
 
   proof_t *prf = prove(lowmc, lowmc_key, p); 
   
