@@ -121,3 +121,31 @@ int mpc_lowmc_verify(lowmc_t *lowmc, mzd_t *p, view_t *views, mzd_t ***rvec, int
   return status;
 }
 
+void free_proof(lowmc_t *lowmc, proof_t *proof) {
+  for(unsigned i = 0 ; i < NUM_ROUNDS ; i++) {
+    mpc_free(proof->y[i], 3);
+    for(unsigned j = 0 ; j < 2 + lowmc->r ; j++) {
+      mzd_free(proof->views[i][j].s[0]);
+      mzd_free(proof->views[i][j].s[1]);
+      free(proof->views[i][j].s);
+    }
+    free(proof->views[i]);
+  
+    free(proof->keys[i][0]);
+    free(proof->keys[i][1]);
+    free(proof->keys[i]);
+
+    free(proof->r[i][0]);
+    free(proof->r[i][1]);
+    free(proof->r[i]);
+  }
+  free(proof->y);
+  free(proof->views);
+  free(proof->keys);
+  free(proof->r);
+ 
+  free(proof);
+
+ 
+}
+

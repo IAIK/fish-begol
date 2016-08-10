@@ -83,7 +83,6 @@ proof_t *prove(lowmc_t *lowmc, lowmc_key_t *lowmc_key, mzd_t *p) {
   printf("Generating challenge          %4lums\n", deltaCh * 1000 / CLOCKS_PER_SEC);
 
   proof_t *proof = (proof_t*)malloc(sizeof(proof_t));
-
   proof->views = (view_t**)malloc(NUM_ROUNDS * sizeof(view_t*));
   
   proof->r = (unsigned char***)malloc(NUM_ROUNDS * sizeof(unsigned char**));
@@ -124,7 +123,6 @@ proof_t *prove(lowmc_t *lowmc, lowmc_key_t *lowmc_key, mzd_t *p) {
     for(unsigned i = 0 ; i < lowmc->r + 2 ; i++) {
       free(views[j][i].s);
     }
-      
   }
    
   printf("\n");
@@ -170,7 +168,8 @@ int verify(lowmc_t *lowmc, mzd_t *p, mzd_t *c, proof_t *prf) {
   clock_t beginView = clock();
   int output_share_status = 0;
   for(int i = 0 ; i < NUM_ROUNDS ; i++) 
-    if(mzd_cmp(prf->y[i][ch[i]], prf->views[i][lowmc->r + 1].s[0]) || mzd_cmp(prf->y[i][(ch[i] + 1) % 3], prf->views[i][lowmc->r + 1].s[1])) 
+    if(mzd_cmp(prf->y[i][ch[i]], prf->views[i][lowmc->r + 1].s[0]) || 
+        mzd_cmp(prf->y[i][(ch[i] + 1) % 3], prf->views[i][lowmc->r + 1].s[1])) 
       output_share_status = -1;  
   clock_t deltaView = clock() - beginView;
   printf("Reconstructing output views   %4lums\n", deltaView * 1000 / CLOCKS_PER_SEC);
@@ -189,11 +188,15 @@ int verify(lowmc_t *lowmc, mzd_t *p, mzd_t *c, proof_t *prf) {
     mzd_copy(c_ch[0], prf->views[i][lowmc->r + 1].s[0]);
     mzd_copy(c_ch[1], prf->views[i][lowmc->r + 1].s[1]);
 
-    if(mpc_lowmc_verify(lowmc, p, prf->views[i], rv, ch[i]) || mzd_cmp(c_ch[0], prf->views[i][1 + lowmc->r].s[0]) || mzd_cmp(c_ch[1], prf->views[i][1 + lowmc->r].s[1]))
+    if(mpc_lowmc_verify(lowmc, p, prf->views[i], rv, ch[i]) || 
+        mzd_cmp(c_ch[0], prf->views[i][1 + lowmc->r].s[0]) || 
+        mzd_cmp(c_ch[1], prf->views[i][1 + lowmc->r].s[1]))
       view_verify_status = -1;
 
     mzd_free(c_ch[0]);
     mzd_free(c_ch[1]);
+    mpc_free(rv[0], lowmc->r);
+    mpc_free(rv[1], lowmc->r);
   }
   clock_t deltaViewVrfy = clock() - beginViewVrfy;
   printf("Verifying views               %4lums\n", deltaViewVrfy * 1000 / CLOCKS_PER_SEC);
@@ -219,7 +222,6 @@ int verify(lowmc_t *lowmc, mzd_t *p, mzd_t *c, proof_t *prf) {
     printf("[FAIL] Proof does not match reconstructed views.\n");
   else
     printf("[ OK ] Proof matches reconstructed views.\n");   
-
 
   return hash_status || output_share_status || reconstruct_status || view_verify_status;
 }
@@ -252,6 +254,7 @@ int main(int argc, char **argv) {
   proof_t *prf = prove(lowmc, lowmc_key, p); 
   verify(lowmc, p, c, prf);
   
+  free_proof(lowmc, prf);
   lowmc_free(lowmc, lowmc_key);
   mzd_free(p);
   mzd_free(c);

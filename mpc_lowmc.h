@@ -19,6 +19,8 @@ typedef struct {
   mzd_t ***y;
 } proof_t;
 
+void free_proof(lowmc_t *lowmc, proof_t *proof);
+
 /**
  * Initializes the views for the MPC execution of LowMC
  *
