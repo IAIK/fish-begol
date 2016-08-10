@@ -46,11 +46,11 @@ proof_t *prove(lowmc_t *lowmc, lowmc_key_t *lowmc_key, mzd_t *p) {
   for(unsigned i = 0 ; i < NUM_ROUNDS ; i++) {
     views[i][0].s = (mzd_t**)malloc(3 * sizeof(mzd_t*));
     for(unsigned m = 0 ; m < 3 ; m++)  
-      views[i][0].s[m] = mzd_init(lowmc->k, 1);
+      views[i][0].s[m] = mzd_init(1, lowmc->k);
     for(unsigned n = 1 ; n < 2 + lowmc->r ; n++) {
       views[i][n].s = (mzd_t**)malloc(3 * sizeof(mzd_t*));
       for(unsigned m = 0 ; m < 3 ; m++)
-        views[i][n].s[m] = mzd_init(lowmc->n, 1);
+        views[i][n].s[m] = mzd_init(1, lowmc->n);
     }
   }
   lowmc_secret_share(lowmc, lowmc_key);
@@ -183,8 +183,8 @@ int verify(lowmc_t *lowmc, mzd_t *p, mzd_t *c, proof_t *prf) {
     rv[1] = mzd_init_random_vectors_from_seed(prf->keys[i][1], lowmc->n, lowmc->r);
   
     mzd_t *c_ch[2];
-    c_ch[0] = mzd_init(lowmc->n, 1);
-    c_ch[1] = mzd_init(lowmc->n, 1);
+    c_ch[0] = mzd_init(1, lowmc->n);
+    c_ch[1] = mzd_init(1, lowmc->n);
     mzd_copy(c_ch[0], prf->views[i][lowmc->r + 1].s[0]);
     mzd_copy(c_ch[1], prf->views[i][lowmc->r + 1].s[1]);
 

@@ -22,12 +22,11 @@ int mpc_and_bit_verify(BIT* a, BIT* b, BIT* r, view_t *views, int *i, unsigned b
   }
   for(unsigned m = 0 ; m < sc - 1 ; m++) {
     a[m] = wp[m];
-    if(a[m] != mzd_read_bit(views[*i].s[m], bp, 0)) {
-      printf("here we go\n");
+    if(a[m] != mzd_read_bit(views[*i].s[m], 0, bp)) {
       return -1;
     }
   }
-  a[sc - 1] = mzd_read_bit(views[*i].s[sc - 1], bp, 0);
+  a[sc - 1] = mzd_read_bit(views[*i].s[sc - 1], 0, bp);
   free(wp);
   return 0;
 }
@@ -41,19 +40,19 @@ void mpc_xor_bit(BIT* a, BIT* b, unsigned sc) {
 BIT *mpc_read_bit(mzd_t **vec, rci_t n, unsigned sc) {
   BIT *bit = (BIT*)malloc(sc * sizeof(BIT));
   for(unsigned i = 0 ; i < sc ; i++)
-    bit[i] = mzd_read_bit(vec[i], n, 0);
+    bit[i] = mzd_read_bit(vec[i], 0, n);
 
   return bit;
 }
 
 void mpc_write_bit(mzd_t **vec, rci_t n, BIT *bit, unsigned sc) {
   for(unsigned i = 0 ; i < sc ; i++)
-    mzd_write_bit(vec[i], n, 0, bit[i]);
+    mzd_write_bit(vec[i], 0, n, bit[i]);
 }
 
 mzd_t **mpc_add(mzd_t **result, mzd_t **first, mzd_t **second, unsigned sc) {
   if(result == 0)
-    result = mpc_init_empty_share_vector(first[0]->nrows, sc);
+    result = mpc_init_empty_share_vector(first[0]->ncols, sc);
   for(unsigned i = 0; i < sc ; i++)
     mzd_add(result[i], first[i], second[i]);
   return result;
@@ -61,7 +60,7 @@ mzd_t **mpc_add(mzd_t **result, mzd_t **first, mzd_t **second, unsigned sc) {
 
 mzd_t **mpc_const_add(mzd_t **result, mzd_t **first, mzd_t *second, unsigned sc, unsigned c) {
   if(result == 0)
-    result = mpc_init_empty_share_vector(first[0]->nrows, sc);
+    result = mpc_init_empty_share_vector(first[0]->ncols, sc);
   if(c == 0)
     mzd_add(result[0], first[0], second);
   else if(c == sc)
@@ -69,19 +68,11 @@ mzd_t **mpc_const_add(mzd_t **result, mzd_t **first, mzd_t *second, unsigned sc,
   return result;
 }
 
-mzd_t **mpc_const_mat_addmul(mzd_t** result, mzd_t *matrix, mzd_t **vector) {
-  if(result == 0)
-    result = mpc_init_empty_share_vector(vector[0]->nrows, 3);
-  for(unsigned i = 0; i < 3 ; i++)
-    mzd_addmul(result[i], matrix, vector[i], 0);
-  return result;
-}
-
 mzd_t **mpc_const_mat_mul(mzd_t** result, mzd_t *matrix, mzd_t **vector, unsigned sc) {
   if(result == 0)
-    result = mpc_init_empty_share_vector(vector[0]->nrows, sc);
+    result = mpc_init_empty_share_vector(vector[0]->ncols, sc);
   for(unsigned i = 0; i < sc ; i++)
-    mzd_mul(result[i], matrix, vector[i], 0);
+    mzd_mul(result[i], vector[i], matrix, 0);
   return result;
 }
 
@@ -111,7 +102,7 @@ void mpc_free(mzd_t **vec, unsigned sc) {
 mzd_t **mpc_init_empty_share_vector(rci_t n, unsigned sc) {
   mzd_t **s = (mzd_t**)malloc(3 * sizeof(mzd_t*));
   for(unsigned i = 0 ; i < sc ; i++)
-    s[i] = mzd_init(n, 1);
+    s[i] = mzd_init(1, n);
   return s;
 }
 
@@ -124,9 +115,9 @@ mzd_t **mpc_init_random_vector(rci_t n, unsigned sc) {
 
 mzd_t **mpc_init_plain_share_vector(mzd_t *v) {
   mzd_t **s = (mzd_t**)malloc(3 * sizeof(mzd_t*));
-  s[0] = mzd_init_random_vector(v->nrows);
-  s[1] = mzd_init_random_vector(v->nrows);
-  s[2] = mzd_init(v->nrows, 1);
+  s[0] = mzd_init_random_vector(v->ncols);
+  s[1] = mzd_init_random_vector(v->ncols);
+  s[2] = mzd_init(1, v->ncols);
 
   mzd_copy(s[0], v);
   mzd_copy(s[1], v);
@@ -137,9 +128,9 @@ mzd_t **mpc_init_plain_share_vector(mzd_t *v) {
 
 mzd_t **mpc_init_share_vector(mzd_t *v) {
   mzd_t **s = (mzd_t**)malloc(3 * sizeof(mzd_t*));
-  s[0] = mzd_init_random_vector(v->nrows);
-  s[1] = mzd_init_random_vector(v->nrows);
-  s[2] = mzd_init(v->nrows, 1);
+  s[0] = mzd_init_random_vector(v->ncols);
+  s[1] = mzd_init_random_vector(v->ncols);
+  s[2] = mzd_init(1, v->ncols);
   mzd_add(s[2], s[0], s[1]);
   mzd_add(s[2], s[2], v);
 

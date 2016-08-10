@@ -45,8 +45,11 @@ lowmc_t *lowmc_init(size_t m, size_t n, size_t r, size_t k) {
   lowmc->k = k;
 
   lowmc->LMatrix = (mzd_t**)calloc(sizeof(mzd_t*),r);
-  for(unsigned i=0; i<r; i++)
-    lowmc->LMatrix[i] = mzd_sample_lmatrix(n);
+  for(unsigned i=0; i<r; i++) {
+    mzd_t *mat = mzd_sample_lmatrix(n);
+    lowmc->LMatrix[i] = mzd_transpose(0, mat);
+    mzd_free(mat);
+  }
 
   lowmc->Constants = (mzd_t**)calloc(sizeof(mzd_t*),r);
   for(unsigned i=0; i<r; i++) {
@@ -54,7 +57,9 @@ lowmc_t *lowmc_init(size_t m, size_t n, size_t r, size_t k) {
   }
   lowmc->KMatrix = (mzd_t**)calloc(sizeof(mzd_t*), r+1);
   for(unsigned i=0; i<r+1; i++) {
-    lowmc->KMatrix[i] = mzd_sample_kmatrix(n, k);
+    mzd_t *mat = mzd_sample_kmatrix(n, k);
+    lowmc->KMatrix[i] = mzd_transpose(0, mat);
+    mzd_free(mat);
   }
 
   return lowmc;

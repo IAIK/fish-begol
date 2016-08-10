@@ -5,7 +5,7 @@
 
 int _mpc_sbox_layer(mzd_t **out, mzd_t **in, rci_t m, view_t *views, int *i, mzd_t **rvec, unsigned sc, int (*andBitPtr)(BIT*, BIT*, BIT*, view_t*, int*, unsigned, unsigned)) {
   mpc_copy(out, in, sc);
-  for(rci_t n=out[0]->nrows-3*m; n<out[0]->nrows; n+=3) {
+  for(rci_t n=out[0]->ncols-3*m; n<out[0]->ncols; n+=3) {
     BIT* x0 = mpc_read_bit(in, n+0, sc);
     BIT* x1 = mpc_read_bit(in, n+1, sc);
     BIT* x2 = mpc_read_bit(in, n+2, sc);
@@ -103,8 +103,8 @@ int mpc_lowmc_verify(lowmc_t *lowmc, mzd_t *p, view_t *views, mzd_t ***rvec, int
   //initialize two key shares from v0
   lowmc_key_t *lowmc_key = (lowmc_key_t*)malloc(sizeof(lowmc_key));
   lowmc_key->key = (mzd_t**)malloc(2 * sizeof(mzd_t*));
-  lowmc_key->key[0] = mzd_init(lowmc->k, 1);
-  lowmc_key->key[1] = mzd_init(lowmc->k, 1);
+  lowmc_key->key[0] = mzd_init(1, lowmc->k);
+  lowmc_key->key[1] = mzd_init(1, lowmc->k);
   mzd_copy(lowmc_key->key[0], views[0].s[0]);
   mzd_copy(lowmc_key->key[1], views[0].s[1]);  
   lowmc_key->sharecount = 2;

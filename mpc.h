@@ -122,18 +122,6 @@ mzd_t **mpc_add(mzd_t **result, mzd_t **first, mzd_t **second, unsigned sc);
 mzd_t **mpc_const_add(mzd_t **result, mzd_t **first, mzd_t *second, unsigned sc, unsigned c);
 
 /**
- * Computes result = result + first * second in GF(2) of a 
- * secret shared vector and a matrix according to 
- * https://eprint.iacr.org/2016/163.pdf
- * 
- * \param  result the result of the computation
- * \param  matrix the matrix
- * \param  vector the secret shared vector
- * \return        the result of the computation
- */
-mzd_t **mpc_const_mat_addmul(mzd_t** result, mzd_t *matrix, mzd_t **vector);
-
-/**
  * Computes result = first * second in GF(2) of a 
  * secret shared vector and a matrix according to 
  * https://eprint.iacr.org/2016/163.pdf
