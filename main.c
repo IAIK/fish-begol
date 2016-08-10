@@ -146,6 +146,7 @@ int verify(lowmc_t *lowmc, mzd_t *p, mzd_t *c, proof_t *prf) {
   clock_t deltaHash = clock() - beginHash;
   printf("Verifying hashes              %4lums\n", deltaHash * 1000 / CLOCKS_PER_SEC);
 
+  clock_t beginRec = clock();
   int reconstruct_status = 0;
   for(int i = 0 ; i < NUM_ROUNDS ; i++) {
     mzd_t *c_mpcr  = mpc_reconstruct_from_share(prf->y[0]); 
@@ -153,16 +154,21 @@ int verify(lowmc_t *lowmc, mzd_t *p, mzd_t *c, proof_t *prf) {
       reconstruct_status = -1;
     mzd_free(c_mpcr);
   }
+  clock_t deltaRec = clock() - beginRec;
+  printf("Verifying output shares       %4lums\n", deltaRec * 1000 / CLOCKS_PER_SEC);
  
+  clock_t beginView = clock();
   int output_share_status = 0;
   for(int i = 0 ; i < NUM_ROUNDS ; i++) 
     if(mzd_cmp(prf->y[i][ch[i]], prf->views[i][lowmc->r + 1].s[0]) || mzd_cmp(prf->y[i][(ch[i] + 1) % 3], prf->views[i][lowmc->r + 1].s[1])) 
       output_share_status = -1;  
+  clock_t deltaView = clock() - beginView;
+  printf("Reconstructing output views   %4lums\n", deltaView * 1000 / CLOCKS_PER_SEC);
 
-  
+
+  clock_t beginViewVrfy = clock();
   mzd_t **rv[2];
   int view_verify_status = 0;
-
   for(int i = 0 ; i < NUM_ROUNDS ; i++) {
     rv[0] = mzd_init_random_vectors_from_seed(prf->keys[i][0], lowmc->n, lowmc->r);
     rv[1] = mzd_init_random_vectors_from_seed(prf->keys[i][1], lowmc->n, lowmc->r);
@@ -179,6 +185,8 @@ int verify(lowmc_t *lowmc, mzd_t *p, mzd_t *c, proof_t *prf) {
     mzd_free(c_ch[0]);
     mzd_free(c_ch[1]);
   }
+  clock_t deltaViewVrfy = clock() - beginViewVrfy;
+  printf("Verifying views               %4lums\n", deltaViewVrfy * 1000 / CLOCKS_PER_SEC);
    
   if(hash_status)
     printf("[FAIL] Commitments did not open correctly\n");
