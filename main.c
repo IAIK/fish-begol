@@ -53,10 +53,10 @@ proof_t *prove(lowmc_t *lowmc, lowmc_key_t *lowmc_key, mzd_t *p) {
   printf("MPC secret sharing            %4lums\n", deltaShare * 1000 / CLOCKS_PER_SEC);
   
   clock_t beginLowmc = clock();
-  mzd_t **c_mpc;
+  mzd_t ***c_mpc = (mzd_t***)malloc(NUM_ROUNDS * sizeof(mzd_t**));
   #pragma omp parallel for
   for(unsigned i = 0 ; i < NUM_ROUNDS ; i++)
-    c_mpc = mpc_lowmc_call(lowmc, lowmc_key, p, views[i], rvec[i]);
+    c_mpc[i] = mpc_lowmc_call(lowmc, lowmc_key, p, views[i], rvec[i]);
   clock_t deltaLowmc = clock() - beginLowmc;
   printf("MPC LowMC encryption          %4lums\n", deltaLowmc * 1000 / CLOCKS_PER_SEC);
   
@@ -64,9 +64,9 @@ proof_t *prove(lowmc_t *lowmc, lowmc_key_t *lowmc_key, mzd_t *p) {
   unsigned char hashes[NUM_ROUNDS][3][SHA256_DIGEST_LENGTH];
   #pragma omp parallel for
   for(unsigned i = 0 ; i < NUM_ROUNDS ; i++) {
-    H(keys[i][0], views[i], 0, 2 + lowmc->r, r[i][0], hashes[i][0]);
-    H(keys[i][1], views[i], 1, 2 + lowmc->r, r[i][1], hashes[i][1]);
-    H(keys[i][2], views[i], 2, 2 + lowmc->r, r[i][2], hashes[i][2]);
+    H(keys[i][0], c_mpc[i], views[i], 0, 2 + lowmc->r, r[i][0], hashes[i][0]);
+    H(keys[i][1], c_mpc[i], views[i], 1, 2 + lowmc->r, r[i][1], hashes[i][1]);
+    H(keys[i][2], c_mpc[i], views[i], 2, 2 + lowmc->r, r[i][2], hashes[i][2]);
   }
   clock_t deltaHash = clock() - beginHash;
   printf("Hashing views                 %4lums\n", deltaHash * 1000 / CLOCKS_PER_SEC);
@@ -133,12 +133,12 @@ int verify(lowmc_t *lowmc, mzd_t *p, mzd_t *c, proof_t *prf) {
   unsigned char hash[SHA256_DIGEST_LENGTH];
   #pragma omp parallel for
   for(unsigned i = 0 ; i < NUM_ROUNDS ; i++) {
-    H(prf->keys[i][0], prf->views[i], 0, 2 + lowmc->r, prf->r[i][0], hash);
+    H(prf->keys[i][0], prf->y[i], prf->views[i], 0, 2 + lowmc->r, prf->r[i][0], hash);
     if(0 != memcmp(hash, prf->hashes[i][ch[i]], SHA256_DIGEST_LENGTH)) {
       printf("Error verifying hash1\n");
       exit(-1);
     } 
-    H(prf->keys[i][1], prf->views[i], 1, 2 + lowmc->r, prf->r[i][1], hash);
+    H(prf->keys[i][1], prf->y[i], prf->views[i], 1, 2 + lowmc->r, prf->r[i][1], hash);
     if(0 != memcmp(hash, prf->hashes[i][(ch[i] + 1) % 3], SHA256_DIGEST_LENGTH)) {
       printf("Error verifying hash2\n");
       exit(-1);
@@ -147,13 +147,22 @@ int verify(lowmc_t *lowmc, mzd_t *p, mzd_t *c, proof_t *prf) {
   clock_t deltaHash = clock() - beginHash;
   printf("Verifying hashes              %4lums\n", deltaHash * 1000 / CLOCKS_PER_SEC);
 
-  mzd_t *c_mpcr  = mpc_reconstruct_from_share(prf->y); 
+  mzd_t *c_mpcr  = mpc_reconstruct_from_share(prf->y[0]); 
   
   if(mzd_cmp(c, c_mpcr) == 0)
     printf("[ OK ] MPC ciphertext match.\n");
   else
     printf("[FAIL] MPC ciphertext does not match reference implementation.\n");
+ 
+  int status = 0;
+  for(int i = 0 ; i < NUM_ROUNDS ; i++) 
+    if(mzd_cmp(prf->y[i][ch[i]], prf->views[i][lowmc->r + 1].s[0]) || mzd_cmp(prf->y[i][(ch[i] + 1) % 3], prf->views[i][lowmc->r + 1].s[1])) 
+      status = -1;  
 
+  if(status) 
+    printf("[FAIL] Output share mismatch\n");    
+  else
+    printf("[ OK ] Output share match.\n");
   mzd_t **rv[NUM_ROUNDS][2];
   rv[0][0] = mzd_init_random_vectors_from_seed(prf->keys[0][0], lowmc->n, lowmc->r);
   rv[0][1] = mzd_init_random_vectors_from_seed(prf->keys[0][1], lowmc->n, lowmc->r);
