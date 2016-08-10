@@ -109,9 +109,11 @@ int mpc_lowmc_verify(lowmc_t *lowmc, mzd_t *p, view_t *views, mzd_t ***rvec, int
   lowmc_key->sharecount = 2;
   
   int status = 0;
-  mzd_t ** v = _mpc_lowmc_call_verify(lowmc, lowmc_key, p, views, rvec, &status, c);
+  mzd_t **v = _mpc_lowmc_call_verify(lowmc, lowmc_key, p, views, rvec, &status, c);
   if(v)
     mpc_free(v, 2);
+
+  free(lowmc_key);
 
   return status;
 }
