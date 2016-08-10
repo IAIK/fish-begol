@@ -43,12 +43,16 @@ proof_t *prove(lowmc_t *lowmc, lowmc_key_t *lowmc_key, mzd_t *p) {
   clock_t beginShare = clock();  
   view_t views[NUM_ROUNDS][2 + lowmc->r];
   #pragma omp parallel for
-  for(unsigned i = 0 ; i < NUM_ROUNDS ; i++)
-    for(unsigned n = 0 ; n < 2 + lowmc->r ; n++) {
+  for(unsigned i = 0 ; i < NUM_ROUNDS ; i++) {
+    views[i][0].s = (mzd_t**)malloc(3 * sizeof(mzd_t*));
+    for(unsigned m = 0 ; m < 3 ; m++)  
+      views[i][0].s[m] = mzd_init(lowmc->k, 1);
+    for(unsigned n = 1 ; n < 2 + lowmc->r ; n++) {
       views[i][n].s = (mzd_t**)malloc(3 * sizeof(mzd_t*));
       for(unsigned m = 0 ; m < 3 ; m++)
         views[i][n].s[m] = mzd_init(lowmc->n, 1);
     }
+  }
   lowmc_secret_share(lowmc, lowmc_key);
   clock_t deltaShare = clock() - beginShare;
   printf("MPC secret sharing            %4lums\n", deltaShare * 1000 / CLOCKS_PER_SEC);
@@ -89,6 +93,7 @@ proof_t *prove(lowmc_t *lowmc, lowmc_key_t *lowmc_key, mzd_t *p) {
   for(unsigned i = 0 ; i < NUM_ROUNDS ; i++) { 
     int a = ch[i];
     int b = (a + 1) % 3;
+    int c = (a + 2) % 3;
 
     proof->r[i] = (unsigned char**)malloc(2 * sizeof(unsigned char*));
     proof->r[i][0] = (unsigned char*)malloc(4 * sizeof(unsigned char));
@@ -107,7 +112,7 @@ proof_t *prove(lowmc_t *lowmc, lowmc_key_t *lowmc_key, mzd_t *p) {
       proof->views[i][j].s = (mzd_t**)malloc(2 * sizeof(mzd_t*));
       proof->views[i][j].s[0] = views[i][j].s[a];
       proof->views[i][j].s[1] = views[i][j].s[b];
-      //mzd_free(views[i][j].s[(ch[i] + 2) % 3]);
+      mzd_free(views[i][j].s[c]);
     }
   }
   proof->y = c_mpc;

@@ -52,9 +52,8 @@ int _mpc_sbox_layer(mzd_t **out, mzd_t **in, rci_t m, view_t *views, int *i, mzd
 mzd_t **_mpc_lowmc_call(lowmc_t *lowmc, lowmc_key_t *lowmc_key, mzd_t *p, view_t *views, mzd_t ***rvec, unsigned sc, unsigned ch, int (*andBitPtr)(BIT*, BIT*, BIT*, view_t*, int*, unsigned, unsigned), int *status) {
   int vcnt = 0;
   
-  for(unsigned i = 0 ; i < sc ; i++) {
-    views[vcnt].s[i] = lowmc_key->key[i];
-  }  
+  for(unsigned i = 0 ; i < sc ; i++) 
+    mzd_copy(views[vcnt].s[i], lowmc_key->key[i]);
   vcnt++;
 
   mzd_t **c = mpc_init_empty_share_vector(lowmc->n, sc);
@@ -104,8 +103,10 @@ int mpc_lowmc_verify(lowmc_t *lowmc, mzd_t *p, view_t *views, mzd_t ***rvec, int
   //initialize two key shares from v0
   lowmc_key_t *lowmc_key = (lowmc_key_t*)malloc(sizeof(lowmc_key));
   lowmc_key->key = (mzd_t**)malloc(2 * sizeof(mzd_t*));
-  lowmc_key->key[0] = views[0].s[0];
-  lowmc_key->key[1] = views[0].s[1];  
+  lowmc_key->key[0] = mzd_init(lowmc->k, 1);
+  lowmc_key->key[1] = mzd_init(lowmc->k, 1);
+  mzd_copy(lowmc_key->key[0], views[0].s[0]);
+  mzd_copy(lowmc_key->key[1], views[0].s[1]);  
   lowmc_key->sharecount = 2;
   
   int status = 0;
@@ -113,6 +114,8 @@ int mpc_lowmc_verify(lowmc_t *lowmc, mzd_t *p, view_t *views, mzd_t ***rvec, int
   if(v)
     mpc_free(v, 2);
 
+  mzd_free(lowmc_key->key[0]);
+  mzd_free(lowmc_key->key[1]);
   free(lowmc_key);
 
   return status;
