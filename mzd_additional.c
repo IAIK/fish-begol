@@ -9,8 +9,8 @@ mzd_t *mzd_init_random_vector(rci_t n) {
 }
 
 mzd_t **mzd_init_random_vectors_from_seed(unsigned char key[16], rci_t n, unsigned count) {
-  if(n % 8 != 0)
-    exit(-1);
+  if(n % (8 * sizeof(word)) != 0)
+    return 0;
   
   unsigned char *randomness = (unsigned char*)malloc(n / 8 * count * sizeof(unsigned char));
   getRandomness(key, randomness, n / 8 * count * sizeof(unsigned char));
@@ -19,12 +19,8 @@ mzd_t **mzd_init_random_vectors_from_seed(unsigned char key[16], rci_t n, unsign
   unsigned j = 0;
   for(int v = 0 ; v < count ; v++) {
     vectors[v] = mzd_init(1, n);
-    for(int i = 0 ; i < n ; i++) {
-      mzd_write_bit(vectors[v], 0, i, randomness[j] & 0x01);
-      randomness[j] >>= 1;
-      if(((i + 1) % 8) == 0) {
-        j++;
-      }
+    for(int i = 0 ; i < n / (8 * sizeof(word)) ; i++) {
+      memcpy(vectors[v]->rows[0] + i, randomness, sizeof(word));
     }
   }
   
