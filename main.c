@@ -241,13 +241,13 @@ int main(int argc, char **argv) {
 
   printf("\n");
 
+
   proof_t *prf = prove(lowmc, lowmc_key, p); 
-  
   verify(lowmc, p, c, prf);
-  
   
   lowmc_free(lowmc, lowmc_key);
   mzd_free(p);
+  mzd_free(c);
 
   cleanup_EVP();
   return 0;
