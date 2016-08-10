@@ -11,10 +11,6 @@ typedef struct {
   mzd_t **s;
 } view_t;
 
-//typedef struct {
-//  mzd_t *s[3];
-//} view_v_t;
-
 typedef struct {
   view_t **views;
   unsigned char ***keys;

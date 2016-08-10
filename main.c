@@ -110,14 +110,16 @@ proof_t *prove(lowmc_t *lowmc, lowmc_key_t *lowmc_key, mzd_t *p) {
       //mzd_free(views[i][j].s[(ch[i] + 2) % 3]);
     }
   }
-
   proof->y = c_mpc;
  
   #pragma omp parallel for
   for(unsigned j = 0 ; j < NUM_ROUNDS ; j++) {
-    //mpc_free(c_mpc[j], 3);
-    for(unsigned i  = 0 ; i < 3 ; i++) 
+    for(unsigned i = 0 ; i < 3 ; i++) 
       mpc_free(rvec[j][i], lowmc->r);
+    for(unsigned i = 0 ; i < lowmc->r + 2 ; i++) {
+      free(views[j][i].s);
+    }
+      
   }
    
   printf("\n");
