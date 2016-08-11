@@ -1,5 +1,8 @@
 #include "multithreading.h"
 
+/**
+ * as in https://github.com/Sobuno/ZKBoo/blob/master/MPC_SHA256/shared.h
+ */
 void openmp_locking_callback(int mode, int type, char *file, int line)
 {
   if (mode & CRYPTO_LOCK)
@@ -12,12 +15,17 @@ void openmp_locking_callback(int mode, int type, char *file, int line)
   }
 }
 
-
+/**
+ * as in https://github.com/Sobuno/ZKBoo/blob/master/MPC_SHA256/shared.h
+ */
 unsigned long openmp_thread_id(void)
 {
   return (unsigned long)omp_get_thread_num();
 }
 
+/**
+ * as in https://github.com/Sobuno/ZKBoo/blob/master/MPC_SHA256/shared.h
+ */
 void openmp_thread_setup(void)
 {
   int i;
@@ -32,6 +40,9 @@ void openmp_thread_setup(void)
   CRYPTO_set_locking_callback((void (*)())openmp_locking_callback);
 }
 
+/**
+ * as in https://github.com/Sobuno/ZKBoo/blob/master/MPC_SHA256/shared.h
+ */
 void openmp_thread_cleanup(void)
 {
   int i;
