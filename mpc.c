@@ -34,7 +34,7 @@ mzd_t **mpc_xor(mzd_t **res, mzd_t **first, mzd_t **second, unsigned sc) {
   return res;
 }
 
-mzd_t **mpc_and(mzd_t **res, mzd_t **first, mzd_t **second, mzd_t **r, view_t *views, int *i, unsigned viewshift,  unsigned sc) {
+mzd_t **mpc_and(mzd_t **res, mzd_t **first, mzd_t **second, mzd_t **r, view_t *views, int *i, unsigned viewshift,  unsigned sc, mzd_t** buffer) {
   if(res == 0) 
     res = (mzd_t**)calloc(sizeof(mzd_t*), 3);
   for(unsigned m = 0 ; m < sc ; m++) {
@@ -52,14 +52,12 @@ mzd_t **mpc_and(mzd_t **res, mzd_t **first, mzd_t **second, mzd_t **r, view_t *v
     mzd_free(b);
     mzd_free(c);
   }
-  mzd_t** v = mpc_init_empty_share_vector(first[0]->ncols, sc);
-  mpc_shift_right(v, res, viewshift, 0, sc);
-  mpc_xor(views[*i].s, views[*i].s, v, sc);
-  mpc_free(v, sc);
+  mpc_shift_right(buffer, res, viewshift, 0, sc);
+  mpc_xor(views[*i].s, views[*i].s, buffer, sc);
   return res;
 }
 
-mzd_t **mpc_and_verify(mzd_t **res, mzd_t **first, mzd_t **second, mzd_t **r, view_t *views, int *i, unsigned viewshift,  unsigned sc) {
+mzd_t **mpc_and_verify(mzd_t **res, mzd_t **first, mzd_t **second, mzd_t **r, view_t *views, int *i, unsigned viewshift,  unsigned sc, mzd_t** buffer) {
   if(res == 0) 
     res = (mzd_t**)calloc(sizeof(mzd_t*), 3);
   for(unsigned m = 0 ; m < sc ; m++) {

@@ -12,9 +12,9 @@ mzd_t **mpc_and_const(mzd_t **res, mzd_t **first, mzd_t *second, unsigned sc);
 
 mzd_t **mpc_xor(mzd_t **res, mzd_t **first, mzd_t **second, unsigned sc);
 
-mzd_t **mpc_and(mzd_t **res, mzd_t **first, mzd_t **second, mzd_t **r, view_t *views, int *i, unsigned viewshift, unsigned sc);
+mzd_t **mpc_and(mzd_t **res, mzd_t **first, mzd_t **second, mzd_t **r, view_t *views, int *i, unsigned viewshift, unsigned sc, mzd_t **buffer);
 
-mzd_t **mpc_and_verify(mzd_t **res, mzd_t **first, mzd_t **second, mzd_t **r, view_t *views, int *i, unsigned viewshift, unsigned sc);
+mzd_t **mpc_and_verify(mzd_t **res, mzd_t **first, mzd_t **second, mzd_t **r, view_t *views, int *i, unsigned viewshift, unsigned sc, mzd_t **buffer);
 
 void mpc_set(mzd_t **res, mzd_t **src, unsigned sc);
 

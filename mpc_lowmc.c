@@ -4,7 +4,7 @@
 #include "lowmc_pars.h"
 
 int _mpc_sbox_layer_bitsliced(mzd_t **out, mzd_t **in, rci_t m, view_t *views, int *i, mzd_t **rvec, unsigned sc, 
-    mzd_t** (*andPtr)(mzd_t **, mzd_t **, mzd_t **, mzd_t**, view_t*, int*, unsigned, unsigned), mask_t *mask, sbox_vars_t *vars) {
+    mzd_t** (*andPtr)(mzd_t **, mzd_t **, mzd_t **, mzd_t**, view_t*, int*, unsigned, unsigned, mzd_t**), mask_t *mask, sbox_vars_t *vars) {
   if(in[0]->ncols - 3 * m < 2) {
     printf("Bitsliced implementation requires in->ncols - 3 * m >= 2\n");
     return 0;
@@ -26,9 +26,9 @@ int _mpc_sbox_layer_bitsliced(mzd_t **out, mzd_t **in, rci_t m, view_t *views, i
   mpc_shift_left(vars->x1s, vars->x1m, 1, 0, sc);
   mpc_shift_left(vars->r1s, vars->r1m, 1, 0, sc);
 
-  mzd_t **t2 = andPtr(vars->r0m, vars->x0s, vars->x1s, vars->r2m, views, i, 0, sc);  
-  mzd_t **t0 = andPtr(vars->r2m, vars->x1s, vars->x2m, vars->r0s, views, i, 2, sc);
-  mzd_t **t1 = andPtr(vars->r1m, vars->x0s, vars->x2m, vars->r1s, views, i, 1, sc);
+  mzd_t **t2 = andPtr(vars->r0m, vars->x0s, vars->x1s, vars->r2m, views, i, 0, sc, vars->v);  
+  mzd_t **t0 = andPtr(vars->r2m, vars->x1s, vars->x2m, vars->r0s, views, i, 2, sc, vars->v);
+  mzd_t **t1 = andPtr(vars->r1m, vars->x0s, vars->x2m, vars->r1s, views, i, 1, sc, vars->v);
 
 
   mpc_xor(t0, t0, vars->x0s, sc);
@@ -141,7 +141,7 @@ mzd_t **_mpc_lowmc_call(lowmc_t *lowmc, lowmc_key_t *lowmc_key, mzd_t *p, view_t
 }
 
 mzd_t **_mpc_lowmc_call_bitsliced(lowmc_t *lowmc, lowmc_key_t *lowmc_key, mzd_t *p, view_t *views, mzd_t ***rvec, unsigned sc, unsigned ch, 
-    mzd_t** (*andPtr)(mzd_t **, mzd_t **, mzd_t **, mzd_t**, view_t*, int*, unsigned, unsigned), int *status) {
+    mzd_t** (*andPtr)(mzd_t **, mzd_t **, mzd_t **, mzd_t**, view_t*, int*, unsigned, unsigned, mzd_t**), int *status) {
   int vcnt = 0;
   
   for(unsigned i = 0 ; i < sc ; i++) 
@@ -194,6 +194,7 @@ mzd_t **_mpc_lowmc_call_bitsliced(lowmc_t *lowmc, lowmc_key_t *lowmc_key, mzd_t 
   mpc_free(vars->r0s, sc);
   mpc_free(vars->x1s, sc);
   mpc_free(vars->r1s, sc);
+  mpc_free(vars->v, sc);
   free(vars);
 
   mpc_free(z, sc);
@@ -247,7 +248,8 @@ sbox_vars_t *sbox_vars_init(sbox_vars_t *vars, rci_t n, unsigned sc) {
   vars->x1s = mpc_init_empty_share_vector(n, sc); 
   vars->r0s = mpc_init_empty_share_vector(n, sc); 
   vars->r1s = mpc_init_empty_share_vector(n, sc); 
-  
+  vars->v   = mpc_init_empty_share_vector(n, sc); 
+
   return vars;
 }
 
@@ -279,4 +281,5 @@ void free_proof(lowmc_t *lowmc, proof_t *proof) {
 
  
 }
+
 

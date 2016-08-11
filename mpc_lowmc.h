@@ -30,6 +30,7 @@ typedef struct {
   mzd_t **r0s;
   mzd_t **x1s;
   mzd_t **r1s;
+  mzd_t **v;
 } sbox_vars_t;
 
 sbox_vars_t *sbox_vars_init(sbox_vars_t *vars, rci_t n, unsigned sc);
