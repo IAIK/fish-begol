@@ -4,7 +4,7 @@
 #include "lowmc_pars.h"
 
 int _mpc_sbox_layer_bitsliced(mzd_t **out, mzd_t **in, rci_t m, view_t *views, int *i, mzd_t **rvec, unsigned sc, 
-    mzd_t** (*andPtr)(mzd_t **, mzd_t **, mzd_t **, mzd_t**, view_t*, int*, unsigned, unsigned), mask_t *mask) {
+    mzd_t** (*andPtr)(mzd_t **, mzd_t **, mzd_t **, mzd_t**, view_t*, int*, unsigned, unsigned), mask_t *mask, sbox_vars_t *vars) {
   if(in[0]->ncols - 3 * m < 2) {
     printf("Bitsliced implementation requires in->ncols - 3 * m >= 2\n");
     return 0;
@@ -13,54 +13,41 @@ int _mpc_sbox_layer_bitsliced(mzd_t **out, mzd_t **in, rci_t m, view_t *views, i
   mpc_copy(out, in, sc);
   mpc_and_const(out, out, mask->mask, sc);
 
-  mzd_t **x0m  = mpc_and_const(0, in, mask->x0, sc);
-  mzd_t **x1m  = mpc_and_const(0, in, mask->x1, sc);   
-  mzd_t **x2m  = mpc_and_const(0, in, mask->x2, sc);   
-  mzd_t **r0m  = mpc_and_const(0, rvec, mask->x0, sc);
-  mzd_t **r1m  = mpc_and_const(0, rvec, mask->x1, sc);   
-  mzd_t **r2m  = mpc_and_const(0, rvec, mask->x2, sc);   
+  mpc_and_const(vars->x0m, in, mask->x0, sc);
+  mpc_and_const(vars->x1m, in, mask->x1, sc);   
+  mpc_and_const(vars->x2m, in, mask->x2, sc);   
+  mpc_and_const(vars->r0m, rvec, mask->x0, sc);
+  mpc_and_const(vars->r1m, rvec, mask->x1, sc);   
+  mpc_and_const(vars->r2m, rvec, mask->x2, sc);   
 
-  mzd_t **x0s  = mpc_init_empty_share_vector(out[0]->ncols, sc);
-  mpc_shift_left(x0s, x0m, 2, 0, sc);
-  mzd_t **r0s  = mpc_init_empty_share_vector(out[0]->ncols, sc);
-  mpc_shift_left(r0s, r0m, 2, 0, sc);
+  mpc_shift_left(vars->x0s, vars->x0m, 2, 0, sc);
+  mpc_shift_left(vars->r0s, vars->r0m, 2, 0, sc);
   
-  mzd_t **x1s  = mpc_init_empty_share_vector(out[0]->ncols, sc);
-  mpc_shift_left(x1s, x1m, 1, 0, sc);
-  mzd_t **r1s  = mpc_init_empty_share_vector(out[0]->ncols, sc);
-  mpc_shift_left(r1s, r1m, 1, 0, sc);
+  mpc_shift_left(vars->x1s, vars->x1m, 1, 0, sc);
+  mpc_shift_left(vars->r1s, vars->r1m, 1, 0, sc);
 
-  mzd_t **t2 = andPtr(r0m, x0s, x1s, r2m, views, i, 0, sc);  
-  mzd_t **t0 = andPtr(r2m, x1s, x2m, r0s, views, i, 2, sc);
-  mzd_t **t1 = andPtr(r1m, x0s, x2m, r1s, views, i, 1, sc);
+  mzd_t **t2 = andPtr(vars->r0m, vars->x0s, vars->x1s, vars->r2m, views, i, 0, sc);  
+  mzd_t **t0 = andPtr(vars->r2m, vars->x1s, vars->x2m, vars->r0s, views, i, 2, sc);
+  mzd_t **t1 = andPtr(vars->r1m, vars->x0s, vars->x2m, vars->r1s, views, i, 1, sc);
 
 
-  mpc_xor(t0, t0, x0s, sc);
+  mpc_xor(t0, t0, vars->x0s, sc);
  
-  mpc_xor(t1, t1, x0s, sc);
-  mpc_xor(t1, t1, x1s, sc);
+  mpc_xor(t1, t1, vars->x0s, sc);
+  mpc_xor(t1, t1, vars->x1s, sc);
 
-  mpc_xor(t2, t2, x0s, sc);
-  mpc_xor(t2, t2, x1s, sc);
-  mpc_xor(t2, t2, x2m, sc);
+  mpc_xor(t2, t2, vars->x0s, sc);
+  mpc_xor(t2, t2, vars->x1s, sc);
+  mpc_xor(t2, t2, vars->x2m, sc);
 
-  mpc_shift_right(x0s, t0, 2, 0, sc);
-  mpc_shift_right(x1s, t1, 1, 0, sc);
+  mpc_shift_right(vars->x0s, t0, 2, 0, sc);
+  mpc_shift_right(vars->x1s, t1, 1, 0, sc);
 
   mpc_xor(out, out, t2, sc);
-  mpc_xor(out, out, x0s, sc);
-  mpc_xor(out, out, x1s, sc);
+  mpc_xor(out, out, vars->x0s, sc);
+  mpc_xor(out, out, vars->x1s, sc);
 
-  mpc_free(x0m, sc);
-  mpc_free(x1m, sc);
-  mpc_free(x2m, sc);
-  mpc_free(r0m, sc);
-  mpc_free(r1m, sc);
-  mpc_free(r2m, sc);
-  mpc_free(x0s, sc);
-  mpc_free(r0s, sc);
-  mpc_free(x1s, sc);
-  mpc_free(r1s, sc);
+  
   
   (*i)++;
   return 0;
@@ -171,12 +158,13 @@ mzd_t **_mpc_lowmc_call_bitsliced(lowmc_t *lowmc, lowmc_key_t *lowmc_key, mzd_t 
   mpc_const_add(x, x, p, sc, ch);
 
   mask_t *mask = prepareMasks(0, lowmc->n, lowmc->m);
+  sbox_vars_t *vars = sbox_vars_init(0, lowmc->n, sc);
 
   mzd_t *r[3];
   for(unsigned i = 0 ; i < lowmc->r ; i++) {  
     for(unsigned j = 0 ; j < sc ; j++)
       r[j] = rvec[j][i]; 
-    if(_mpc_sbox_layer_bitsliced(y, x, lowmc->m, views, &vcnt, r, sc, andPtr, mask)) {
+    if(_mpc_sbox_layer_bitsliced(y, x, lowmc->m, views, &vcnt, r, sc, andPtr, mask, vars)) {
       *status = -1;
       return 0;
     }
@@ -195,6 +183,18 @@ mzd_t **_mpc_lowmc_call_bitsliced(lowmc_t *lowmc, lowmc_key_t *lowmc_key, mzd_t 
   mzd_free(mask->x1);
   mzd_free(mask->x2);
   mzd_free(mask->mask);
+  free(mask);
+  mpc_free(vars->x0m, sc);
+  mpc_free(vars->x1m, sc);
+  mpc_free(vars->x2m, sc);
+  mpc_free(vars->r0m, sc);
+  mpc_free(vars->r1m, sc);
+  mpc_free(vars->r2m, sc);
+  mpc_free(vars->x0s, sc);
+  mpc_free(vars->r0s, sc);
+  mpc_free(vars->x1s, sc);
+  mpc_free(vars->r1s, sc);
+  free(vars);
 
   mpc_free(z, sc);
   mpc_free(y, sc);
@@ -232,6 +232,25 @@ int mpc_lowmc_verify(lowmc_t *lowmc, mzd_t *p, view_t *views, mzd_t ***rvec, int
 
   return status;
 }
+
+sbox_vars_t *sbox_vars_init(sbox_vars_t *vars, rci_t n, unsigned sc) {
+  if(vars == 0) 
+    vars = (sbox_vars_t*)malloc(sizeof(sbox_vars_t));
+  
+  vars->x0m = mpc_init_empty_share_vector(n, sc); 
+  vars->x1m = mpc_init_empty_share_vector(n, sc); 
+  vars->x2m = mpc_init_empty_share_vector(n, sc); 
+  vars->r0m = mpc_init_empty_share_vector(n, sc); 
+  vars->r1m = mpc_init_empty_share_vector(n, sc); 
+  vars->r2m = mpc_init_empty_share_vector(n, sc); 
+  vars->x0s = mpc_init_empty_share_vector(n, sc); 
+  vars->x1s = mpc_init_empty_share_vector(n, sc); 
+  vars->r0s = mpc_init_empty_share_vector(n, sc); 
+  vars->r1s = mpc_init_empty_share_vector(n, sc); 
+  
+  return vars;
+}
+
 
 void free_proof(lowmc_t *lowmc, proof_t *proof) {
   for(unsigned i = 0 ; i < NUM_ROUNDS ; i++) {

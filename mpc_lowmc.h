@@ -30,10 +30,9 @@ typedef struct {
   mzd_t **r0s;
   mzd_t **x1s;
   mzd_t **r1s;
-  mzd_t **t0;
-  mzd_t **t1;
-  mzd_t **t2;
 } sbox_vars_t;
+
+sbox_vars_t *sbox_vars_init(sbox_vars_t *vars, rci_t n, unsigned sc);
 
 void free_proof(lowmc_t *lowmc, proof_t *proof);
 
