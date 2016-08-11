@@ -1,6 +1,13 @@
 #include "mpc.h"
 #include "mzd_additional.h"
 
+void mpc_set(mzd_t **res, mzd_t **src, unsigned sc) {
+  for(int i = 0 ; i < sc ; i++) {
+    mzd_free(res[i]);
+    res[i] = src[i];
+  } 
+}
+
 void mpc_shift_right(mzd_t**res, mzd_t **val, unsigned count, word carry, unsigned sc) {
   for(unsigned i = 0 ; i < sc ; i++) 
     mzd_shift_right(res[i], val[i], count, 0);

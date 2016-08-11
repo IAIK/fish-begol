@@ -16,6 +16,8 @@ mzd_t **mpc_and(mzd_t **res, mzd_t **first, mzd_t **second, mzd_t **r, view_t *v
 
 mzd_t **mpc_and_verify(mzd_t **res, mzd_t **first, mzd_t **second, mzd_t **r, view_t *views, int *i, unsigned viewshift, unsigned sc);
 
+void mpc_set(mzd_t **res, mzd_t **src, unsigned sc);
+
 /**
  * Linearly secret shares the vector v 
  * 

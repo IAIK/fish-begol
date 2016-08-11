@@ -19,6 +19,22 @@ typedef struct {
   mzd_t ***y;
 } proof_t;
 
+typedef struct {
+  mzd_t **x0m;
+  mzd_t **x1m;
+  mzd_t **x2m;
+  mzd_t **r0m;
+  mzd_t **r1m;
+  mzd_t **r2m;
+  mzd_t **x0s;
+  mzd_t **r0s;
+  mzd_t **x1s;
+  mzd_t **r1s;
+  mzd_t **t0;
+  mzd_t **t1;
+  mzd_t **t2;
+} sbox_vars_t;
+
 void free_proof(lowmc_t *lowmc, proof_t *proof);
 
 /**

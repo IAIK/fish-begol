@@ -29,10 +29,11 @@ int _mpc_sbox_layer_bitsliced(mzd_t **out, mzd_t **in, rci_t m, view_t *views, i
   mpc_shift_left(x1s, x1m, 1, 0, sc);
   mzd_t **r1s  = mpc_init_empty_share_vector(out[0]->ncols, sc);
   mpc_shift_left(r1s, r1m, 1, 0, sc);
-  
-  mzd_t **t0 = andPtr(0, x1s, x2m, r0s, views, i, 2, sc);
-  mzd_t **t1 = andPtr(0, x0s, x2m, r1s, views, i, 1, sc);
-  mzd_t **t2 = andPtr(0, x0s, x1s, r2m, views, i, 0, sc);
+
+  mzd_t **t2 = andPtr(r0m, x0s, x1s, r2m, views, i, 0, sc);  
+  mzd_t **t0 = andPtr(r2m, x1s, x2m, r0s, views, i, 2, sc);
+  mzd_t **t1 = andPtr(r1m, x0s, x2m, r1s, views, i, 1, sc);
+
 
   mpc_xor(t0, t0, x0s, sc);
  
@@ -43,14 +44,12 @@ int _mpc_sbox_layer_bitsliced(mzd_t **out, mzd_t **in, rci_t m, view_t *views, i
   mpc_xor(t2, t2, x1s, sc);
   mpc_xor(t2, t2, x2m, sc);
 
-  mzd_t **x0r = mpc_init_empty_share_vector(out[0]->ncols, sc);
-  mzd_t **x1r = mpc_init_empty_share_vector(out[0]->ncols, sc);
-  mpc_shift_right(x0r, t0, 2, 0, sc);
-  mpc_shift_right(x1r, t1, 1, 0, sc);
+  mpc_shift_right(x0s, t0, 2, 0, sc);
+  mpc_shift_right(x1s, t1, 1, 0, sc);
 
   mpc_xor(out, out, t2, sc);
-  mpc_xor(out, out, x0r, sc);
-  mpc_xor(out, out, x1r, sc);
+  mpc_xor(out, out, x0s, sc);
+  mpc_xor(out, out, x1s, sc);
 
   mpc_free(x0m, sc);
   mpc_free(x1m, sc);
@@ -62,11 +61,6 @@ int _mpc_sbox_layer_bitsliced(mzd_t **out, mzd_t **in, rci_t m, view_t *views, i
   mpc_free(r0s, sc);
   mpc_free(x1s, sc);
   mpc_free(r1s, sc);
-  mpc_free(t0, sc);
-  mpc_free(t1, sc);
-  mpc_free(t2, sc);
-  mpc_free(x0r, sc);
-  mpc_free(x1r, sc);
   
   (*i)++;
   return 0;
