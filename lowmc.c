@@ -2,22 +2,6 @@
 #include "mzd_additional.h"
 #include "lowmc_pars.h"
 
-void prepareMasks(mzd_t *first, mzd_t *second, mzd_t *third, mzd_t *mask, rci_t n, rci_t m) {
-  if(0 != n % (8 * sizeof(word)))
-    return;
-
-  for(int i = 0 ; i < n - 3 * m ; i++) {
-    mzd_write_bit(mask, 0, i, 1);
-  }
-  for(unsigned i = n - 3 * m; i < n ; i+=3) {
-    mzd_write_bit(first,   0, i    , 1);
-  }
-  mzd_shift_left(second, first, 1, 0);
-  mzd_shift_left(third, first, 2, 0);
-}
-
-
-
 void sbox_layer_bitsliced(mzd_t *out, mzd_t *in, rci_t m) {
   if(in->ncols - 3 * m < 2) {
     printf("Bitsliced implementation requires in->ncols - 3 * m >= 2\n");

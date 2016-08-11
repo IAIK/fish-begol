@@ -1,6 +1,78 @@
 #include "mpc.h"
 #include "mzd_additional.h"
 
+void mpc_shift_right(mzd_t**res, mzd_t **val, unsigned count, word carry, unsigned sc) {
+  for(unsigned i = 0 ; i < sc ; i++) 
+    mzd_shift_right(res[i], val[i], count, 0);
+}
+
+void mpc_shift_left(mzd_t **res, mzd_t **val, unsigned count, word carry, unsigned sc) {
+  for(unsigned i = 0 ; i < sc ; i++) 
+    mzd_shift_left(res[i], val[i], count, 0);
+}
+
+mzd_t **mpc_and_const(mzd_t **res, mzd_t **first, mzd_t *second, unsigned sc) {
+  if(res == 0) 
+    res = (mzd_t**)calloc(sizeof(mzd_t*), 3);
+  for(unsigned i = 0 ; i < sc ; i++) 
+    res[i] = mzd_and(res[i], first[i], second);
+  return res;
+}
+
+mzd_t **mpc_xor(mzd_t **res, mzd_t **first, mzd_t **second, unsigned sc) {
+  if(res == 0) 
+    res = (mzd_t**)calloc(sizeof(mzd_t*), 3);
+  for(unsigned i = 0 ; i < sc ; i++) 
+    res[i] = mzd_xor(res[i], first[i], second[i]);
+  return res;
+}
+
+mzd_t **mpc_and(mzd_t **res, mzd_t **first, mzd_t **second, mzd_t **r, view_t *views, int *i, unsigned viewshift,  unsigned sc) {
+  if(res == 0) 
+    res = (mzd_t**)calloc(sizeof(mzd_t*), 3);
+  for(unsigned m = 0 ; m < sc ; m++) {
+    unsigned j = (m + 1) % 3;
+    res[m] = mzd_and(res[m], first[m], second[m]);
+    
+    mzd_t *b = mzd_and(0, first[j], second[m]);
+    mzd_t *c = mzd_and(0, first[m], second[j]);
+ 
+    mzd_xor(res[m], res[m], b);
+    mzd_xor(res[m], res[m], c);
+    mzd_xor(res[m], res[m], r[m]);
+    mzd_xor(res[m], res[m], r[j]);
+    
+    mzd_free(b);
+    mzd_free(c);
+  }
+  mzd_t** v = mpc_init_empty_share_vector(first[0]->ncols, sc);
+  mpc_shift_right(v, res, viewshift, 0, sc);
+  mpc_xor(views[*i].s, views[*i].s, v, sc);
+  return res;
+}
+
+mzd_t **mpc_and_verify(mzd_t **res, mzd_t **first, mzd_t **second, mzd_t **r, view_t *views, int *i, unsigned viewshift,  unsigned sc) {
+  if(res == 0) 
+    res = (mzd_t**)calloc(sizeof(mzd_t*), 3);
+  for(unsigned m = 0 ; m < sc ; m++) {
+    unsigned j = (m + 1) % 3;
+    res[m] = mzd_and(res[m], first[m], second[m]);
+    
+    mzd_t *b = mzd_and(0, first[j], second[m]);
+    mzd_t *c = mzd_and(0, first[m], second[j]);
+
+    mzd_xor(res[m], res[m], b);
+    mzd_xor(res[m], res[m], c);
+    mzd_xor(res[m], res[m], r[m]);
+    mzd_xor(res[m], res[m], r[j]);
+
+    mzd_free(b);
+    mzd_free(c);
+  }
+  mpc_xor(views[*i].s, views[*i].s, res, sc);
+  return res;
+}
+
 int mpc_and_bit(BIT* a, BIT* b, BIT* r, view_t *views, int *i, unsigned bp, unsigned sc) {
   BIT* wp = (BIT*)malloc(sc * sizeof(BIT));
   for(unsigned m = 0 ; m < sc ; m++) {

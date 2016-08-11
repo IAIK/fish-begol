@@ -28,6 +28,10 @@ mzd_t **mzd_init_random_vectors_from_seed(unsigned char key[16], rci_t n, unsign
 }
 
 word mzd_shift_right(mzd_t* res, mzd_t *val, unsigned count, word carry) {
+  if(!count) {
+    mzd_copy(res, val);
+    return 0;
+  }
   word prev = 0;
 
   for(int i = 0 ; i < val->ncols / (8 * sizeof(word)); i++) {
@@ -48,6 +52,10 @@ word mzd_shift_right(mzd_t* res, mzd_t *val, unsigned count, word carry) {
 }
 
 word mzd_shift_left(mzd_t* res, mzd_t *val, unsigned count, word carry) {
+  if(!count) {
+    mzd_copy(res, val);
+    return 0;
+  }
   word prev = 0;
 
   for(int i = 0 ; i < val->ncols / (8 * sizeof(word)); i++) {

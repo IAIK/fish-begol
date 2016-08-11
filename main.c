@@ -174,7 +174,6 @@ int verify(lowmc_t *lowmc, mzd_t *p, mzd_t *c, proof_t *prf) {
   clock_t deltaView = clock() - beginView;
   printf("Reconstructing output views   %4lums\n", deltaView * 1000 / CLOCKS_PER_SEC);
 
-
   clock_t beginViewVrfy = clock();
   mzd_t **rv[2];
   int view_verify_status = 0;

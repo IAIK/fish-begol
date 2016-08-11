@@ -3,6 +3,8 @@
 
 #include "m4ri/m4ri.h" 
 
+void prepareMasks(mzd_t *first, mzd_t *second, mzd_t *third, mzd_t *mask, rci_t n, rci_t m);
+
 /**
  * Represents the LowMC parameters as in https://bitbucket.org/malb/lowmc-helib/src,
  * with the difference that key in a separate struct
