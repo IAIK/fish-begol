@@ -48,6 +48,7 @@ mzd_t **mpc_and(mzd_t **res, mzd_t **first, mzd_t **second, mzd_t **r, view_t *v
   mzd_t** v = mpc_init_empty_share_vector(first[0]->ncols, sc);
   mpc_shift_right(v, res, viewshift, 0, sc);
   mpc_xor(views[*i].s, views[*i].s, v, sc);
+  mpc_free(v, sc);
   return res;
 }
 

@@ -52,6 +52,22 @@ int _mpc_sbox_layer_bitsliced(mzd_t **out, mzd_t **in, rci_t m, view_t *views, i
   mpc_xor(out, out, x0r, sc);
   mpc_xor(out, out, x1r, sc);
 
+  mpc_free(x0m, sc);
+  mpc_free(x1m, sc);
+  mpc_free(x2m, sc);
+  mpc_free(r0m, sc);
+  mpc_free(r1m, sc);
+  mpc_free(r2m, sc);
+  mpc_free(x0s, sc);
+  mpc_free(r0s, sc);
+  mpc_free(x1s, sc);
+  mpc_free(r1s, sc);
+  mpc_free(t0, sc);
+  mpc_free(t1, sc);
+  mpc_free(t2, sc);
+  mpc_free(x0r, sc);
+  mpc_free(x1r, sc);
+  
   (*i)++;
   return 0;
 }
