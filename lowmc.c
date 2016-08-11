@@ -2,25 +2,18 @@
 #include "mzd_additional.h"
 #include "lowmc_pars.h"
 
-void sbox_layer_bitsliced(mzd_t *out, mzd_t *in, rci_t m) {
+void sbox_layer_bitsliced(mzd_t *out, mzd_t *in, rci_t m, mask_t *mask) {
   if(in->ncols - 3 * m < 2) {
     printf("Bitsliced implementation requires in->ncols - 3 * m >= 2\n");
     return;
   }
 
   mzd_copy(out, in);
-   
-  mzd_t *x0   = mzd_init(1, out->ncols);
-  mzd_t *x1   = mzd_init(1, out->ncols);
-  mzd_t *x2   = mzd_init(1, out->ncols);
-  mzd_t *mask = mzd_init(1, out->ncols);
-  prepareMasks(x0, x1, x2, mask, out->ncols, m);
+  mzd_and(out, out, mask->mask);
 
-  mzd_and(out, out, mask);
-
-  mzd_t *x0m  = mzd_and(0, x0, in);
-  mzd_t *x1m  = mzd_and(0, x1, in);   
-  mzd_t *x2m  = mzd_and(0, x2, in);   
+  mzd_t *x0m  = mzd_and(0, mask->x0, in);
+  mzd_t *x1m  = mzd_and(0, mask->x1, in);   
+  mzd_t *x2m  = mzd_and(0, mask->x2, in);   
 
   mzd_t *x0s  = mzd_init(1, out->ncols);
   mzd_shift_left(x0s, x0m, 2, 0);
@@ -74,14 +67,22 @@ mzd_t *lowmc_call(lowmc_t *lowmc, lowmc_key_t *lowmc_key, mzd_t *p) {
   mzd_copy(x, p);
   mzd_addmul(x, lowmc_key->key[0], lowmc->KMatrix[0], 0);
 
+  mask_t *mask = prepareMasks(0, lowmc->n, lowmc->m);
+
   for(unsigned i=0; i<lowmc->r; i++) {
-    sbox_layer_bitsliced(y, x, lowmc->m);
+    //sbox_layer(y, x, lowmc->m);
+    sbox_layer_bitsliced(y, x, lowmc->m, mask);
     mzd_mul(z, y, lowmc->LMatrix[i], 0);
     mzd_add(z, z, lowmc->Constants[i]);
     mzd_addmul(z, lowmc_key->key[0], lowmc->KMatrix[i+1], 0);
     mzd_copy(x, z);
   }
  
+  mzd_free(mask->x0);
+  mzd_free(mask->x1);
+  mzd_free(mask->x2);
+  mzd_free(mask->mask);
+
   mzd_copy(c, x);
 
   mzd_free(z);

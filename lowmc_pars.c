@@ -4,18 +4,27 @@
 #include "mzd_additional.h"
 #include "m4ri/m4ri.h"
 
-void prepareMasks(mzd_t *first, mzd_t *second, mzd_t *third, mzd_t *mask, rci_t n, rci_t m) {
+mask_t *prepareMasks(mask_t *mask, rci_t n, rci_t m) {
   if(0 != n % (8 * sizeof(word)))
-    return;
+    return 0;
+  if(mask == 0) 
+    mask = (mask_t*)malloc(sizeof(mask_t));
+
+  mask->x0   = mzd_init(1, n);
+  mask->x1   = mzd_init(1, n);
+  mask->x2   = mzd_init(1, n);
+  mask->mask = mzd_init(1, n);
 
   for(int i = 0 ; i < n - 3 * m ; i++) {
-    mzd_write_bit(mask, 0, i, 1);
+    mzd_write_bit(mask->mask, 0, i, 1);
   }
   for(unsigned i = n - 3 * m; i < n ; i+=3) {
-    mzd_write_bit(first, 0, i, 1);
+    mzd_write_bit(mask->x0, 0, i, 1);
   }
-  mzd_shift_left(second, first, 1, 0);
-  mzd_shift_left(third, first, 2, 0);
+  mzd_shift_left(mask->x1, mask->x0, 1, 0);
+  mzd_shift_left(mask->x2, mask->x0, 2, 0);
+
+  return mask;
 }
 
 

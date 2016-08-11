@@ -3,8 +3,6 @@
 
 #include "m4ri/m4ri.h" 
 
-void prepareMasks(mzd_t *first, mzd_t *second, mzd_t *third, mzd_t *mask, rci_t n, rci_t m);
-
 /**
  * Represents the LowMC parameters as in https://bitbucket.org/malb/lowmc-helib/src,
  * with the difference that key in a separate struct
@@ -25,6 +23,13 @@ typedef struct {
   mzd_t **key;
   unsigned sharecount;
 } lowmc_key_t;
+
+typedef struct {
+  mzd_t *x0;
+  mzd_t *x1;
+  mzd_t *x2;
+  mzd_t *mask;
+} mask_t;
 
 /**
  * Samples the L matrix for the LowMC instance
@@ -69,5 +74,7 @@ void lowmc_free(lowmc_t *lowmc, lowmc_key_t *lowmc_key);
  * \param lowmc the LowMC parameters
  */
 void lowmc_secret_share(lowmc_t *lowmc, lowmc_key_t *lowmc_key);
+
+mask_t *prepareMasks(mask_t *mask, rci_t n, rci_t m);
 
 #endif

@@ -4,30 +4,21 @@
 #include "lowmc_pars.h"
 
 int _mpc_sbox_layer_bitsliced(mzd_t **out, mzd_t **in, rci_t m, view_t *views, int *i, mzd_t **rvec, unsigned sc, 
-    mzd_t** (*andPtr)(mzd_t **, mzd_t **, mzd_t **, mzd_t**, view_t*, int*, unsigned, unsigned)) {
+    mzd_t** (*andPtr)(mzd_t **, mzd_t **, mzd_t **, mzd_t**, view_t*, int*, unsigned, unsigned), mask_t *mask) {
   if(in[0]->ncols - 3 * m < 2) {
     printf("Bitsliced implementation requires in->ncols - 3 * m >= 2\n");
     return 0;
   }
 
   mpc_copy(out, in, sc);
-  //mpc_copy(views[*i].s, in, sc);
-   
-  mzd_t *x0   = mzd_init(1, out[0]->ncols);
-  mzd_t *x1   = mzd_init(1, out[0]->ncols);
-  mzd_t *x2   = mzd_init(1, out[0]->ncols);
-  mzd_t *mask = mzd_init(1, out[0]->ncols);
-  prepareMasks(x0, x1, x2, mask, out[0]->ncols, m);
+  mpc_and_const(out, out, mask->mask, sc);
 
-  mpc_and_const(out, out, mask, sc);
-  //mpc_and_const(views[*i].s, views[*i].s, mask, sc);
-
-  mzd_t **x0m  = mpc_and_const(0, in, x0, sc);
-  mzd_t **x1m  = mpc_and_const(0, in, x1, sc);   
-  mzd_t **x2m  = mpc_and_const(0, in, x2, sc);   
-  mzd_t **r0m  = mpc_and_const(0, rvec, x0, sc);
-  mzd_t **r1m  = mpc_and_const(0, rvec, x1, sc);   
-  mzd_t **r2m  = mpc_and_const(0, rvec, x2, sc);   
+  mzd_t **x0m  = mpc_and_const(0, in, mask->x0, sc);
+  mzd_t **x1m  = mpc_and_const(0, in, mask->x1, sc);   
+  mzd_t **x2m  = mpc_and_const(0, in, mask->x2, sc);   
+  mzd_t **r0m  = mpc_and_const(0, rvec, mask->x0, sc);
+  mzd_t **r1m  = mpc_and_const(0, rvec, mask->x1, sc);   
+  mzd_t **r2m  = mpc_and_const(0, rvec, mask->x2, sc);   
 
   mzd_t **x0s  = mpc_init_empty_share_vector(out[0]->ncols, sc);
   mpc_shift_left(x0s, x0m, 2, 0, sc);
@@ -169,11 +160,13 @@ mzd_t **_mpc_lowmc_call_bitsliced(lowmc_t *lowmc, lowmc_key_t *lowmc_key, mzd_t 
   mpc_const_mat_mul(x, lowmc->KMatrix[0], lowmc_key->key, sc);
   mpc_const_add(x, x, p, sc, ch);
 
+  mask_t *mask = prepareMasks(0, lowmc->n, lowmc->m);
+
   mzd_t *r[3];
   for(unsigned i = 0 ; i < lowmc->r ; i++) {  
     for(unsigned j = 0 ; j < sc ; j++)
       r[j] = rvec[j][i]; 
-    if(_mpc_sbox_layer_bitsliced(y, x, lowmc->m, views, &vcnt, r, sc, andPtr)) {
+    if(_mpc_sbox_layer_bitsliced(y, x, lowmc->m, views, &vcnt, r, sc, andPtr, mask)) {
       *status = -1;
       return 0;
     }
@@ -187,6 +180,11 @@ mzd_t **_mpc_lowmc_call_bitsliced(lowmc_t *lowmc, lowmc_key_t *lowmc_key, mzd_t 
   }
   mpc_copy(c, x, sc);
   mpc_copy(views[vcnt].s, c, sc); 
+
+  mzd_free(mask->x0);
+  mzd_free(mask->x1);
+  mzd_free(mask->x2);
+  mzd_free(mask->mask);
 
   mpc_free(z, sc);
   mpc_free(y, sc);
