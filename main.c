@@ -215,7 +215,7 @@ int verify(lowmc_t *lowmc, mzd_t *p, mzd_t *c, proof_t *prf) {
   if(reconstruct_status)
     printf("[FAIL] MPC ciphertext does not match reference implementation.\n");
   else
-    printf("[ OK ] MPC ciphertext match.\n");
+    printf("[ OK ] MPC ciphertext matches.\n");
 
   if(view_verify_status)
     printf("[FAIL] Proof does not match reconstructed views.\n");
