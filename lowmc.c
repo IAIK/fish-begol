@@ -11,25 +11,19 @@ void prepareMasks(mzd_t *first, mzd_t *second, mzd_t *third, mzd_t *mask, rci_t 
   }
   for(unsigned i = n - 3 * m; i < n ; i+=3) {
     mzd_write_bit(first,   0, i    , 1);
-    mzd_write_bit(second,  0, i + 1, 1);
-    mzd_write_bit(third,   0, i + 2, 1);
   }
+  mzd_shift_left(second, first, 1, 0);
+  mzd_shift_left(third, first, 2, 0);
 }
 
-word mzd_shift_right(mzd_t* res, mzd_t *val, unsigned count) {
-  word prev = 0;
-  if(res == 0) 
-    res = mzd_init(1, val->ncols);
-  
-  for(int i = 0 ; i < val->ncols / (8 * sizeof(word)); i++) {
-    res->rows[0][i] = (val->rows[0][i] >> count) | prev;
-    prev = val->rows[0][i] << (8 * sizeof(word) - count);
-  }
 
-  return prev;
-}
 
 void sbox_layer_bitsliced(mzd_t *out, mzd_t *in, rci_t m) {
+  if(in->ncols - 3 * m < 2) {
+    printf("Bitsliced implementation requires in->ncols - 3 * m >= 2\n");
+    return;
+  }
+
   mzd_copy(out, in);
    
   mzd_t *x0   = mzd_init(1, out->ncols);
@@ -38,36 +32,39 @@ void sbox_layer_bitsliced(mzd_t *out, mzd_t *in, rci_t m) {
   mzd_t *mask = mzd_init(1, out->ncols);
   prepareMasks(x0, x1, x2, mask, out->ncols, m);
 
-  word prev0 = 0, prev1 = 0;
-  for(unsigned i = 1 ; i < out->ncols / (8 * sizeof(word)) ; i++) {
-    word x00 = in->rows[0][i] & x0->rows[0][i];
-    word x10 = in->rows[0][i] & x1->rows[0][i];
-    word x20 = in->rows[0][i] & x2->rows[0][i]; 
-    x10 >>= 1;
-    x20 >>= 2;  
- 
-    if(i < out->ncols / (8 * sizeof(word)) - 1) {
-      if(x0->rows[0][i] & 0x8000000000000000) {
-        if(in->rows[0][i + 1] & 0x01)
-          x10 |= 0x8000000000000000;
-        if(in->rows[0][i + 1] & 0x02)
-          x20 |= 0x8000000000000000;
-      } else if(x0->rows[0][i] & 0x4000000000000000) {
-        if(in->rows[0][i + 1] & 0x01)
-          x20 |= 0x4000000000000000;
-      }
-    }
+  mzd_and(out, out, mask);
 
-    word t0 = (x10 & x20) ^ x00;
-    word t1 = (x00 & x20) ^ x00 ^ x10;
-    word t2 = (x00 & x10) ^ x00 ^ x10 ^ x20;
+  mzd_t *x0m  = mzd_and(0, x0, in);
+  mzd_t *x1m  = mzd_and(0, x1, in);   
+  mzd_t *x2m  = mzd_and(0, x2, in);   
+
+  mzd_t *x0s  = mzd_init(1, out->ncols);
+  mzd_shift_left(x0s, x0m, 2, 0);
+  mzd_t *x1s  = mzd_init(1, out->ncols);
+  mzd_shift_left(x1s, x1m, 1, 0);
  
-    out->rows[0][i] &= mask->rows[0][i];
-    out->rows[0][i] ^= t0 ^ (t1 << 1) ^ (t2 << 2) ^ prev0 ^ prev1;  
-   
-    prev0 = (t1 & 0x8000000000000000) ? 1 : 0;
-    prev1 = (t2 & 0x8000000000000000) ? 2 : (t2 & 0x4000000000000000) ? 1 : 0;
-  } 
+  mzd_t *t0 = mzd_and(0, x1s, x2m);
+  mzd_t *t1 = mzd_and(0, x0s, x2m);
+  mzd_t *t2 = mzd_and(0, x0s, x1s);
+
+  mzd_xor(t0, t0, x0s);
+ 
+  mzd_xor(t1, t1, x0s);
+  mzd_xor(t1, t1, x1s);
+
+  mzd_xor(t2, t2, x0s);
+  mzd_xor(t2, t2, x1s);
+  mzd_xor(t2, t2, x2m);
+
+
+  mzd_t *x0r = mzd_init(1, out->ncols);
+  mzd_t *x1r = mzd_init(1, out->ncols);
+  mzd_shift_right(x0r, t0, 2, 0);
+  mzd_shift_right(x1r, t1, 1, 0);
+
+  mzd_xor(out, out, t2);
+  mzd_xor(out, out, x0r);
+  mzd_xor(out, out, x1r);
 }
 
 void sbox_layer(mzd_t *out, mzd_t *in, rci_t m) {

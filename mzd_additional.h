@@ -12,4 +12,12 @@ mzd_t *mzd_init_random_vector(rci_t n);
 
 mzd_t **mzd_init_random_vectors_from_seed(unsigned char key[16], rci_t n, unsigned count);
 
+word mzd_shift_right(mzd_t* res, mzd_t *val, unsigned count, word carry);
+
+word mzd_shift_left(mzd_t* res, mzd_t *val, unsigned count, word carry);
+
+mzd_t *mzd_and(mzd_t *res, mzd_t *first, mzd_t *second);
+
+mzd_t *mzd_xor(mzd_t *res, mzd_t *first, mzd_t *second);
+
 #endif
