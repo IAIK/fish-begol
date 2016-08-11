@@ -26,3 +26,59 @@ mzd_t **mzd_init_random_vectors_from_seed(unsigned char key[16], rci_t n, unsign
   
   return vectors;
 }
+
+word mzd_shift_right(mzd_t* res, mzd_t *val, unsigned count, word carry) {
+  word prev = 0;
+
+  for(int i = 0 ; i < val->ncols / (8 * sizeof(word)); i++) {
+    if(i < val->ncols / (8 * sizeof(word)) - 1)
+      prev = val->rows[0][i + 1] << (8 * sizeof(word) - count);
+    else 
+      prev = 0;
+    res->rows[0][i] = (val->rows[0][i] >> count) | prev;
+  }
+
+  
+  if(carry == 0)
+    return (val->rows[0][0] << (8 * sizeof(word) - count)) >> (8 * sizeof(word) - count);
+  else {
+    res->rows[0][(res->ncols / (8 * sizeof(word))) - 1] |= (carry << (8 * sizeof(word) - count));
+    return 0;
+  }
+}
+
+word mzd_shift_left(mzd_t* res, mzd_t *val, unsigned count, word carry) {
+  word prev = 0;
+
+  for(int i = 0 ; i < val->ncols / (8 * sizeof(word)); i++) {
+    res->rows[0][i] = (val->rows[0][i] << count) | prev;
+    prev = val->rows[0][i] >> (8 * sizeof(word) - count);
+  }
+
+  if(carry == 0)
+    return prev; 
+  else {
+    res->rows[0][0] |= carry;
+    return 0;
+  } 
+}
+
+mzd_t *mzd_and(mzd_t *res, mzd_t *first, mzd_t *second) {
+  if(res == 0) {
+    res = mzd_init(1, first->ncols);
+  }
+  for(int i = 0 ; i < first->ncols / (8 * sizeof(word)); i++) {
+    res->rows[0][i] = first->rows[0][i] & second->rows[0][i];
+  }
+  return res;
+}
+
+mzd_t *mzd_xor(mzd_t *res, mzd_t *first, mzd_t *second) {
+  if(res == 0) {
+    res = mzd_init(1, first->ncols);
+  }
+  for(int i = 0 ; i < first->ncols / (8 * sizeof(word)); i++) {
+    res->rows[0][i] = first->rows[0][i] ^ second->rows[0][i];
+  }
+  return res;
+}
