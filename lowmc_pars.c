@@ -4,7 +4,7 @@
 #include "mzd_additional.h"
 #include "m4ri/m4ri.h"
 
-mask_t *prepareMasks(mask_t *mask, rci_t n, rci_t m) {
+mask_t *prepare_masks(mask_t *mask, rci_t n, rci_t m) {
   if(0 != n % (8 * sizeof(word)))
     return 0;
   if(mask == 0) 

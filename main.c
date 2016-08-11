@@ -90,6 +90,7 @@ proof_t *prove(lowmc_t *lowmc, lowmc_key_t *lowmc_key, mzd_t *p) {
   proof->keys = (unsigned char***)malloc(NUM_ROUNDS * sizeof(unsigned char**));
   memcpy(proof->hashes, hashes, NUM_ROUNDS * 3 * SHA256_DIGEST_LENGTH * sizeof(char));
 
+  #pragma omp parallel for
   for(unsigned i = 0 ; i < NUM_ROUNDS ; i++) { 
     int a = ch[i];
     int b = (a + 1) % 3;

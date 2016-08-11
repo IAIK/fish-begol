@@ -67,7 +67,7 @@ mzd_t *lowmc_call(lowmc_t *lowmc, lowmc_key_t *lowmc_key, mzd_t *p) {
   mzd_copy(x, p);
   mzd_addmul(x, lowmc_key->key[0], lowmc->KMatrix[0], 0);
 
-  mask_t *mask = prepareMasks(0, lowmc->n, lowmc->m);
+  mask_t *mask = prepare_masks(0, lowmc->n, lowmc->m);
 
   for(unsigned i=0; i<lowmc->r; i++) {
     //sbox_layer(y, x, lowmc->m);

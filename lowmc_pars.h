@@ -75,6 +75,6 @@ void lowmc_free(lowmc_t *lowmc, lowmc_key_t *lowmc_key);
  */
 void lowmc_secret_share(lowmc_t *lowmc, lowmc_key_t *lowmc_key);
 
-mask_t *prepareMasks(mask_t *mask, rci_t n, rci_t m);
+mask_t *prepare_masks(mask_t *mask, rci_t n, rci_t m);
 
 #endif

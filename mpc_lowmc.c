@@ -155,7 +155,7 @@ mzd_t **_mpc_lowmc_call_bitsliced(lowmc_t *lowmc, lowmc_key_t *lowmc_key, mzd_t 
   mpc_const_mat_mul(x, lowmc->KMatrix[0], lowmc_key->key, sc);
   mpc_const_add(x, x, p, sc, ch);
 
-  mask_t *mask = prepareMasks(0, lowmc->n, lowmc->m);
+  mask_t *mask = prepare_masks(0, lowmc->n, lowmc->m);
   sbox_vars_t *vars = sbox_vars_init(0, lowmc->n, sc);
   
   mzd_t **t = mpc_init_empty_share_vector(lowmc->n, sc);
