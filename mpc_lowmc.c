@@ -47,8 +47,6 @@ int _mpc_sbox_layer_bitsliced(mzd_t **out, mzd_t **in, rci_t m, view_t *views, i
   mpc_xor(out, out, vars->x0s, sc);
   mpc_xor(out, out, vars->x1s, sc);
 
-  
-  
   (*i)++;
   return 0;
 }
@@ -159,6 +157,8 @@ mzd_t **_mpc_lowmc_call_bitsliced(lowmc_t *lowmc, lowmc_key_t *lowmc_key, mzd_t 
 
   mask_t *mask = prepareMasks(0, lowmc->n, lowmc->m);
   sbox_vars_t *vars = sbox_vars_init(0, lowmc->n, sc);
+  
+  mzd_t **t = mpc_init_empty_share_vector(lowmc->n, sc);
 
   mzd_t *r[3];
   for(unsigned i = 0 ; i < lowmc->r ; i++) {  
@@ -170,12 +170,11 @@ mzd_t **_mpc_lowmc_call_bitsliced(lowmc_t *lowmc, lowmc_key_t *lowmc_key, mzd_t 
     }
     mpc_const_mat_mul(z, lowmc->LMatrix[i], y, sc);
     mpc_const_add(z, z, lowmc->Constants[i], sc, ch);
-    mzd_t **t = mpc_init_empty_share_vector(lowmc->n, sc);
     mpc_const_mat_mul(t, lowmc->KMatrix[i+1], lowmc_key->key, sc);
     mpc_add(z, z, t, sc);
-    mpc_free(t, sc);
     mpc_copy(x, z, sc);
   }
+  mpc_free(t, sc);
   mpc_copy(c, x, sc);
   mpc_copy(views[vcnt].s, c, sc); 
 
