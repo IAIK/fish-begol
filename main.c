@@ -9,6 +9,7 @@
 #include "openssl/sha.h"
 #include "randomness.h"
 #include "hashing_util.h"
+#include "multithreading.h"
 
 proof_t *prove(lowmc_t *lowmc, lowmc_key_t *lowmc_key, mzd_t *p) { 
   printf("Prove:\n");
@@ -227,6 +228,7 @@ int verify(lowmc_t *lowmc, mzd_t *p, mzd_t *c, proof_t *prf) {
 
 int main(int argc, char **argv) {
   init_EVP();
+  openmp_thread_setup();
   
   printf("Setup:\n");
   
@@ -258,6 +260,7 @@ int main(int argc, char **argv) {
   mzd_free(p);
   mzd_free(c);
 
+  openmp_thread_cleanup();
   cleanup_EVP();
   return 0;
 }
