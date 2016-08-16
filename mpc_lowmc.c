@@ -26,24 +26,23 @@ int _mpc_sbox_layer_bitsliced(mzd_t **out, mzd_t **in, rci_t m, view_t *views, i
   mpc_shift_left(vars->x1s, vars->x1m, 1, 0, sc);
   mpc_shift_left(vars->r1s, vars->r1m, 1, 0, sc);
 
-  mzd_t **t2 = andPtr(vars->r0m, vars->x0s, vars->x1s, vars->r2m, views, i, 0, sc, vars->v);  
-  mzd_t **t0 = andPtr(vars->r2m, vars->x1s, vars->x2m, vars->r0s, views, i, 2, sc, vars->v);
-  mzd_t **t1 = andPtr(vars->r1m, vars->x0s, vars->x2m, vars->r1s, views, i, 1, sc, vars->v);
+  andPtr(vars->r0m, vars->x0s, vars->x1s, vars->r2m, views, i, 0, sc, vars->v);  
+  andPtr(vars->r2m, vars->x1s, vars->x2m, vars->r0s, views, i, 2, sc, vars->v);
+  andPtr(vars->r1m, vars->x0s, vars->x2m, vars->r1s, views, i, 1, sc, vars->v);
 
-
-  mpc_xor(t0, t0, vars->x0s, sc);
+  mpc_xor(vars->r2m, vars->r2m, vars->x0s, sc);
  
-  mpc_xor(t1, t1, vars->x0s, sc);
-  mpc_xor(t1, t1, vars->x1s, sc);
+  mpc_xor(vars->r1m, vars->r1m, vars->x0s, sc);
+  mpc_xor(vars->r1m, vars->r1m, vars->x1s, sc);
 
-  mpc_xor(t2, t2, vars->x0s, sc);
-  mpc_xor(t2, t2, vars->x1s, sc);
-  mpc_xor(t2, t2, vars->x2m, sc);
+  mpc_xor(vars->r0m, vars->r0m, vars->x0s, sc);
+  mpc_xor(vars->r0m, vars->r0m, vars->x1s, sc);
+  mpc_xor(vars->r0m, vars->r0m, vars->x2m, sc);
 
-  mpc_shift_right(vars->x0s, t0, 2, 0, sc);
-  mpc_shift_right(vars->x1s, t1, 1, 0, sc);
+  mpc_shift_right(vars->x0s, vars->r2m, 2, 0, sc);
+  mpc_shift_right(vars->x1s, vars->r1m, 1, 0, sc);
 
-  mpc_xor(out, out, t2, sc);
+  mpc_xor(out, out, vars->r0m, sc);
   mpc_xor(out, out, vars->x0s, sc);
   mpc_xor(out, out, vars->x1s, sc);
 
