@@ -4,7 +4,7 @@
 #include "lowmc_pars.h"
 
 int _mpc_sbox_layer_bitsliced(mzd_t **out, mzd_t **in, rci_t m, view_t *views, int *i, mzd_t **rvec, unsigned sc, 
-    mzd_t** (*andPtr)(mzd_t **, mzd_t **, mzd_t **, mzd_t**, view_t*, int*, unsigned, unsigned, mzd_t**), mask_t *mask, sbox_vars_t *vars) {
+    int (*andPtr)(mzd_t **, mzd_t **, mzd_t **, mzd_t**, view_t*, int*, mzd_t*, unsigned, unsigned, mzd_t**), mask_t *mask, sbox_vars_t *vars) {
   if(in[0]->ncols - 3 * m < 2) {
     printf("Bitsliced implementation requires in->ncols - 3 * m >= 2\n");
     return 0;
@@ -26,9 +26,11 @@ int _mpc_sbox_layer_bitsliced(mzd_t **out, mzd_t **in, rci_t m, view_t *views, i
   mpc_shift_left(vars->x1s, vars->x1m, 1, 0, sc);
   mpc_shift_left(vars->r1s, vars->r1m, 1, 0, sc);
 
-  andPtr(vars->r0m, vars->x0s, vars->x1s, vars->r2m, views, i, 0, sc, vars->v);  
-  andPtr(vars->r2m, vars->x1s, vars->x2m, vars->r0s, views, i, 2, sc, vars->v);
-  andPtr(vars->r1m, vars->x0s, vars->x2m, vars->r1s, views, i, 1, sc, vars->v);
+  if(andPtr(vars->r0m, vars->x0s, vars->x1s, vars->r2m, views, i, mask->x2, 0, sc, vars->v) ||
+    andPtr(vars->r2m, vars->x1s, vars->x2m, vars->r0s, views, i, mask->x2, 2, sc, vars->v) ||
+  andPtr(vars->r1m, vars->x0s, vars->x2m, vars->r1s, views, i, mask->x2, 1, sc, vars->v)) {
+    return -1;
+  }
 
   mpc_xor(vars->r2m, vars->r2m, vars->x0s, sc);
  
@@ -138,7 +140,7 @@ mzd_t **_mpc_lowmc_call(lowmc_t *lowmc, lowmc_key_t *lowmc_key, mzd_t *p, view_t
 }
 
 mzd_t **_mpc_lowmc_call_bitsliced(lowmc_t *lowmc, lowmc_key_t *lowmc_key, mzd_t *p, view_t *views, mzd_t ***rvec, unsigned sc, unsigned ch, 
-    mzd_t** (*andPtr)(mzd_t **, mzd_t **, mzd_t **, mzd_t**, view_t*, int*, unsigned, unsigned, mzd_t**), int *status) {
+    int (*andPtr)(mzd_t **, mzd_t **, mzd_t **, mzd_t**, view_t*, int*, mzd_t*, unsigned, unsigned, mzd_t**), int *status) {
   int vcnt = 0;
   
   for(unsigned i = 0 ; i < sc ; i++) 
@@ -207,8 +209,8 @@ mzd_t **mpc_lowmc_call(lowmc_t *lowmc, lowmc_key_t *lowmc_key, mzd_t *p, view_t 
 }
 
 mzd_t **_mpc_lowmc_call_verify(lowmc_t *lowmc, lowmc_key_t *lowmc_key, mzd_t *p, view_t *views, mzd_t ***rvec, int *status, int c) {
-  return _mpc_lowmc_call(lowmc, lowmc_key, p, views, rvec, 2, c, &mpc_and_bit_verify, status); 
-  //return _mpc_lowmc_call_bitsliced(lowmc, lowmc_key, p, views, rvec, 2, 0, &mpc_and_verify, 0); 
+  //return _mpc_lowmc_call(lowmc, lowmc_key, p, views, rvec, 2, c, &mpc_and_bit_verify, status); 
+  return _mpc_lowmc_call_bitsliced(lowmc, lowmc_key, p, views, rvec, 2, c, &mpc_and_verify, status); 
 }
 
 int mpc_lowmc_verify(lowmc_t *lowmc, mzd_t *p, view_t *views, mzd_t ***rvec, int c) {

@@ -191,8 +191,9 @@ int verify(lowmc_t *lowmc, mzd_t *p, mzd_t *c, proof_t *prf) {
 
     if(mpc_lowmc_verify(lowmc, p, prf->views[i], rv, ch[i]) || 
         mzd_cmp(c_ch[0], prf->views[i][1 + lowmc->r].s[0]) || 
-        mzd_cmp(c_ch[1], prf->views[i][1 + lowmc->r].s[1]))
+        mzd_cmp(c_ch[1], prf->views[i][1 + lowmc->r].s[1])) {
       view_verify_status = -1;
+    }
 
     mzd_free(c_ch[0]);
     mzd_free(c_ch[1]);

@@ -8,6 +8,12 @@ void mpc_set(mzd_t **res, mzd_t **src, unsigned sc) {
   } 
 }
 
+void mpc_clear(mzd_t **res, unsigned sc) {
+  for(int i = 0 ; i < sc ; i++) 
+    for(int j = 0 ; j < res[i]->ncols / (8 * sizeof(word)); j++) 
+    res[i]->rows[0][j] = 0;
+}
+
 void mpc_shift_right(mzd_t**res, mzd_t **val, unsigned count, word carry, unsigned sc) {
   for(unsigned i = 0 ; i < sc ; i++) 
     mzd_shift_right(res[i], val[i], count, 0);
@@ -34,7 +40,7 @@ mzd_t **mpc_xor(mzd_t **res, mzd_t **first, mzd_t **second, unsigned sc) {
   return res;
 }
 
-mzd_t **mpc_and(mzd_t **res, mzd_t **first, mzd_t **second, mzd_t **r, view_t *views, int *i, unsigned viewshift,  unsigned sc, mzd_t** buffer) {
+int mpc_and(mzd_t **res, mzd_t **first, mzd_t **second, mzd_t **r, view_t *views, int *i, mzd_t* mask, unsigned viewshift,  unsigned sc, mzd_t** buffer) {
   if(res == 0) 
     res = (mzd_t**)calloc(sizeof(mzd_t*), 3);
   for(unsigned m = 0 ; m < sc ; m++) {
@@ -52,16 +58,17 @@ mzd_t **mpc_and(mzd_t **res, mzd_t **first, mzd_t **second, mzd_t **r, view_t *v
     mzd_free(b);
     mzd_free(c);
   }
+
   mpc_shift_right(buffer, res, viewshift, 0, sc);
   mpc_xor(views[*i].s, views[*i].s, buffer, sc);
-  return res;
+  return 0;
 }
 
-mzd_t **mpc_and_verify(mzd_t **res, mzd_t **first, mzd_t **second, mzd_t **r, view_t *views, int *i, unsigned viewshift,  unsigned sc, mzd_t** buffer) {
+int mpc_and_verify(mzd_t **res, mzd_t **first, mzd_t **second, mzd_t **r, view_t *views, int *i, mzd_t* mask, unsigned viewshift,  unsigned sc, mzd_t** buffer) {
   if(res == 0) 
     res = (mzd_t**)calloc(sizeof(mzd_t*), 3);
   for(unsigned m = 0 ; m < sc - 1; m++) {
-    unsigned j = m + 1;
+    unsigned j = m + 1; 
     res[m] = mzd_and(res[m], first[m], second[m]);
     
     mzd_t *b = mzd_and(0, first[j], second[m]);
@@ -75,14 +82,19 @@ mzd_t **mpc_and_verify(mzd_t **res, mzd_t **first, mzd_t **second, mzd_t **r, vi
     mzd_free(b);
     mzd_free(c);
   }
+
+  for(unsigned m = 0 ; m < sc - 1; m++) {
+    mzd_shift_left(buffer[m], views[*i].s[m], viewshift, 0);
+    mzd_and(buffer[m], buffer[m], res[m]);
+    if(mzd_cmp(buffer[m], res[m])) {
+      return -1;
+    }
+  }
   
-  mpc_shift_right(buffer, res, viewshift, 0, sc);
-  mpc_xor(views[*i].s, views[*i].s, buffer, sc);
-  mzd_print(views[*i].s[0]);
- 
-  // TODO views ^ mask + compare first i views 
-  mzd_copy(res[sc - 1], views[*i].s[sc - 1]);
-  return res;
+  mzd_shift_left(res[sc - 1], views[*i].s[sc - 1], viewshift, 0);
+  mzd_and(res[sc - 1], res[sc - 1], mask);
+
+  return 0;
 }
 
 int mpc_and_bit(BIT* a, BIT* b, BIT* r, view_t *views, int *i, unsigned bp, unsigned sc) {
