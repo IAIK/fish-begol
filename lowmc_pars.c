@@ -94,6 +94,8 @@ lowmc_key_t *lowmc_keygen(lowmc_t *lowmc) {
   lowmc_key->key = (mzd_t**)malloc(sizeof(mzd_t*));
   lowmc_key->key[0] = mzd_init_random_vector(lowmc->k);
   lowmc_key->sharecount = 1;
+
+  return lowmc_key;
 }
 
 void lowmc_free(lowmc_t *lowmc, lowmc_key_t *lowmc_key) {
