@@ -215,7 +215,7 @@ mzd_t **_mpc_lowmc_call_verify(lowmc_t *lowmc, lowmc_key_t *lowmc_key, mzd_t *p,
 
 int mpc_lowmc_verify(lowmc_t *lowmc, mzd_t *p, view_t *views, mzd_t ***rvec, int c) {
   //initialize two key shares from v0
-  lowmc_key_t *lowmc_key = (lowmc_key_t*)malloc(sizeof(lowmc_key));
+  lowmc_key_t *lowmc_key = (lowmc_key_t*)malloc(sizeof(lowmc_key_t));
   lowmc_key->key = (mzd_t**)malloc(2 * sizeof(mzd_t*));
   lowmc_key->key[0] = mzd_init(1, lowmc->k);
   lowmc_key->key[1] = mzd_init(1, lowmc->k);
