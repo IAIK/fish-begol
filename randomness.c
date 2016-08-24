@@ -40,16 +40,13 @@ void handleErrors(void)
 }
 
 
-EVP_CIPHER_CTX _setupAES(unsigned char key[16]) {
-  EVP_CIPHER_CTX ctx;
-  EVP_CIPHER_CTX_init(&ctx);
+static void _setupAES(EVP_CIPHER_CTX* ctx, unsigned char key[16]) {
+  EVP_CIPHER_CTX_init(ctx);
 
   /* A 128 bit IV */
   unsigned char *iv = (unsigned char *)"01234567890123456";
-  if(1 != EVP_EncryptInit_ex(&ctx, EVP_aes_128_ctr(), NULL, key, iv))
+  if(1 != EVP_EncryptInit_ex(ctx, EVP_aes_128_ctr(), NULL, key, iv))
     handleErrors();
-
-  return ctx;
 }
 
 void getRandomness(unsigned char key[16], unsigned char *randomness, unsigned count) {
@@ -57,12 +54,11 @@ void getRandomness(unsigned char key[16], unsigned char *randomness, unsigned co
     exit(-1);
 
   EVP_CIPHER_CTX ctx;
-  ctx = _setupAES(key);
-  unsigned char *plaintext =
-      (unsigned char *)"0000000000000000";
+  _setupAES(&ctx, key);
+  unsigned char plaintext[16] = { '0' };
   int len;
   for(int j = 0 ; j < count / 16 ; j++) {
-    if(1 != EVP_EncryptUpdate(&ctx, &randomness[j*16], &len, plaintext, strlen ((char *)plaintext)))
+    if(1 != EVP_EncryptUpdate(&ctx, &randomness[j*16], &len, plaintext, sizeof(plaintext)))
       handleErrors();
   }
   EVP_CIPHER_CTX_cleanup(&ctx);
