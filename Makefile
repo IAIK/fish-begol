@@ -1,9 +1,10 @@
 CC=gcc
 
-LDLIBS+=-lm4ri -lcrypto -lomp
+LDLIBS+=-lm4ri -lcrypto
 
-all: 
-	$(CC) *.c *.h $(LDLIBS) -o mpc_lowmc
+all:
+	$(CC) -std=c99 *.c $(LDLIBS) -o mpc_lowmc
+	$(CC) -std=c99 *.c $(LDLIBS) -o mpc_lowmc_openmp -fopenmp -DWITH_OPENMP
 
 clean:
-	rm -f *.o *.gch mpc_lowmc
+	rm -f *.o *.gch mpc_lowmc mpc_lowmc_openmp

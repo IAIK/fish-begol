@@ -1,9 +1,15 @@
 #include "multithreading.h"
 
+#ifdef WITH_OPENMP
+#include <openssl/crypto.h>
+#include <omp.h>
+
+static omp_lock_t *locks = NULL;
+
 /**
  * as in https://github.com/Sobuno/ZKBoo/blob/master/MPC_SHA256/shared.h
  */
-void openmp_locking_callback(int mode, int type, char *file, int line)
+static void openmp_locking_callback(int mode, int type, const char *file, int line)
 {
   if (mode & CRYPTO_LOCK)
   {
@@ -18,7 +24,7 @@ void openmp_locking_callback(int mode, int type, char *file, int line)
 /**
  * as in https://github.com/Sobuno/ZKBoo/blob/master/MPC_SHA256/shared.h
  */
-unsigned long openmp_thread_id(void)
+static unsigned long openmp_thread_id(void)
 {
   return (unsigned long)omp_get_thread_num();
 }
@@ -28,16 +34,14 @@ unsigned long openmp_thread_id(void)
  */
 void openmp_thread_setup(void)
 {
-  int i;
-
   locks = OPENSSL_malloc(CRYPTO_num_locks() * sizeof(omp_lock_t));
-  for (i=0; i<CRYPTO_num_locks(); i++)
+  for (int i=0; i<CRYPTO_num_locks(); i++)
   {
     omp_init_lock(&locks[i]);
   }
 
-  CRYPTO_set_id_callback((unsigned long (*)())openmp_thread_id);
-  CRYPTO_set_locking_callback((void (*)())openmp_locking_callback);
+  CRYPTO_set_id_callback(openmp_thread_id);
+  CRYPTO_set_locking_callback(openmp_locking_callback);
 }
 
 /**
@@ -45,11 +49,17 @@ void openmp_thread_setup(void)
  */
 void openmp_thread_cleanup(void)
 {
-  int i;
-
   CRYPTO_set_id_callback(NULL);
   CRYPTO_set_locking_callback(NULL);
-  for (i=0; i<CRYPTO_num_locks(); i++)
+  for (int i=0; i<CRYPTO_num_locks(); i++)
     omp_destroy_lock(&locks[i]);
   OPENSSL_free(locks);
 }
+
+#else
+void openmp_thread_setup(void)
+{}
+
+void openmp_thread_cleanup(void)
+{}
+#endif
