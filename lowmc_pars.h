@@ -1,7 +1,8 @@
 #ifndef LOWMC_PARS_H
 #define LOWMC_PARS_H
 
-#include "m4ri/m4ri.h" 
+#include <m4ri/m4ri.h>
+#include "mzd_additional.h"
 
 /**
  * Represents the LowMC parameters as in https://bitbucket.org/malb/lowmc-helib/src,
@@ -15,14 +16,9 @@ typedef struct {
   mzd_t **LMatrix;
   mzd_t **KMatrix;
   mzd_t **Constants;
-
-  
 } lowmc_t;
 
-typedef struct {
-  mzd_t **key;
-  unsigned sharecount;
-} lowmc_key_t;
+typedef mzd_shared_t lowmc_key_t;
 
 typedef struct {
   mzd_t *x0;

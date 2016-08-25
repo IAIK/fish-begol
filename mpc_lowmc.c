@@ -100,9 +100,9 @@ int _mpc_sbox_layer(mzd_t **out, mzd_t **in, rci_t m, view_t *views, int *i, mzd
 
 mzd_t **_mpc_lowmc_call(lowmc_t *lowmc, lowmc_key_t *lowmc_key, mzd_t *p, view_t *views, mzd_t ***rvec, unsigned sc, unsigned ch, int (*andBitPtr)(BIT*, BIT*, BIT*, view_t*, int*, unsigned, unsigned), int *status) {
   int vcnt = 0;
-  
-  for(unsigned i = 0 ; i < sc ; i++) 
-    mzd_copy(views[vcnt].s[i], lowmc_key->key[i]);
+
+  for (unsigned i = 0; i < sc; i++)
+    mzd_copy(views[vcnt].s[i], lowmc_key->shared[i]);
   vcnt++;
 
   mzd_t **c = mpc_init_empty_share_vector(lowmc->n, sc);
@@ -111,7 +111,7 @@ mzd_t **_mpc_lowmc_call(lowmc_t *lowmc, lowmc_key_t *lowmc_key, mzd_t *p, view_t
   mzd_t **y = mpc_init_empty_share_vector(lowmc->n, sc);
   mzd_t **z = mpc_init_empty_share_vector(lowmc->n, sc);
 
-  mpc_const_mat_mul(x, lowmc->KMatrix[0], lowmc_key->key, sc);
+  mpc_const_mat_mul(x, lowmc->KMatrix[0], lowmc_key->shared, sc);
   mpc_const_add(x, x, p, sc, ch);
 
   mzd_t *r[3];
@@ -125,7 +125,7 @@ mzd_t **_mpc_lowmc_call(lowmc_t *lowmc, lowmc_key_t *lowmc_key, mzd_t *p, view_t
     mpc_const_mat_mul(z, lowmc->LMatrix[i], y, sc);
     mpc_const_add(z, z, lowmc->Constants[i], sc, ch);
     mzd_t **t = mpc_init_empty_share_vector(lowmc->n, sc);
-    mpc_const_mat_mul(t, lowmc->KMatrix[i+1], lowmc_key->key, sc);
+    mpc_const_mat_mul(t, lowmc->KMatrix[i + 1], lowmc_key->shared, sc);
     mpc_add(z, z, t, sc);
     mpc_free(t, sc);
     mpc_copy(x, z, sc);
@@ -142,9 +142,9 @@ mzd_t **_mpc_lowmc_call(lowmc_t *lowmc, lowmc_key_t *lowmc_key, mzd_t *p, view_t
 mzd_t **_mpc_lowmc_call_bitsliced(lowmc_t *lowmc, lowmc_key_t *lowmc_key, mzd_t *p, view_t *views, mzd_t ***rvec, unsigned sc, unsigned ch, 
     int (*andPtr)(mzd_t **, mzd_t **, mzd_t **, mzd_t**, view_t*, int*, mzd_t*, unsigned, unsigned, mzd_t**), int *status) {
   int vcnt = 0;
-  
-  for(unsigned i = 0 ; i < sc ; i++) 
-    mzd_copy(views[vcnt].s[i], lowmc_key->key[i]);
+
+  for (unsigned i = 0; i < sc; i++)
+    mzd_copy(views[vcnt].s[i], lowmc_key->shared[i]);
   vcnt++;
 
   mzd_t **c = mpc_init_empty_share_vector(lowmc->n, sc);
@@ -153,7 +153,7 @@ mzd_t **_mpc_lowmc_call_bitsliced(lowmc_t *lowmc, lowmc_key_t *lowmc_key, mzd_t 
   mzd_t **y = mpc_init_empty_share_vector(lowmc->n, sc);
   mzd_t **z = mpc_init_empty_share_vector(lowmc->n, sc);
 
-  mpc_const_mat_mul(x, lowmc->KMatrix[0], lowmc_key->key, sc);
+  mpc_const_mat_mul(x, lowmc->KMatrix[0], lowmc_key->shared, sc);
   mpc_const_add(x, x, p, sc, ch);
 
   mask_t *mask = prepare_masks(0, lowmc->n, lowmc->m);
@@ -171,7 +171,7 @@ mzd_t **_mpc_lowmc_call_bitsliced(lowmc_t *lowmc, lowmc_key_t *lowmc_key, mzd_t 
     }
     mpc_const_mat_mul(z, lowmc->LMatrix[i], y, sc);
     mpc_const_add(z, z, lowmc->Constants[i], sc, ch);
-    mpc_const_mat_mul(t, lowmc->KMatrix[i+1], lowmc_key->key, sc);
+    mpc_const_mat_mul(t, lowmc->KMatrix[i + 1], lowmc_key->shared, sc);
     mpc_add(z, z, t, sc);
     mpc_copy(x, z, sc);
   }
@@ -213,24 +213,19 @@ mzd_t **_mpc_lowmc_call_verify(lowmc_t *lowmc, lowmc_key_t *lowmc_key, mzd_t *p,
   return _mpc_lowmc_call_bitsliced(lowmc, lowmc_key, p, views, rvec, 2, c, &mpc_and_verify, status); 
 }
 
-int mpc_lowmc_verify(lowmc_t *lowmc, mzd_t *p, view_t *views, mzd_t ***rvec, int c) {
-  //initialize two key shares from v0
-  lowmc_key_t *lowmc_key = (lowmc_key_t*)malloc(sizeof(lowmc_key_t));
-  lowmc_key->key = (mzd_t**)malloc(2 * sizeof(mzd_t*));
-  lowmc_key->key[0] = mzd_init(1, lowmc->k);
-  lowmc_key->key[1] = mzd_init(1, lowmc->k);
-  mzd_copy(lowmc_key->key[0], views[0].s[0]);
-  mzd_copy(lowmc_key->key[1], views[0].s[1]);  
-  lowmc_key->sharecount = 2;
-  
+int mpc_lowmc_verify(lowmc_t *lowmc, mzd_t *p, view_t *views, mzd_t ***rvec,
+                     int c) {
+  // initialize two key shares from v0
+  lowmc_key_t lowmc_key;
+  mzd_shared_from_shares(&lowmc_key, views[0].s, 2);
+
   int status = 0;
-  mzd_t **v = _mpc_lowmc_call_verify(lowmc, lowmc_key, p, views, rvec, &status, c);
-  if(v)
+  mzd_t **v =
+      _mpc_lowmc_call_verify(lowmc, &lowmc_key, p, views, rvec, &status, c);
+  if (v)
     mpc_free(v, 2);
 
-  mzd_free(lowmc_key->key[0]);
-  mzd_free(lowmc_key->key[1]);
-  free(lowmc_key);
+  mzd_shared_free(&lowmc_key);
 
   return status;
 }
