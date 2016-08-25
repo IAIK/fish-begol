@@ -69,7 +69,7 @@ void sbox_layer(mzd_t *out, mzd_t *in, rci_t m) {
 
 mzd_t *lowmc_call(lowmc_t *lowmc, lowmc_key_t *lowmc_key, mzd_t *p) {
   mzd_t *c = mzd_init(1, lowmc->n);
-  
+
   mzd_t *x = mzd_init(1, lowmc->n);
   mzd_t *y = mzd_init(1, lowmc->n);
   mzd_t *z = mzd_init(1, lowmc->n);
@@ -77,21 +77,22 @@ mzd_t *lowmc_call(lowmc_t *lowmc, lowmc_key_t *lowmc_key, mzd_t *p) {
   mzd_copy(x, p);
   mzd_addmul(x, lowmc_key->key[0], lowmc->KMatrix[0], 0);
 
-  mask_t *mask = prepare_masks(0, lowmc->n, lowmc->m);
+  mask_t mask;
+  prepare_masks(&mask, lowmc->n, lowmc->m);
 
-  for(unsigned i=0; i<lowmc->r; i++) {
-    //sbox_layer(y, x, lowmc->m);
-    sbox_layer_bitsliced(y, x, lowmc->m, mask);
+  for (unsigned i = 0; i < lowmc->r; i++) {
+    // sbox_layer(y, x, lowmc->m);
+    sbox_layer_bitsliced(y, x, lowmc->m, &mask);
     mzd_mul(z, y, lowmc->LMatrix[i], 0);
     mzd_add(z, z, lowmc->Constants[i]);
-    mzd_addmul(z, lowmc_key->key[0], lowmc->KMatrix[i+1], 0);
+    mzd_addmul(z, lowmc_key->key[0], lowmc->KMatrix[i + 1], 0);
     mzd_copy(x, z);
   }
- 
-  mzd_free(mask->x0);
-  mzd_free(mask->x1);
-  mzd_free(mask->x2);
-  mzd_free(mask->mask);
+
+  mzd_free(mask.x0);
+  mzd_free(mask.x1);
+  mzd_free(mask.x2);
+  mzd_free(mask.mask);
 
   mzd_copy(c, x);
 
@@ -100,4 +101,3 @@ mzd_t *lowmc_call(lowmc_t *lowmc, lowmc_key_t *lowmc_key, mzd_t *p) {
   mzd_free(x);
   return c;
 }
-
