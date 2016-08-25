@@ -1,23 +1,32 @@
 #include "hashing_util.h"
 #include "mpc_lowmc.h"
-#include "m4ri/m4ri.h"
+#include <m4ri/m4ri.h>
+
+static void hash_mzd(SHA256_CTX *ctx, mzd_t *v) {
+  const rci_t nrows = v->nrows;
+  for (rci_t m = 0; m < nrows; ++m) {
+    SHA256_Update(ctx, v->rows[m], sizeof(word) * v->width);
+  }
+}
 
 /*
- * Computes the SHA256 hash of a view using openssl (similar as in 
+ * Computes the SHA256 hash of a view using openssl (similar as in
  * https://github.com/Sobuno/ZKBoo/blob/master/MPC_SHA256/shared.h)
- */ 
-void H(unsigned char k[16], mzd_t *y[3], view_t* v, unsigned vidx, unsigned vcnt, unsigned char r[4], unsigned char hash[SHA256_DIGEST_LENGTH]) {
+ */
+void H(unsigned char k[16], mzd_t *y[3], view_t *v, unsigned vidx,
+       unsigned vcnt, unsigned char r[4],
+       unsigned char hash[SHA256_DIGEST_LENGTH]) {
   SHA256_CTX ctx;
   SHA256_Init(&ctx);
   SHA256_Update(&ctx, k, 16);
-  for(unsigned i = 0 ; i < 3 ; i++) 
-    for (rci_t m = 0; m < y[i]->nrows; m++) 
-      for(wi_t n = 0; n < y[i]->width ; n++)  
-        SHA256_Update(&ctx, y[i]->rows[m] + n, sizeof(word));   
-  for(unsigned i = 0 ; i < vcnt ; i++) 
-    for (rci_t m = 0; m < v[i].s[vidx]->nrows; m++) 
-      for(wi_t n = 0; n < v[i].s[vidx]->width ; n++)  
-        SHA256_Update(&ctx, v[i].s[vidx]->rows[m] + n, sizeof(word));   
+
+  for (unsigned i = 0; i < 3; ++i) {
+    hash_mzd(&ctx, y[i]);
+  }
+  for (unsigned i = 0; i < vcnt; ++i) {
+    hash_mzd(&ctx, v[i].s[vidx]);
+  }
+
   SHA256_Update(&ctx, r, 4);
   SHA256_Final(hash, &ctx);
 }
