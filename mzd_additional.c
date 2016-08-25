@@ -28,8 +28,36 @@ mzd_t **mzd_init_random_vectors_from_seed(unsigned char key[16], rci_t n, unsign
   return vectors;
 }
 
-word mzd_shift_right(mzd_t* res, mzd_t *val, unsigned count, word carry) {
-  if(!count) {
+void mzd_shift_right_inplace(mzd_t *val, unsigned int count) {
+  if (!count) {
+    return;
+  }
+
+  const unsigned int nwords = val->ncols / (8 * sizeof(word));
+  const unsigned int left_count = 8 * sizeof(word) - count;
+
+  for (unsigned int i = 0; i < nwords - 1; ++i) {
+    val->rows[0][i] = (val->rows[0][i] >> count) | (val->rows[0][i + 1] << left_count);
+  }
+  val->rows[0][nwords - 1] >>= count;
+}
+
+void mzd_shift_left_inplace(mzd_t *val, unsigned count) {
+  if (!count) {
+    return;
+  }
+
+  const unsigned int nwords = val->ncols / (8 * sizeof(word));
+  const unsigned int right_count = 8 * sizeof(word) - count;
+
+  for (unsigned int i = nwords - 1; i > 0; --i) {
+    val->rows[0][i] = (val->rows[0][i] << count) | (val->rows[0][i - 1] >> right_count);
+  }
+  val->rows[0][0] = val->rows[0][0] << count;
+}
+
+word mzd_shift_right(mzd_t *res, mzd_t *val, unsigned count, word carry) {
+  if (!count) {
     mzd_copy(res, val);
     return 0;
   }

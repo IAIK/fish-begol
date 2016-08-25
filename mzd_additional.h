@@ -20,4 +20,8 @@ mzd_t *mzd_and(mzd_t *res, mzd_t *first, mzd_t *second);
 
 mzd_t *mzd_xor(mzd_t *res, mzd_t *first, mzd_t *second);
 
+void mzd_shift_right_inplace(mzd_t *val, unsigned int count);
+
+void mzd_shift_left_inplace(mzd_t *val, unsigned int count);
+
 #endif
