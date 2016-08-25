@@ -1,9 +1,9 @@
 #include "lowmc.h"
-#include "mzd_additional.h"
 #include "lowmc_pars.h"
+#include "mzd_additional.h"
 
-void sbox_layer_bitsliced(mzd_t *out, mzd_t *in, rci_t m, mask_t *mask) {
-  if(in->ncols - 3 * m < 2) {
+static void sbox_layer_bitsliced(mzd_t *out, mzd_t *in, rci_t m, mask_t *mask) {
+  if (in->ncols - 3 * m < 2) {
     printf("Bitsliced implementation requires in->ncols - 3 * m >= 2\n");
     return;
   }
@@ -11,28 +11,27 @@ void sbox_layer_bitsliced(mzd_t *out, mzd_t *in, rci_t m, mask_t *mask) {
   mzd_copy(out, in);
   mzd_and(out, out, mask->mask);
 
-  mzd_t *x0m  = mzd_and(0, mask->x0, in);
-  mzd_t *x1m  = mzd_and(0, mask->x1, in);   
-  mzd_t *x2m  = mzd_and(0, mask->x2, in);   
+  mzd_t *x0m = mzd_and(0, mask->x0, in);
+  mzd_t *x1m = mzd_and(0, mask->x1, in);
+  mzd_t *x2m = mzd_and(0, mask->x2, in);
 
-  mzd_t *x0s  = mzd_init(1, out->ncols);
+  mzd_t *x0s = mzd_init(1, out->ncols);
   mzd_shift_left(x0s, x0m, 2, 0);
-  mzd_t *x1s  = mzd_init(1, out->ncols);
+  mzd_t *x1s = mzd_init(1, out->ncols);
   mzd_shift_left(x1s, x1m, 1, 0);
- 
+
   mzd_t *t0 = mzd_and(0, x1s, x2m);
   mzd_t *t1 = mzd_and(0, x0s, x2m);
   mzd_t *t2 = mzd_and(0, x0s, x1s);
 
   mzd_xor(t0, t0, x0s);
- 
+
   mzd_xor(t1, t1, x0s);
   mzd_xor(t1, t1, x1s);
 
   mzd_xor(t2, t2, x0s);
   mzd_xor(t2, t2, x1s);
   mzd_xor(t2, t2, x2m);
-
 
   mzd_t *x0r = mzd_init(1, out->ncols);
   mzd_t *x1r = mzd_init(1, out->ncols);
@@ -42,6 +41,17 @@ void sbox_layer_bitsliced(mzd_t *out, mzd_t *in, rci_t m, mask_t *mask) {
   mzd_xor(out, out, t2);
   mzd_xor(out, out, x0r);
   mzd_xor(out, out, x1r);
+
+  mzd_free(x1r);
+  mzd_free(x0r);
+  mzd_free(t2);
+  mzd_free(t1);
+  mzd_free(t0);
+  mzd_free(x1s);
+  mzd_free(x0s);
+  mzd_free(x2m);
+  mzd_free(x1m);
+  mzd_free(x0m);
 }
 
 void sbox_layer(mzd_t *out, mzd_t *in, rci_t m) {
