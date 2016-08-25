@@ -34,46 +34,30 @@ void H(unsigned char k[16], mzd_t *y[3], view_t *v, unsigned vidx,
 /**
  * Computes the challenge (as in https://github.com/Sobuno/ZKBoo/blob/master/MPC_SHA256/shared.h)
  */
-void H3(unsigned char c[NUM_ROUNDS][3][SHA256_DIGEST_LENGTH], int* ch) {
+void H3(unsigned char c[NUM_ROUNDS][3][SHA256_DIGEST_LENGTH], int *ch) {
 
   unsigned char hash[SHA256_DIGEST_LENGTH];
   SHA256_CTX ctx;
-  SHA256_Init(&ctx);   
-  SHA256_Update(&ctx, c, 3 * SHA256_DIGEST_LENGTH * NUM_ROUNDS);   
+  SHA256_Init(&ctx);
+  SHA256_Update(&ctx, c, 3 * SHA256_DIGEST_LENGTH * NUM_ROUNDS);
   SHA256_Final(hash, &ctx);
 
-  //Pick bits from hash
+  // Pick bits from hash
   int i = 0;
   int bitTracker = 0;
-  while(i < NUM_ROUNDS) {
-    if(bitTracker >= SHA256_DIGEST_LENGTH*8) { //Generate new hash
+  while (i < NUM_ROUNDS) {
+    if (bitTracker >= SHA256_DIGEST_LENGTH * 8) { // Generate new hash
       SHA256_Init(&ctx);
       SHA256_Update(&ctx, hash, sizeof(hash));
       SHA256_Final(hash, &ctx);
       bitTracker = 0;
-      //printf("Generated new hash\n");
+      // printf("Generated new hash\n");
     }
 
-    int b1 = GETBIT(hash[bitTracker/8], bitTracker % 8);
-    int b2 = GETBIT(hash[(bitTracker+1)/8], (bitTracker+1) % 8);
-    if(b1 == 0) {
-      if(b2 == 0) {
-        ch[i] = 0;
-	bitTracker += 2;
-	i++;
-      } else {
-        ch[i] = 1;
-	bitTracker += 2;
-	i++;
-      }
-    } else {
-      if(b2 == 0) {
-        ch[i] = 2;
-	bitTracker += 2;
-	i++;
-      } else {
-        bitTracker += 2;
-      }
+    unsigned char twobits = (hash[bitTracker / 8] >> (bitTracker % 8)) & 0x3;
+    if (twobits != 0x3) {
+      ch[i++] = twobits;
     }
+    bitTracker += 2;
   }
 }
