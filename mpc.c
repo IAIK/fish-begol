@@ -207,14 +207,10 @@ mzd_t **mpc_init_random_vector(rci_t n, unsigned sc) {
 }
 
 mzd_t **mpc_init_plain_share_vector(mzd_t *v) {
-  mzd_t **s = (mzd_t**)malloc(3 * sizeof(mzd_t*));
-  s[0] = mzd_init_random_vector(v->ncols);
-  s[1] = mzd_init_random_vector(v->ncols);
-  s[2] = mzd_init(1, v->ncols);
-
-  mzd_copy(s[0], v);
-  mzd_copy(s[1], v);
-  mzd_copy(s[2], v);
+  mzd_t **s = (mzd_t **)malloc(3 * sizeof(mzd_t *));
+  s[0] = mzd_copy(NULL, v);
+  s[1] = mzd_copy(NULL, v);
+  s[2] = mzd_copy(NULL, v);
 
   return s;
 }
