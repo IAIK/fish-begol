@@ -54,16 +54,24 @@ int _mpc_sbox_layer_bitsliced(mzd_t **out, mzd_t **in, rci_t m, view_t *views, i
 
 int _mpc_sbox_layer(mzd_t **out, mzd_t **in, rci_t m, view_t *views, int *i, mzd_t **rvec, unsigned sc, int (*andBitPtr)(BIT*, BIT*, BIT*, view_t*, int*, unsigned, unsigned)) {
   mpc_copy(out, in, sc);
-  for(rci_t n=out[0]->ncols-3*m; n<out[0]->ncols; n+=3) {
-    BIT* x0 = mpc_read_bit(in, n+0, sc);
-    BIT* x1 = mpc_read_bit(in, n+1, sc);
-    BIT* x2 = mpc_read_bit(in, n+2, sc);
-    BIT* r0  = mpc_read_bit(rvec, n+0, sc);
-    BIT* r1  = mpc_read_bit(rvec, n+1, sc);    
-    BIT* r2  = mpc_read_bit(rvec, n+2, sc);
-     
-    BIT tmp1[sc], tmp2[sc], tmp3[sc]; 
-    for(unsigned m = 0 ; m < sc ; m++) {
+
+  BIT *x0 = malloc(sizeof(BIT) * sc);
+  BIT *x1 = malloc(sizeof(BIT) * sc);
+  BIT *x2 = malloc(sizeof(BIT) * sc);
+  BIT *r0 = malloc(sizeof(BIT) * sc);
+  BIT *r1 = malloc(sizeof(BIT) * sc);
+  BIT *r2 = malloc(sizeof(BIT) * sc);
+
+  for (rci_t n = out[0]->ncols - 3 * m; n < out[0]->ncols; n += 3) {
+    mpc_read_bit(x0, in, n + 0, sc);
+    mpc_read_bit(x1, in, n + 1, sc);
+    mpc_read_bit(x2, in, n + 2, sc);
+    mpc_read_bit(r0, rvec, n + 0, sc);
+    mpc_read_bit(r1, rvec, n + 1, sc);
+    mpc_read_bit(r2, rvec, n + 2, sc);
+
+    BIT tmp1[sc], tmp2[sc], tmp3[sc];
+    for (unsigned m = 0; m < sc; m++) {
       tmp1[m] = x1[m];
       tmp2[m] = x0[m];
       tmp3[m] = x0[m];
@@ -76,23 +84,22 @@ int _mpc_sbox_layer(mzd_t **out, mzd_t **in, rci_t m, view_t *views, int *i, mzd
 
     mpc_xor_bit(tmp1, x0, sc);
     mpc_write_bit(out, n + 0, tmp1, sc);
-  
+
     mpc_xor_bit(tmp2, x0, sc);
     mpc_xor_bit(tmp2, x1, sc);
     mpc_write_bit(out, n + 1, tmp2, sc);
- 
+
     mpc_xor_bit(tmp3, x0, sc);
     mpc_xor_bit(tmp3, x1, sc);
     mpc_xor_bit(tmp3, x2, sc);
     mpc_write_bit(out, n + 2, tmp3, sc);
-
-    free(x0);
-    free(x1);
-    free(x2);
-    free(r0);
-    free(r1);
-    free(r2);
   }
+  free(x0);
+  free(x1);
+  free(x2);
+  free(r0);
+  free(r1);
+  free(r2);
 
   (*i)++;
   return 0;
@@ -272,10 +279,8 @@ void free_proof(lowmc_t *lowmc, proof_t *proof) {
   free(proof->views);
   free(proof->keys);
   free(proof->r);
- 
-  free(proof);
 
- 
+  free(proof);
 }
 
 

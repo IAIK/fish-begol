@@ -92,14 +92,13 @@ void mpc_xor_bit(BIT* a, BIT* b, unsigned sc);
 
 /**
  * Reads a secret shared bit from a given vector
- * 
+ *
+ * \param out destination of the secret shared bit
  * \param vec the secret shared vector
  * \param n   the position of the bit
  * \param sc  the share count
- *
- * \return    the secret shared bit
  */
-BIT *mpc_read_bit(mzd_t **vec, rci_t n, unsigned sc);
+void mpc_read_bit(BIT* out, mzd_t **vec, rci_t n, unsigned sc);
 
 /**
  * Writes a secret shared bit to a given vector

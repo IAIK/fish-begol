@@ -133,12 +133,9 @@ void mpc_xor_bit(BIT* a, BIT* b, unsigned sc) {
   }
 }
 
-BIT *mpc_read_bit(mzd_t **vec, rci_t n, unsigned sc) {
-  BIT *bit = (BIT*)malloc(sc * sizeof(BIT));
-  for(unsigned i = 0 ; i < sc ; i++)
-    bit[i] = mzd_read_bit(vec[i], 0, n);
-
-  return bit;
+void mpc_read_bit(BIT *out, mzd_t **vec, rci_t n, unsigned sc) {
+  for (unsigned i = 0; i < sc; i++)
+    out[i] = mzd_read_bit(vec[i], 0, n);
 }
 
 void mpc_write_bit(mzd_t **vec, rci_t n, BIT *bit, unsigned sc) {
