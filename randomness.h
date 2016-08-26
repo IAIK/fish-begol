@@ -4,7 +4,7 @@
 #include <openssl/conf.h>
 #include <openssl/evp.h>
 #include <openssl/err.h>
-#include "m4ri/m4ri.h"
+#include <m4ri/m4ri.h>
 
 void init_EVP();
 

@@ -9,9 +9,9 @@ void mpc_set(mzd_t **res, mzd_t **src, unsigned sc) {
 }
 
 void mpc_clear(mzd_t **res, unsigned sc) {
-  for(int i = 0 ; i < sc ; i++) 
-    for(int j = 0 ; j < res[i]->ncols / (8 * sizeof(word)); j++) 
-    res[i]->rows[0][j] = 0;
+  for (int i = 0; i < sc; i++)
+    for (int j = 0; j < res[i]->nrows; j++)
+      mzd_row_clear_offset(res[i], j, 0);
 }
 
 void mpc_shift_right(mzd_t**res, mzd_t **val, unsigned count, word carry, unsigned sc) {

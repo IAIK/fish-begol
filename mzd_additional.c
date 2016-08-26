@@ -19,23 +19,23 @@ mzd_t *mzd_init_random_vector(rci_t n) {
   return A;
 }
 
-mzd_t **mzd_init_random_vectors_from_seed(unsigned char key[16], rci_t n, unsigned count) {
-  if(n % (8 * sizeof(word)) != 0)
-    return 0;
+mzd_t **mzd_init_random_vectors_from_seed(unsigned char key[16], rci_t n, unsigned int count) {
+  if (n % (8 * sizeof(word)) != 0)
+    return NULL;
 
-  unsigned char *randomness = (unsigned char*)malloc(n / 8 * count * sizeof(unsigned char));
-  getRandomness(key, randomness, n / 8 * count * sizeof(unsigned char));
+  const unsigned int size = n / 8 * sizeof(unsigned char);
 
-  mzd_t **vectors = (mzd_t**)malloc(count * sizeof(mzd_t*));
-  for(int v = 0 ; v < count ; v++) {
+  unsigned char *randomness = (unsigned char *)malloc(size * count);
+  getRandomness(key, randomness, size * count);
+
+  mzd_t **vectors = calloc(count, sizeof(mzd_t *));
+  for (unsigned int v = 0; v < count; ++v) {
     vectors[v] = mzd_init(1, n);
-    for(int i = 0 ; i < n / (8 * sizeof(word)) ; i++) {
-      memcpy(vectors[v]->rows[0] + i, randomness, sizeof(word));
-    }
+    memcpy(vectors[v]->rows[0], randomness + v * size, size);
+    vectors[v]->rows[0][vectors[v]->width - 1] &= vectors[v]->high_bitmask;
   }
 
   free(randomness);
-
   return vectors;
 }
 
