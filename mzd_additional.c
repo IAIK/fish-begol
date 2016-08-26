@@ -5,13 +5,10 @@
 
 void mzd_randomize_ssl(mzd_t* val) {
   // similar to mzd_randomize but using RAND_Bytes instead
-  const wi_t width = val->width - 1;
   const word mask_end = val->high_bitmask;
   for(rci_t i = 0; i < val->nrows; ++i) {
-    RAND_bytes((unsigned char*) val->rows[i], width * sizeof(word));
-    word last;
-    RAND_bytes((unsigned char*) &last, sizeof(last));
-    val->rows[i][width] ^= (val->rows[i][width] ^ last) & mask_end;
+    RAND_bytes((unsigned char*) val->rows[i], val->width * sizeof(word));
+    val->rows[i][val->width - 1] &= mask_end;
   }
 }
 
