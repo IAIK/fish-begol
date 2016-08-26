@@ -57,10 +57,17 @@ lowmc_key_t *lowmc_keygen(lowmc_t *lowmc);
 
 /**
  * Frees the allocated LowMC parameters
- * 
+ *
  * \param lowmc the LowMC parameters to be freed
  */
-void lowmc_free(lowmc_t *lowmc, lowmc_key_t *lowmc_key);
+void lowmc_free(lowmc_t *lowmc);
+
+/**
+ * Frees the allocated LowMC key.
+ *
+ * \param lowmc_key the LowMC key to be freed
+ */
+void lowmc_key_free(lowmc_key_t* lowmc_key);
 
 /**
  * Updates a given LowMC parameter instance so that the key is 

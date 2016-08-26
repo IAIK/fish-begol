@@ -1,17 +1,72 @@
-#include "mpc_test.h"
-#include "lowmc_pars.h"
-#include "lowmc.h"
-#include "mpc_lowmc.h"
-#include "mzd_additional.h"
-#include "mpc.h"
-#include "time.h"
-#include "openssl/rand.h"
-#include "openssl/sha.h"
-#include "randomness.h"
 #include "hashing_util.h"
+#include "lowmc.h"
+#include "lowmc_pars.h"
+#include "mpc.h"
+#include "mpc_lowmc.h"
+#include "mpc_test.h"
 #include "multithreading.h"
+#include "mzd_additional.h"
+#include "randomness.h"
 
-proof_t *prove(lowmc_t *lowmc, lowmc_key_t *lowmc_key, mzd_t *p) { 
+#include <openssl/rand.h>
+#include <inttypes.h>
+#include <time.h>
+
+typedef struct {
+  // The LowMC instance.
+  lowmc_t *lowmc;
+} public_parameters_t;
+
+typedef struct {
+  lowmc_key_t *k;
+  lowmc_key_t *s;
+} private_key_t;
+
+typedef struct {
+  // pk = E_k(s)
+  mzd_t *pk;
+} public_key_t;
+
+static void create_instance(public_parameters_t *pp, private_key_t *private_key,
+                            public_key_t *public_key) {
+  printf("Setup:\n");
+
+  clock_t beginSetup = clock();
+  lowmc_t *lowmc = lowmc_init(63, 256, 14, 128);
+  clock_t deltaSetup = clock() - beginSetup;
+  printf("LowMC setup                   %4lums\n", deltaSetup * 1000 / CLOCKS_PER_SEC);
+
+  clock_t beginKeygen = clock();
+  lowmc_key_t *lowmc_key_k = lowmc_keygen(lowmc);
+  lowmc_key_t *lowmc_key_s = lowmc_keygen(lowmc);
+  clock_t deltaKeygen = clock() - beginKeygen;
+  printf("LowMC key generation          %4lums\n", deltaKeygen * 1000 / CLOCKS_PER_SEC);
+
+  pp->lowmc = lowmc;
+  private_key->k = lowmc_key_k;
+  private_key->s = lowmc_key_s;
+
+  clock_t beginPubkey = clock();
+  public_key->pk = lowmc_call(lowmc, lowmc_key_k, lowmc_key_s->shared[0]);
+  clock_t deltaPubkey = clock() - beginPubkey;
+  printf("Public key computation        %4lums\n", deltaPubkey * 1000 / CLOCKS_PER_SEC);
+}
+
+static void destroy_instance(public_parameters_t *pp, private_key_t *private_key,
+                             public_key_t *public_key) {
+  lowmc_free(pp->lowmc);
+  pp->lowmc = NULL;
+
+  lowmc_key_free(private_key->k);
+  lowmc_key_free(private_key->s);
+  private_key->k = NULL;
+  private_key->s = NULL;
+
+  mzd_free(public_key->pk);
+  public_key->pk = NULL;
+}
+
+proof_t *prove(lowmc_t *lowmc, lowmc_key_t *lowmc_key, mzd_t *p) {
   printf("Prove:\n");
   unsigned char r[NUM_ROUNDS][3][4];
   unsigned char keys[NUM_ROUNDS][3][16];
@@ -231,36 +286,37 @@ int verify(lowmc_t *lowmc, mzd_t *p, mzd_t *c, proof_t *prf) {
 int main(int argc, char **argv) {
   init_EVP();
   openmp_thread_setup();
-  
-  printf("Setup:\n");
-  
-  clock_t beginSetup = clock();
-  lowmc_t *lowmc     = lowmc_init(63, 256, 14, 128);
-  clock_t deltaSetup = clock() - beginSetup;
-  printf("LowMC setup                   %4lums\n", deltaSetup * 1000 / CLOCKS_PER_SEC);
 
-  clock_t beginKeygen    = clock();
-  lowmc_key_t *lowmc_key = lowmc_keygen(lowmc);
-  clock_t deltaKeygen    = clock() - beginKeygen;
-  printf("LowMC key generation          %4lums\n", deltaKeygen * 1000 / CLOCKS_PER_SEC);
+  for (int i = 0; i != 2; ++i) {
 
-  mzd_t *p = mzd_init_random_vector(256);  
+    public_parameters_t pp;
+    private_key_t private_key;
+    public_key_t public_key;
 
-  clock_t beginRef = clock(); 
-  mzd_t *c         = lowmc_call(lowmc, lowmc_key, p);
-  clock_t deltaRef = clock() - beginRef;
-  printf("LowMC reference encryption    %4lums\n", deltaRef * 1000 / CLOCKS_PER_SEC);
+    create_instance(&pp, &private_key, &public_key);
 
-  printf("\n");
+    mzd_t *p = mzd_init_random_vector(256);
 
+    clock_t beginRef = clock();
+    mzd_t *c = lowmc_call(pp.lowmc, private_key.s, p);
+    clock_t deltaRef = clock() - beginRef;
+    printf("LowMC reference encryption    %4lums\n", deltaRef * 1000 / CLOCKS_PER_SEC);
 
-  proof_t *prf = prove(lowmc, lowmc_key, p); 
-  verify(lowmc, p, c, prf);
-  
-  free_proof(lowmc, prf);
-  lowmc_free(lowmc, lowmc_key);
-  mzd_free(p);
-  mzd_free(c);
+    printf("\n");
+
+    lowmc_key_t key = { 0, NULL };
+    mzd_shared_copy(&key, private_key.s);
+
+    proof_t *prf = prove(pp.lowmc, &key, p);
+    verify(pp.lowmc, p, c, prf);
+
+    free_proof(pp.lowmc, prf);
+    mzd_shared_clear(&key);
+    mzd_free(p);
+    mzd_free(c);
+
+    destroy_instance(&pp, &private_key, &public_key);
+  }
 
   openmp_thread_cleanup();
   cleanup_EVP();

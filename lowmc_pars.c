@@ -92,8 +92,8 @@ lowmc_key_t *lowmc_keygen(lowmc_t *lowmc) {
   return lowmc_key;
 }
 
-void lowmc_free(lowmc_t *lowmc, lowmc_key_t *lowmc_key) {
-  for(unsigned i=0; i<lowmc->r; i++) {
+void lowmc_free(lowmc_t *lowmc) {
+  for (unsigned i = 0; i < lowmc->r; i++) {
     mzd_free(lowmc->Constants[i]);
     mzd_free(lowmc->KMatrix[i]);
     mzd_free(lowmc->LMatrix[i]);
@@ -103,9 +103,11 @@ void lowmc_free(lowmc_t *lowmc, lowmc_key_t *lowmc_key) {
   free(lowmc->LMatrix);
   free(lowmc->KMatrix);
 
-  mzd_shared_free(lowmc_key);
-
   free(lowmc);
+}
+
+void lowmc_key_free(lowmc_key_t *lowmc_key) {
+  mzd_shared_clear(lowmc_key);
   free(lowmc_key);
 }
 

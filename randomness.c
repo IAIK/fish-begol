@@ -33,8 +33,7 @@ BIT getrandbit() {
   return b;
 } 
 
-void handleErrors(void)
-{
+static void handleErrors(void) {
   ERR_print_errors_fp(stderr);
   abort();
 }
