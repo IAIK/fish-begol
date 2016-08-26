@@ -2,10 +2,14 @@
 #include "mzd_additional.h"
 #include "mpc.h"
 #include "lowmc_pars.h"
+typedef int (*BIT_and_ptr)(BIT *, BIT *, BIT *, view_t *, int *, unsigned, unsigned);
+typedef int (*and_ptr)(mzd_t **, mzd_t **, mzd_t **, mzd_t **, view_t *, int *, mzd_t *, unsigned,
+                       unsigned, mzd_t **);
 
-int _mpc_sbox_layer_bitsliced(mzd_t **out, mzd_t **in, rci_t m, view_t *views, int *i, mzd_t **rvec, unsigned sc, 
-    int (*andPtr)(mzd_t **, mzd_t **, mzd_t **, mzd_t**, view_t*, int*, mzd_t*, unsigned, unsigned, mzd_t**), mask_t *mask, sbox_vars_t *vars) {
-  if(in[0]->ncols - 3 * m < 2) {
+static int _mpc_sbox_layer_bitsliced(mzd_t **out, mzd_t **in, rci_t m, view_t *views, int *i,
+                                     mzd_t **rvec, unsigned sc, and_ptr andPtr, mask_t *mask,
+                                     sbox_vars_t *vars) {
+  if (in[0]->ncols - 3 * m < 2) {
     printf("Bitsliced implementation requires in->ncols - 3 * m >= 2\n");
     return 0;
   }
@@ -52,7 +56,8 @@ int _mpc_sbox_layer_bitsliced(mzd_t **out, mzd_t **in, rci_t m, view_t *views, i
   return 0;
 }
 
-int _mpc_sbox_layer(mzd_t **out, mzd_t **in, rci_t m, view_t *views, int *i, mzd_t **rvec, unsigned sc, int (*andBitPtr)(BIT*, BIT*, BIT*, view_t*, int*, unsigned, unsigned)) {
+static int _mpc_sbox_layer(mzd_t **out, mzd_t **in, rci_t m, view_t *views, int *i, mzd_t **rvec,
+                           unsigned sc, BIT_and_ptr andBitPtr) {
   mpc_copy(out, in, sc);
 
   BIT *x0 = malloc(sizeof(BIT) * sc);
@@ -105,7 +110,9 @@ int _mpc_sbox_layer(mzd_t **out, mzd_t **in, rci_t m, view_t *views, int *i, mzd
   return 0;
 }
 
-mzd_t **_mpc_lowmc_call(lowmc_t *lowmc, lowmc_key_t *lowmc_key, mzd_t *p, view_t *views, mzd_t ***rvec, unsigned sc, unsigned ch, int (*andBitPtr)(BIT*, BIT*, BIT*, view_t*, int*, unsigned, unsigned), int *status) {
+static mzd_t **_mpc_lowmc_call(lowmc_t *lowmc, lowmc_key_t *lowmc_key, mzd_t *p, view_t *views,
+                               mzd_t ***rvec, unsigned sc, unsigned ch, BIT_and_ptr andBitPtr,
+                               int *status) {
   int vcnt = 0;
 
   for (unsigned i = 0; i < sc; i++)
@@ -146,8 +153,9 @@ mzd_t **_mpc_lowmc_call(lowmc_t *lowmc, lowmc_key_t *lowmc_key, mzd_t *p, view_t
   return c;
 }
 
-mzd_t **_mpc_lowmc_call_bitsliced(lowmc_t *lowmc, lowmc_key_t *lowmc_key, mzd_t *p, view_t *views, mzd_t ***rvec, unsigned sc, unsigned ch, 
-    int (*andPtr)(mzd_t **, mzd_t **, mzd_t **, mzd_t**, view_t*, int*, mzd_t*, unsigned, unsigned, mzd_t**), int *status) {
+static mzd_t **_mpc_lowmc_call_bitsliced(lowmc_t *lowmc, lowmc_key_t *lowmc_key, mzd_t *p,
+                                         view_t *views, mzd_t ***rvec, unsigned sc, unsigned ch,
+                                         and_ptr andPtr, int *status) {
   int vcnt = 0;
 
   for (unsigned i = 0; i < sc; i++)
