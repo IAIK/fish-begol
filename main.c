@@ -73,12 +73,12 @@ proof_t *prove(lowmc_t *lowmc, lowmc_key_t *lowmc_key, mzd_t *p) {
 
   //Generating keys
   clock_t beginCrypto = clock(), deltaCrypto;
-  if(RAND_bytes((unsigned char*) keys, NUM_ROUNDS * 3 * 16) != 1) {
+  if (RAND_bytes((unsigned char *)keys, sizeof(keys)) != 1) {
     printf("RAND_bytes failed crypto, aborting\n");
     return 0;
   }
 
-  if(RAND_bytes((unsigned char*) r, NUM_ROUNDS * 3 * 4) != 1) {
+  if (RAND_bytes((unsigned char *)r, sizeof(r)) != 1) {
     printf("RAND_bytes failed crypto, aborting\n");
     return 0;
   }

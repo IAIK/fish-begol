@@ -8,8 +8,7 @@ static void sbox_layer_bitsliced(mzd_t *out, mzd_t *in, rci_t m, mask_t *mask) {
     return;
   }
 
-  mzd_copy(out, in);
-  mzd_and(out, out, mask->mask);
+  mzd_and(out, in, mask->mask);
 
   mzd_t *x0m = mzd_and(0, mask->x0, in);
   mzd_t *x1m = mzd_and(0, mask->x1, in);
