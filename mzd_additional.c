@@ -1,10 +1,24 @@
 #include "mzd_additional.h"
 #include "randomness.h"
 
+#include <openssl/rand.h>
+
+void mzd_randomize_ssl(mzd_t* val) {
+  // similar to mzd_randomize but using RAND_Bytes instead
+  const wi_t width = val->width - 1;
+  const word mask_end = val->high_bitmask;
+  for(rci_t i = 0; i < val->nrows; ++i) {
+    RAND_bytes((unsigned char*) val->rows[i], width * sizeof(word));
+    word last;
+    RAND_bytes((unsigned char*) &last, sizeof(last));
+    val->rows[i][width] ^= (val->rows[i][width] ^ last) & mask_end;
+  }
+}
+
 mzd_t *mzd_init_random_vector(rci_t n) {
-  mzd_t *A = mzd_init(1,n);
-  for(rci_t i=0; i<n; i++)
-    mzd_write_bit(A, 0, n-i-1, getrandbit());
+  mzd_t *A = mzd_init(1, n);
+  mzd_randomize_ssl(A);
+
   return A;
 }
 

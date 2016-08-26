@@ -10,6 +10,8 @@
  */
 mzd_t *mzd_init_random_vector(rci_t n);
 
+void mzd_randomize_ssl(mzd_t* val);
+
 mzd_t **mzd_init_random_vectors_from_seed(unsigned char key[16], rci_t n, unsigned count);
 
 word mzd_shift_right(mzd_t* res, mzd_t *val, unsigned count, word carry);

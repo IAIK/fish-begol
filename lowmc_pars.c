@@ -1,8 +1,10 @@
 #include "lowmc_pars.h"
-#include "randomness.h"
 #include "mpc.h"
 #include "mzd_additional.h"
-#include "m4ri/m4ri.h"
+#include "randomness.h"
+
+#include <m4ri/m4ri.h>
+#include <stdbool.h>
 
 mask_t *prepare_masks(mask_t *mask, rci_t n, rci_t m) {
   if(0 != n % (8 * sizeof(word)))
@@ -27,39 +29,30 @@ mask_t *prepare_masks(mask_t *mask, rci_t n, rci_t m) {
   return mask;
 }
 
-
-mzd_t *mzd_sample_lmatrix(rci_t n) {
-  mzd_t *A = mzd_init(n,n);
-  mzd_t *B = mzd_init(n,n);
-  do {
-    for(rci_t i=0; i<n; i++) {
-      for(rci_t j=0; j<n; j++)
-        mzd_write_bit(A, n-i-1, n-j-1, getrandbit());
-      //mzd_xor_bits(A, n-i-1, n-i-1, 1, 1);
-    }
-    mzd_copy(B, A);
-  } while(mzd_echelonize(A, 0) != n);
-  mzd_free(A);
-  return B;
-};
-
-mzd_t *mzd_sample_kmatrix(rci_t n, rci_t k) {
+static mzd_t *mzd_sample_matrix_word(rci_t n, rci_t k, rci_t rank, bool with_xor) {
   mzd_t *A = mzd_init(n, k);
   mzd_t *B = mzd_init(n, k);
-
-  rci_t r = (n<k) ? n : k;
-
   do {
-    for(rci_t i=0; i<n; i++) {
-      for(rci_t j=0; j<k; j++)
-        mzd_write_bit(A, n-i-1, k-j-1, getrandbit());
-      mzd_xor_bits(A, n-i-1, (k+i+1)%k, 1, 1);
+    mzd_randomize_ssl(A);
+    if (with_xor) {
+      for (rci_t i = 0; i < n; i++) {
+        mzd_xor_bits(A, n - i - 1, (k + i + 1) % k, 1, 1);
+      }
     }
     mzd_copy(B, A);
-  } while(mzd_echelonize(A, 0) != r);
+  } while (mzd_echelonize(A, 0) != rank);
   mzd_free(A);
   return B;
 };
+
+mzd_t *mzd_sample_lmatrix(rci_t n) {
+  return mzd_sample_matrix_word(n, n, n, false);
+}
+
+mzd_t *mzd_sample_kmatrix(rci_t n, rci_t k) {
+  rci_t r = (n < k) ? n : k;
+  return mzd_sample_matrix_word(n, k, r, true);
+}
 
 lowmc_t *lowmc_init(size_t m, size_t n, size_t r, size_t k) {
   lowmc_t *lowmc = (lowmc_t*)malloc(sizeof(lowmc_t));
