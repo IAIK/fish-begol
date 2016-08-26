@@ -15,6 +15,12 @@ void cleanup_EVP();
  */
 BIT getrandbit();
 
+typedef struct aes_prng_s aes_prng_t;
+
+aes_prng_t* aes_prng_init(unsigned char* key);
+void aes_prng_free(aes_prng_t* aes_prng);
+void aes_prng_get_randomness(aes_prng_t* aes_prng, unsigned char* dst, unsigned int count);
+
 /**
  * Writes count pseudorandom bytes to the pre-initialized randomness array
  *

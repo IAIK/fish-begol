@@ -23,19 +23,16 @@ mzd_t **mzd_init_random_vectors_from_seed(unsigned char key[16], rci_t n, unsign
   if (n % (8 * sizeof(word)) != 0)
     return NULL;
 
-  const unsigned int size = n / 8 * sizeof(unsigned char);
-
-  unsigned char *randomness = (unsigned char *)malloc(size * count);
-  getRandomness(key, randomness, size * count);
+  aes_prng_t* aes_prng = aes_prng_init(key);
 
   mzd_t **vectors = calloc(count, sizeof(mzd_t *));
   for (unsigned int v = 0; v < count; ++v) {
     vectors[v] = mzd_init(1, n);
-    memcpy(vectors[v]->rows[0], randomness + v * size, size);
+    aes_prng_get_randomness(aes_prng, (unsigned char*) vectors[v]->rows[0], n / 8);
     vectors[v]->rows[0][vectors[v]->width - 1] &= vectors[v]->high_bitmask;
   }
 
-  free(randomness);
+  aes_prng_free(aes_prng);
   return vectors;
 }
 
@@ -58,7 +55,7 @@ void mzd_shift_left_inplace(mzd_t *val, unsigned count) {
     return;
   }
 
-  const unsigned int nwords = val->ncols / (8 * sizeof(word));
+  const unsigned int nwords      = val->ncols / (8 * sizeof(word));
   const unsigned int right_count = 8 * sizeof(word) - count;
 
   for (unsigned int i = nwords - 1; i > 0; --i) {
