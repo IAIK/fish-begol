@@ -4,6 +4,15 @@
 #include <m4ri/m4ri.h>
 #include "mzd_additional.h"
 
+typedef mzd_shared_t lowmc_key_t;
+
+typedef struct {
+  mzd_t *x0;
+  mzd_t *x1;
+  mzd_t *x2;
+  mzd_t *mask;
+} mask_t;
+
 /**
  * Represents the LowMC parameters as in https://bitbucket.org/malb/lowmc-helib/src,
  * with the difference that key in a separate struct
@@ -16,16 +25,8 @@ typedef struct {
   mzd_t **LMatrix;
   mzd_t **KMatrix;
   mzd_t **Constants;
+  mask_t mask;
 } lowmc_t;
-
-typedef mzd_shared_t lowmc_key_t;
-
-typedef struct {
-  mzd_t *x0;
-  mzd_t *x1;
-  mzd_t *x2;
-  mzd_t *mask;
-} mask_t;
 
 /**
  * Samples the L matrix for the LowMC instance

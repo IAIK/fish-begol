@@ -50,18 +50,20 @@ static void sbox_layer_bitsliced(mzd_t *out, mzd_t *in, rci_t m, mask_t *mask) {
 __attribute__((target("avx2"))) static inline __m256i
 m256_shift_left(__m256i data, unsigned int count) {
   __m256i carry = _mm256_srli_epi64(data, 64 - count);
+  __m256i carry  = _mm256_srli_epi64(data, 64 - count);
   __m256i rotate = _mm256_permute4x64_epi64(carry, _MM_SHUFFLE(2, 1, 0, 3));
-  carry = _mm256_blend_epi32(_mm256_setzero_si256(), rotate, _MM_SHUFFLE(3, 3, 3, 0));
-  data = _mm256_slli_epi64(data, count);
+  carry          = _mm256_blend_epi32(_mm256_setzero_si256(), rotate, _MM_SHUFFLE(3, 3, 3, 0));
+  data           = _mm256_slli_epi64(data, count);
   return _mm256_or_si256(data, carry);
 }
 
 __attribute__((target("avx2"))) static inline __m256i
 m256_shift_right(__m256i data, unsigned int count) {
   __m256i carry = _mm256_slli_epi64(data, 64 - count);
+  __m256i carry  = _mm256_slli_epi64(data, 64 - count);
   __m256i rotate = _mm256_permute4x64_epi64(carry, _MM_SHUFFLE(0, 3, 2, 1));
-  carry = _mm256_blend_epi32(_mm256_setzero_si256(), rotate, _MM_SHUFFLE(0, 3, 3, 3));
-  data = _mm256_srli_epi64(data, count);
+  carry          = _mm256_blend_epi32(_mm256_setzero_si256(), rotate, _MM_SHUFFLE(0, 3, 3, 3));
+  data           = _mm256_srli_epi64(data, count);
   return _mm256_or_si256(data, carry);
 }
 
@@ -87,7 +89,7 @@ sbox_layer_avx(mzd_t *out, mzd_t *in, mask_t *mask) {
   t0 = _mm256_xor_si256(t0, x0m);
 
   x0m = _mm256_xor_si256(x0m, x1m);
-  t1 = _mm256_xor_si256(t1, x0m);
+  t1  = _mm256_xor_si256(t1, x0m);
 
   t2 = _mm256_xor_si256(t2, x0m);
   t2 = _mm256_xor_si256(t2, x2m);
@@ -127,15 +129,13 @@ mzd_t *lowmc_call(lowmc_t *lowmc, lowmc_key_t *lowmc_key, mzd_t *p) {
   mzd_copy(x, p);
   mzd_addmul(x, lowmc_key->shared[0], lowmc->KMatrix[0], 0);
 
-  mask_t mask;
-  prepare_masks(&mask, lowmc->n, lowmc->m);
 
   for (unsigned i = 0; i < lowmc->r; i++) {
     // sbox_layer(y, x, lowmc->m);
     if (__builtin_cpu_supports("avx2") && y->ncols == 256) {
-      sbox_layer_avx(y, x, &mask);
+      sbox_layer_avx(y, x, &lowmc->mask);
     } else {
-      sbox_layer_bitsliced(y, x, lowmc->m, &mask);
+      sbox_layer_bitsliced(y, x, lowmc->m, &lowmc->mask);
     }
     mzd_mul(z, y, lowmc->LMatrix[i], 0);
     mzd_add(z, z, lowmc->Constants[i]);
@@ -144,11 +144,6 @@ mzd_t *lowmc_call(lowmc_t *lowmc, lowmc_key_t *lowmc_key, mzd_t *p) {
   }
 
   mzd_copy(c, x);
-
-  mzd_free(mask.x0);
-  mzd_free(mask.x1);
-  mzd_free(mask.x2);
-  mzd_free(mask.mask);
 
   mzd_free(z);
   mzd_free(y);

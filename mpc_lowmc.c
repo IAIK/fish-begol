@@ -129,10 +129,10 @@ static mzd_t **_mpc_lowmc_call(lowmc_t *lowmc, lowmc_key_t *lowmc_key, mzd_t *p,
   mpc_const_add(x, x, p, sc, ch);
 
   mzd_t *r[3];
-  for(unsigned i = 0 ; i < lowmc->r ; i++) {  
-    for(unsigned j = 0 ; j < sc ; j++)
-      r[j] = rvec[j][i]; 
-    if(_mpc_sbox_layer(y, x, lowmc->m, views, &vcnt, r, sc, andBitPtr)) {
+  for (unsigned i = 0; i < lowmc->r; i++) {
+    for (unsigned j = 0; j < sc; j++)
+      r[j]          = rvec[j][i];
+    if (_mpc_sbox_layer(y, x, lowmc->m, views, &vcnt, r, sc, andBitPtr)) {
       *status = -1;
       return 0;
     }
@@ -171,16 +171,15 @@ static mzd_t **_mpc_lowmc_call_bitsliced(lowmc_t *lowmc, lowmc_key_t *lowmc_key,
   mpc_const_mat_mul(x, lowmc->KMatrix[0], lowmc_key->shared, sc);
   mpc_const_add(x, x, p, sc, ch);
 
-  mask_t *mask = prepare_masks(0, lowmc->n, lowmc->m);
   sbox_vars_t *vars = sbox_vars_init(0, lowmc->n, sc);
-  
+
   mzd_t **t = mpc_init_empty_share_vector(lowmc->n, sc);
 
   mzd_t *r[3];
-  for(unsigned i = 0 ; i < lowmc->r ; i++) {  
-    for(unsigned j = 0 ; j < sc ; j++)
-      r[j] = rvec[j][i]; 
-    if(_mpc_sbox_layer_bitsliced(y, x, lowmc->m, views, &vcnt, r, sc, andPtr, mask, vars)) {
+  for (unsigned i = 0; i < lowmc->r; i++) {
+    for (unsigned j = 0; j < sc; j++)
+      r[j]          = rvec[j][i];
+    if (_mpc_sbox_layer_bitsliced(y, x, lowmc->m, views, &vcnt, r, sc, andPtr, &lowmc->mask, vars)) {
       *status = -1;
       return 0;
     }
@@ -192,13 +191,8 @@ static mzd_t **_mpc_lowmc_call_bitsliced(lowmc_t *lowmc, lowmc_key_t *lowmc_key,
   }
   mpc_free(t, sc);
   mpc_copy(c, x, sc);
-  mpc_copy(views[vcnt].s, c, sc); 
+  mpc_copy(views[vcnt].s, c, sc);
 
-  mzd_free(mask->x0);
-  mzd_free(mask->x1);
-  mzd_free(mask->x2);
-  mzd_free(mask->mask);
-  free(mask);
   mpc_free(vars->x0m, sc);
   mpc_free(vars->x1m, sc);
   mpc_free(vars->x2m, sc);
