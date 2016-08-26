@@ -14,40 +14,32 @@ static void sbox_layer_bitsliced(mzd_t *out, mzd_t *in, rci_t m, mask_t *mask) {
   mzd_t *x1m = mzd_and(0, mask->x1, in);
   mzd_t *x2m = mzd_and(0, mask->x2, in);
 
-  mzd_t *x0s = mzd_init(1, out->ncols);
-  mzd_shift_left(x0s, x0m, 2, 0);
-  mzd_t *x1s = mzd_init(1, out->ncols);
-  mzd_shift_left(x1s, x1m, 1, 0);
+  mzd_shift_left_inplace(x0m, 2);
+  mzd_shift_left_inplace(x1m, 1);
 
-  mzd_t *t0 = mzd_and(0, x1s, x2m);
-  mzd_t *t1 = mzd_and(0, x0s, x2m);
-  mzd_t *t2 = mzd_and(0, x0s, x1s);
+  mzd_t *t0 = mzd_and(0, x1m, x2m);
+  mzd_t *t1 = mzd_and(0, x0m, x2m);
+  mzd_t *t2 = mzd_and(0, x0m, x1m);
 
-  mzd_xor(t0, t0, x0s);
+  mzd_xor(t0, t0, x0m);
 
-  mzd_xor(t1, t1, x0s);
-  mzd_xor(t1, t1, x1s);
+  mzd_xor(t1, t1, x0m);
+  mzd_xor(t1, t1, x1m);
 
-  mzd_xor(t2, t2, x0s);
-  mzd_xor(t2, t2, x1s);
+  mzd_xor(t2, t2, x0m);
+  mzd_xor(t2, t2, x1m);
   mzd_xor(t2, t2, x2m);
 
-  mzd_t *x0r = mzd_init(1, out->ncols);
-  mzd_t *x1r = mzd_init(1, out->ncols);
-  mzd_shift_right(x0r, t0, 2, 0);
-  mzd_shift_right(x1r, t1, 1, 0);
+  mzd_shift_right_inplace(t0, 2);
+  mzd_shift_right_inplace(t1, 1);
 
   mzd_xor(out, out, t2);
-  mzd_xor(out, out, x0r);
-  mzd_xor(out, out, x1r);
+  mzd_xor(out, out, t0);
+  mzd_xor(out, out, t1);
 
-  mzd_free(x1r);
-  mzd_free(x0r);
   mzd_free(t2);
   mzd_free(t1);
   mzd_free(t0);
-  mzd_free(x1s);
-  mzd_free(x0s);
   mzd_free(x2m);
   mzd_free(x1m);
   mzd_free(x0m);
