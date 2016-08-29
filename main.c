@@ -72,7 +72,7 @@ proof_t* old_prove(lowmc_t* lowmc, lowmc_key_t* lowmc_key, mzd_t* p) {
   unsigned char keys[NUM_ROUNDS][3][16];
 
   // Generating keys
-  clock_t beginCrypto = clock(), deltaCrypto;
+  clock_t beginRand = clock();
   if (RAND_bytes((unsigned char*)keys, sizeof(keys)) != 1) {
     printf("RAND_bytes failed crypto, aborting\n");
     return 0;
@@ -82,10 +82,7 @@ proof_t* old_prove(lowmc_t* lowmc, lowmc_key_t* lowmc_key, mzd_t* p) {
     printf("RAND_bytes failed crypto, aborting\n");
     return 0;
   }
-  deltaCrypto       = clock() - beginCrypto;
-  int inMilliCrypto = deltaCrypto * 1000 / CLOCKS_PER_SEC;
 
-  clock_t beginRand = clock();
   mzd_t** rvec[NUM_ROUNDS][3];
 #pragma omp parallel for
   for (unsigned i = 0; i < NUM_ROUNDS; i++) {
