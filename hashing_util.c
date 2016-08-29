@@ -13,9 +13,8 @@ static void hash_mzd(SHA256_CTX *ctx, mzd_t *v) {
  * Computes the SHA256 hash of a view using openssl (similar as in
  * https://github.com/Sobuno/ZKBoo/blob/master/MPC_SHA256/shared.h)
  */
-void H(unsigned char k[16], mzd_t *y[3], view_t *v, unsigned vidx,
-       unsigned vcnt, unsigned char r[4],
-       unsigned char hash[SHA256_DIGEST_LENGTH]) {
+void H(unsigned char k[16], mzd_t *y[3], view_t *v, unsigned vidx, unsigned vcnt,
+       unsigned char r[4], unsigned char hash[SHA256_DIGEST_LENGTH]) {
   SHA256_CTX ctx;
   SHA256_Init(&ctx);
   SHA256_Update(&ctx, k, 16);
@@ -32,7 +31,8 @@ void H(unsigned char k[16], mzd_t *y[3], view_t *v, unsigned vidx,
 }
 
 /**
- * Computes the challenge (as in https://github.com/Sobuno/ZKBoo/blob/master/MPC_SHA256/shared.h)
+ * Computes the challenge (as in
+ * https://github.com/Sobuno/ZKBoo/blob/master/MPC_SHA256/shared.h)
  */
 void H3(unsigned char c[NUM_ROUNDS][3][SHA256_DIGEST_LENGTH], int *ch) {
 
@@ -43,8 +43,8 @@ void H3(unsigned char c[NUM_ROUNDS][3][SHA256_DIGEST_LENGTH], int *ch) {
   SHA256_Final(hash, &ctx);
 
   // Pick bits from hash
-  int i = 0;
-  int bitTracker = 0;
+  unsigned int i          = 0;
+  unsigned int bitTracker = 0;
   while (i < NUM_ROUNDS) {
     if (bitTracker >= SHA256_DIGEST_LENGTH * 8) { // Generate new hash
       SHA256_Init(&ctx);
