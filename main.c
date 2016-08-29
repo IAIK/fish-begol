@@ -66,7 +66,7 @@ static void destroy_instance(public_parameters_t *pp, private_key_t *private_key
   public_key->pk = NULL;
 }
 
-proof_t *prove(lowmc_t *lowmc, lowmc_key_t *lowmc_key, mzd_t *p) {
+proof_t *old_prove(lowmc_t *lowmc, lowmc_key_t *lowmc_key, mzd_t *p) {
   printf("Prove:\n");
   unsigned char r[NUM_ROUNDS][3][4];
   unsigned char keys[NUM_ROUNDS][3][16];
@@ -186,7 +186,7 @@ proof_t *prove(lowmc_t *lowmc, lowmc_key_t *lowmc_key, mzd_t *p) {
   return proof;
 }
 
-int verify(lowmc_t *lowmc, mzd_t *p, mzd_t *c, proof_t *prf) {
+int old_verify(lowmc_t *lowmc, mzd_t *p, mzd_t *c, proof_t *prf) {
   printf("Verify:\n");
   clock_t beginCh = clock();
   int ch[NUM_ROUNDS];
@@ -288,7 +288,6 @@ int main(int argc, char **argv) {
   openmp_thread_setup();
 
   for (int i = 0; i != 2; ++i) {
-
     public_parameters_t pp;
     private_key_t private_key;
     public_key_t public_key;
@@ -307,8 +306,8 @@ int main(int argc, char **argv) {
     lowmc_key_t key = { 0, NULL };
     mzd_shared_copy(&key, private_key.s);
 
-    proof_t *prf = prove(pp.lowmc, &key, p);
-    verify(pp.lowmc, p, c, prf);
+    proof_t *prf = old_prove(pp.lowmc, &key, p);
+    old_verify(pp.lowmc, p, c, prf);
 
     free_proof(pp.lowmc, prf);
     mzd_shared_clear(&key);
