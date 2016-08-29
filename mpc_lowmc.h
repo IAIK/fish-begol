@@ -69,4 +69,7 @@ mzd_t **mpc_lowmc_call(lowmc_t *lowmc, lowmc_key_t *lowmc_key, mzd_t *p, view_t 
  */
 int mpc_lowmc_verify(lowmc_t *lowmc, mzd_t *p, view_t *views,  mzd_t ***rvec, int c);
 
+mzd_t **mpc_lowmc_call_shared_p(lowmc_t *lowmc, lowmc_key_t *lowmc_key, mzd_shared_t* p, view_t *views,
+                       mzd_t ***rvec);
+
 #endif
