@@ -60,7 +60,7 @@ mzd_t **mpc_lowmc_call(lowmc_t *lowmc, lowmc_key_t *lowmc_key, mzd_t *p, view_t 
 
 /**
  * Verifies a ZKBoo execution of a LowMC encryption
- * 
+ *
  * \param  lowmc     the lowmc parameters
  * \param  p         the plaintext
  * \param  views     the views
@@ -69,10 +69,30 @@ mzd_t **mpc_lowmc_call(lowmc_t *lowmc, lowmc_key_t *lowmc_key, mzd_t *p, view_t 
  */
 int mpc_lowmc_verify(lowmc_t *lowmc, mzd_t *p, view_t *views, mzd_t ***rvec, int c);
 
+/**
+ * Implements MPC LowMC encryption according to
+ * https://eprint.iacr.org/2016/163.pdf with shared plaintext.
+ *
+ * \param  lowmc     the lowmc parameters
+ * \param  lowmc_key the lowmc key
+ * \param  p         the plaintext
+ * \param  views     the views
+ * \param  rvec      the randomness vector
+ * \return           the ciphertext
+ */
 mzd_t **mpc_lowmc_call_shared_p(lowmc_t *lowmc, lowmc_key_t *lowmc_key, mzd_shared_t* p, view_t *views,
                        mzd_t ***rvec);
 
-int mpc_lowmc_verify_shared_p(lowmc_t *lowmc, mzd_shared_t* shared_p, view_t *views, mzd_t ***rvec, int c);
+/**
+ * Verifies a ZKBoo execution of a LowMC encryption with shared plaintext.
+ *
+ * \param  lowmc     the lowmc parameters
+ * \param  p         the plaintext
+ * \param  views     the views
+ * \param  rvec      the randomness vector
+ * \return           0 on success and a value != 0 otherwise
+ */
+int mpc_lowmc_verify_shared_p(lowmc_t *lowmc, mzd_shared_t* p, view_t *views, mzd_t ***rvec, int c);
 
 
 #endif
