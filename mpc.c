@@ -187,39 +187,40 @@ void mpc_print(mzd_t **shared_vec) {
 }
 
 void mpc_free(mzd_t **vec, unsigned sc) {
-  for(unsigned i = 0 ; i < sc ; i++)
+  for (unsigned i = 0; i < sc; i++)
     mzd_free(vec[i]);
   free(vec);
 }
 
 mzd_t **mpc_init_empty_share_vector(rci_t n, unsigned sc) {
-  mzd_t **s = (mzd_t**)malloc(3 * sizeof(mzd_t*));
-  for(unsigned i = 0 ; i < sc ; i++)
-    s[i] = mzd_init(1, n);
+  mzd_t **s = calloc(sc, sizeof(mzd_t *));
+  for (unsigned i = 0; i < sc; i++)
+    s[i]          = mzd_init(1, n);
   return s;
 }
 
 mzd_t **mpc_init_random_vector(rci_t n, unsigned sc) {
-  mzd_t **s = (mzd_t**)malloc(3 * sizeof(mzd_t*));
-  for(unsigned i = 0 ; i < sc ; i++)
-    s[i] = mzd_init_random_vector(n);
+  mzd_t **s = calloc(sc, sizeof(mzd_t *));
+  for (unsigned i = 0; i < sc; i++)
+    s[i]          = mzd_init_random_vector(n);
   return s;
 }
 
 mzd_t **mpc_init_plain_share_vector(mzd_t *v) {
-  mzd_t **s = (mzd_t **)malloc(3 * sizeof(mzd_t *));
-  s[0] = mzd_copy(NULL, v);
-  s[1] = mzd_copy(NULL, v);
-  s[2] = mzd_copy(NULL, v);
+  mzd_t **s = calloc(3, sizeof(mzd_t *));
+  s[0]      = mzd_copy(NULL, v);
+  s[1]      = mzd_copy(NULL, v);
+  s[2]      = mzd_copy(NULL, v);
 
   return s;
 }
 
 mzd_t **mpc_init_share_vector(mzd_t *v) {
-  mzd_t **s = (mzd_t**)malloc(3 * sizeof(mzd_t*));
-  s[0] = mzd_init_random_vector(v->ncols);
-  s[1] = mzd_init_random_vector(v->ncols);
-  s[2] = mzd_init(1, v->ncols);
+  mzd_t **s = calloc(3, sizeof(mzd_t *));
+  s[0]      = mzd_init_random_vector(v->ncols);
+  s[1]      = mzd_init_random_vector(v->ncols);
+  s[2]      = mzd_init(1, v->ncols);
+
   mzd_add(s[2], s[0], s[1]);
   mzd_add(s[2], s[2], v);
 
