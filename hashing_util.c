@@ -61,3 +61,32 @@ void H3(unsigned char c[NUM_ROUNDS][3][SHA256_DIGEST_LENGTH], int *ch) {
     bitTracker += 2;
   }
 }
+
+void H4(unsigned char c1[NUM_ROUNDS][3][SHA256_DIGEST_LENGTH], unsigned char c2[NUM_ROUNDS][3][SHA256_DIGEST_LENGTH], int* ch) {
+  unsigned char hash[SHA256_DIGEST_LENGTH];
+  SHA256_CTX ctx;
+  SHA256_Init(&ctx);
+  SHA256_Update(&ctx, c1, 3 * SHA256_DIGEST_LENGTH * NUM_ROUNDS);
+  SHA256_Update(&ctx, c2, 3 * SHA256_DIGEST_LENGTH * NUM_ROUNDS);
+  SHA256_Final(hash, &ctx);
+
+  // Pick bits from hash
+  unsigned int i          = 0;
+  unsigned int bitTracker = 0;
+  while (i < NUM_ROUNDS) {
+    if (bitTracker >= SHA256_DIGEST_LENGTH * 8) { // Generate new hash
+      SHA256_Init(&ctx);
+      SHA256_Update(&ctx, hash, sizeof(hash));
+      SHA256_Final(hash, &ctx);
+      bitTracker = 0;
+      // printf("Generated new hash\n");
+    }
+
+    unsigned char twobits = (hash[bitTracker / 8] >> (bitTracker % 8)) & 0x3;
+    if (twobits != 0x3) {
+      ch[i++] = twobits;
+    }
+    bitTracker += 2;
+  }
+
+}
