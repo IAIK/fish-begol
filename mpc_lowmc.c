@@ -206,7 +206,6 @@ static mzd_t **_mpc_lowmc_call_bitsliced_shared_p(lowmc_t *lowmc, lowmc_key_t *l
                                          view_t *views, mzd_t ***rvec, unsigned sc, unsigned ch,
                                          and_ptr andPtr, int *status) {
   int vcnt = 0;
-
   for (unsigned i = 0; i < sc; i++)
     mzd_copy(views[vcnt].s[i], lowmc_key->shared[i]);
   vcnt++;
@@ -293,20 +292,16 @@ int mpc_lowmc_verify(lowmc_t *lowmc, mzd_t *p, view_t *views, mzd_t ***rvec, int
   return status;
 }
 
-int mpc_lowmc_verify_shared_p(lowmc_t *lowmc, mzd_t *p, view_t *views, mzd_t ***rvec, int c) {
+int mpc_lowmc_verify_shared_p(lowmc_t *lowmc, mzd_shared_t* shared_p, view_t *views, mzd_t ***rvec, int c) {
   // initialize two key shares from v0
   lowmc_key_t lowmc_key;
   mzd_shared_from_shares(&lowmc_key, views[0].s, 2);
 
-  mzd_shared_t shared_p;
-  mzd_shared_from_shares(&shared_p, views[0].s, 2);
-
   int status = 0;
-  mzd_t **v  = _mpc_lowmc_call_verify(lowmc, &lowmc_key, p, views, rvec, &status, c);
+  mzd_t **v  = _mpc_lowmc_call_verify_shared_p(lowmc, &lowmc_key, shared_p, views, rvec, &status, c);
   if (v)
     mpc_free(v, 2);
 
-  mzd_shared_clear(&shared_p);
   mzd_shared_clear(&lowmc_key);
 
   return status;
@@ -347,15 +342,15 @@ sbox_vars_t *sbox_vars_init(sbox_vars_t *vars, rci_t n, unsigned sc) {
 }
 
 void free_proof(lowmc_t *lowmc, proof_t *proof) {
-  for(unsigned i = 0 ; i < NUM_ROUNDS ; i++) {
+  for (unsigned i = 0; i < NUM_ROUNDS; i++) {
     mpc_free(proof->y[i], 3);
-    for(unsigned j = 0 ; j < 2 + lowmc->r ; j++) {
+    for (unsigned j = 0; j < 2 + lowmc->r; j++) {
       mzd_free(proof->views[i][j].s[0]);
       mzd_free(proof->views[i][j].s[1]);
       free(proof->views[i][j].s);
     }
     free(proof->views[i]);
-  
+
     free(proof->keys[i][0]);
     free(proof->keys[i][1]);
     free(proof->keys[i]);
@@ -371,5 +366,3 @@ void free_proof(lowmc_t *lowmc, proof_t *proof) {
 
   free(proof);
 }
-
-

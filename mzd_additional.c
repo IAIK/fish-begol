@@ -41,7 +41,7 @@ void mzd_shift_right_inplace(mzd_t *val, unsigned int count) {
     return;
   }
 
-  const unsigned int nwords = val->ncols / (8 * sizeof(word));
+  const unsigned int nwords     = val->ncols / (8 * sizeof(word));
   const unsigned int left_count = 8 * sizeof(word) - count;
 
   for (unsigned int i = 0; i < nwords - 1; ++i) {
@@ -132,28 +132,25 @@ mzd_t *mzd_xor(mzd_t *res, mzd_t *first, mzd_t *second) {
 void mzd_shared_init(mzd_shared_t *shared_value, mzd_t *value) {
   shared_value->share_count = 1;
 
-  shared_value->shared = calloc(1, sizeof(mzd_t *));
-  shared_value->shared[0] = mzd_init(1, value->ncols);
-  mzd_copy(shared_value->shared[0], value);
+  shared_value->shared    = calloc(1, sizeof(mzd_t *));
+  shared_value->shared[0] = mzd_copy(NULL, value);
 }
 
 void mzd_shared_copy(mzd_shared_t *dst, mzd_shared_t *src) {
   mzd_shared_clear(dst);
 
-  dst->shared = calloc(src->share_count, sizeof(mzd_t*));
+  dst->shared = calloc(src->share_count, sizeof(mzd_t *));
   for (unsigned int i = 0; i < src->share_count; ++i) {
-    dst->shared[i] = mzd_init(1, src->shared[i]->ncols);
-    mzd_copy(dst->shared[i], src->shared[i]);
+    dst->shared[i] = mzd_copy(NULL, src->shared[i]);
   }
   dst->share_count = src->share_count;
 }
 
 void mzd_shared_from_shares(mzd_shared_t *shared_value, mzd_t **shares, unsigned int share_count) {
   shared_value->share_count = share_count;
-  shared_value->shared = calloc(share_count, sizeof(mzd_t *));
+  shared_value->shared      = calloc(share_count, sizeof(mzd_t *));
   for (unsigned int i = 0; i < share_count; ++i) {
-    shared_value->shared[i] = mzd_init(1, shares[i]->ncols);
-    mzd_copy(shared_value->shared[i], shares[i]);
+    shared_value->shared[i] = mzd_copy(NULL, shares[i]);
   }
 }
 
@@ -163,7 +160,7 @@ void mzd_shared_share(mzd_shared_t *shared_value) {
     return;
   }
 
-  shared_value->shared = tmp;
+  shared_value->shared      = tmp;
   shared_value->share_count = 3;
 
   shared_value->shared[1] = mzd_init_random_vector(shared_value->shared[0]->ncols);
@@ -179,5 +176,5 @@ void mzd_shared_clear(mzd_shared_t *shared_value) {
   }
   free(shared_value->shared);
   shared_value->share_count = 0;
-  shared_value->shared = NULL;
+  shared_value->shared      = NULL;
 }
