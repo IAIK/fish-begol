@@ -2,14 +2,14 @@
 #include "mzd_additional.h"
 
 void mpc_set(mzd_t **res, mzd_t **src, unsigned sc) {
-  for(int i = 0 ; i < sc ; i++) {
+  for (unsigned int i = 0; i < sc; i++) {
     mzd_free(res[i]);
     res[i] = src[i];
-  } 
+  }
 }
 
 void mpc_clear(mzd_t **res, unsigned sc) {
-  for (int i = 0; i < sc; i++)
+  for (unsigned int i = 0; i < sc; i++)
     for (int j = 0; j < res[i]->nrows; j++)
       mzd_row_clear_offset(res[i], j, 0);
 }
