@@ -40,57 +40,61 @@ mzd_t **mpc_xor(mzd_t **res, mzd_t **first, mzd_t **second, unsigned sc) {
   return res;
 }
 
-int mpc_and(mzd_t **res, mzd_t **first, mzd_t **second, mzd_t **r, view_t *views, int *i, mzd_t* mask, unsigned viewshift,  unsigned sc, mzd_t** buffer) {
-  if(res == 0) 
-    res = (mzd_t**)calloc(sizeof(mzd_t*), 3);
-  for(unsigned m = 0 ; m < sc ; m++) {
+int mpc_and(mzd_t** res, mzd_t** first, mzd_t** second, mzd_t** r, view_t* views, int* i,
+            mzd_t* mask, unsigned viewshift, unsigned sc, mzd_t** buffer) {
+  mzd_t* b = NULL;
+  mzd_t* c = NULL;
+
+  for (unsigned m = 0; m < sc; m++) {
     unsigned j = (m + 1) % 3;
-    res[m] = mzd_and(res[m], first[m], second[m]);
-    
-    mzd_t *b = mzd_and(0, first[j], second[m]);
-    mzd_t *c = mzd_and(0, first[m], second[j]);
- 
+    res[m]     = mzd_and(res[m], first[m], second[m]);
+
+    b = mzd_and(b, first[j], second[m]);
+    c = mzd_and(c, first[m], second[j]);
+
     mzd_xor(res[m], res[m], b);
     mzd_xor(res[m], res[m], c);
     mzd_xor(res[m], res[m], r[m]);
     mzd_xor(res[m], res[m], r[j]);
-    
-    mzd_free(b);
-    mzd_free(c);
   }
+
+  mzd_free(b);
+  mzd_free(c);
 
   mpc_shift_right(buffer, res, viewshift, 0, sc);
   mpc_xor(views[*i].s, views[*i].s, buffer, sc);
   return 0;
 }
 
-int mpc_and_verify(mzd_t **res, mzd_t **first, mzd_t **second, mzd_t **r, view_t *views, int *i, mzd_t* mask, unsigned viewshift,  unsigned sc, mzd_t** buffer) {
-  if(res == 0) 
-    res = (mzd_t**)calloc(sizeof(mzd_t*), 3);
-  for(unsigned m = 0 ; m < sc - 1; m++) {
-    unsigned j = m + 1; 
-    res[m] = mzd_and(res[m], first[m], second[m]);
-    
-    mzd_t *b = mzd_and(0, first[j], second[m]);
-    mzd_t *c = mzd_and(0, first[m], second[j]);
- 
+int mpc_and_verify(mzd_t** res, mzd_t** first, mzd_t** second, mzd_t** r, view_t* views, int* i,
+                   mzd_t* mask, unsigned viewshift, unsigned sc, mzd_t** buffer) {
+  mzd_t* b = NULL;
+  mzd_t* c = NULL;
+
+  for (unsigned m = 0; m < sc - 1; m++) {
+    unsigned j = m + 1;
+    res[m]     = mzd_and(res[m], first[m], second[m]);
+
+    b = mzd_and(b, first[j], second[m]);
+    c = mzd_and(c, first[m], second[j]);
+
     mzd_xor(res[m], res[m], b);
     mzd_xor(res[m], res[m], c);
     mzd_xor(res[m], res[m], r[m]);
     mzd_xor(res[m], res[m], r[j]);
-    
-    mzd_free(b);
-    mzd_free(c);
   }
 
-  for(unsigned m = 0 ; m < sc - 1; m++) {
+  mzd_free(b);
+  mzd_free(c);
+
+  for (unsigned m = 0; m < sc - 1; m++) {
     mzd_shift_left(buffer[m], views[*i].s[m], viewshift, 0);
     mzd_and(buffer[m], buffer[m], res[m]);
-    if(mzd_cmp(buffer[m], res[m])) {
+    if (mzd_cmp(buffer[m], res[m])) {
       return -1;
     }
   }
-  
+
   mzd_shift_left(res[sc - 1], views[*i].s[sc - 1], viewshift, 0);
   mzd_and(res[sc - 1], res[sc - 1], mask);
 
