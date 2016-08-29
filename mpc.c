@@ -16,12 +16,12 @@ void mpc_clear(mzd_t** res, unsigned sc) {
 
 void mpc_shift_right(mzd_t** res, mzd_t** val, unsigned count, unsigned sc) {
   for (unsigned i = 0; i < sc; ++i)
-    mzd_shift_right(res[i], val[i], count, 0);
+    mzd_shift_right(res[i], val[i], count);
 }
 
 void mpc_shift_left(mzd_t** res, mzd_t** val, unsigned count, unsigned sc) {
   for (unsigned i = 0; i < sc; ++i)
-    mzd_shift_left(res[i], val[i], count, 0);
+    mzd_shift_left(res[i], val[i], count);
 }
 
 mzd_t **mpc_and_const(mzd_t **res, mzd_t **first, mzd_t *second, unsigned sc) {
@@ -88,14 +88,14 @@ int mpc_and_verify(mzd_t** res, mzd_t** first, mzd_t** second, mzd_t** r, view_t
   mzd_free(c);
 
   for (unsigned m = 0; m < sc - 1; m++) {
-    mzd_shift_left(buffer[m], views[*i].s[m], viewshift, 0);
+    mzd_shift_left(buffer[m], views[*i].s[m], viewshift);
     mzd_and(buffer[m], buffer[m], res[m]);
     if (mzd_cmp(buffer[m], res[m])) {
       return -1;
     }
   }
 
-  mzd_shift_left(res[sc - 1], views[*i].s[sc - 1], viewshift, 0);
+  mzd_shift_left(res[sc - 1], views[*i].s[sc - 1], viewshift);
   mzd_and(res[sc - 1], res[sc - 1], mask);
 
   return 0;

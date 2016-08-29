@@ -1,9 +1,10 @@
 #ifndef MPC_LOWMC_H
 #define MPC_LOWMC_H
 
-#include "m4ri/m4ri.h"
+#include <m4ri/m4ri.h>
+#include <openssl/sha.h>
+
 #include "lowmc_pars.h"
-#include "openssl/sha.h"
 
 #define NUM_ROUNDS 137
 

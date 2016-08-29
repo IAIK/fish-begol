@@ -23,8 +23,8 @@ mask_t* prepare_masks(mask_t* mask, rci_t n, rci_t m) {
   for (int i = n - 3 * m; i < n; i += 3) {
     mzd_write_bit(mask->x0, 0, i, 1);
   }
-  mzd_shift_left(mask->x1, mask->x0, 1, 0);
-  mzd_shift_left(mask->x2, mask->x0, 2, 0);
+  mzd_shift_left(mask->x1, mask->x0, 1);
+  mzd_shift_left(mask->x2, mask->x0, 2);
 
   return mask;
 }

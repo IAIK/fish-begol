@@ -64,48 +64,34 @@ void mzd_shift_left_inplace(mzd_t *val, unsigned count) {
   val->rows[0][0] = val->rows[0][0] << count;
 }
 
-word mzd_shift_right(mzd_t *res, mzd_t *val, unsigned count, word carry) {
+void mzd_shift_right(mzd_t* res, mzd_t* val, unsigned count) {
   if (!count) {
     mzd_copy(res, val);
-    return 0;
-  }
-  word prev = 0;
-
-  for(int i = 0 ; i < val->ncols / (8 * sizeof(word)); i++) {
-    if(i < val->ncols / (8 * sizeof(word)) - 1)
-      prev = val->rows[0][i + 1] << (8 * sizeof(word) - count);
-    else 
-      prev = 0;
-    res->rows[0][i] = (val->rows[0][i] >> count) | prev;
+    return;
   }
 
-  
-  if(carry == 0)
-    return (val->rows[0][0] << (8 * sizeof(word) - count)) >> (8 * sizeof(word) - count);
-  else {
-    res->rows[0][(res->ncols / (8 * sizeof(word))) - 1] |= (carry << (8 * sizeof(word) - count));
-    return 0;
+  const unsigned int nwords     = val->ncols / (8 * sizeof(word));
+  const unsigned int left_count = 8 * sizeof(word) - count;
+
+  for (unsigned int i = 0; i < nwords - 1; ++i) {
+    res->rows[0][i] = (val->rows[0][i] >> count) | (val->rows[0][i + 1] << left_count);
   }
+  res->rows[0][nwords - 1] = val->rows[0][nwords - 1] >> count;
 }
 
-word mzd_shift_left(mzd_t* res, mzd_t *val, unsigned count, word carry) {
-  if(!count) {
+void mzd_shift_left(mzd_t* res, mzd_t* val, unsigned count) {
+  if (!count) {
     mzd_copy(res, val);
-    return 0;
-  }
-  word prev = 0;
-
-  for(int i = 0 ; i < val->ncols / (8 * sizeof(word)); i++) {
-    res->rows[0][i] = (val->rows[0][i] << count) | prev;
-    prev = val->rows[0][i] >> (8 * sizeof(word) - count);
+    return;
   }
 
-  if(carry == 0)
-    return prev; 
-  else {
-    res->rows[0][0] |= carry;
-    return 0;
-  } 
+  const unsigned int nwords      = val->ncols / (8 * sizeof(word));
+  const unsigned int right_count = 8 * sizeof(word) - count;
+
+  for (unsigned int i = nwords - 1; i > 0; --i) {
+    res->rows[0][i] = (val->rows[0][i] << count) | (val->rows[0][i - 1] >> right_count);
+  }
+  res->rows[0][0] = val->rows[0][0] << count;
 }
 
 mzd_t *mzd_and(mzd_t *res, mzd_t *first, mzd_t *second) {
