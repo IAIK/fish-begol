@@ -118,7 +118,10 @@ void sbox_layer(mzd_t *out, mzd_t *in, rci_t m) {
 
 
 mzd_t *lowmc_call(lowmc_t *lowmc, lowmc_key_t *lowmc_key, mzd_t *p) {
-  mzd_t *c = mzd_init(1, lowmc->n);
+  if (p->ncols > lowmc->n) {
+    printf("p larger than block size!");
+    return NULL;
+  }
 
   mzd_t *x = mzd_init(1, lowmc->n);
   mzd_t *y = mzd_init(1, lowmc->n);
@@ -141,11 +144,8 @@ mzd_t *lowmc_call(lowmc_t *lowmc, lowmc_key_t *lowmc_key, mzd_t *p) {
     mzd_copy(x, z);
   }
 
-  mzd_copy(c, x);
-
   mzd_free(z);
   mzd_free(y);
-  mzd_free(x);
 
-  return c;
+  return x;
 }
