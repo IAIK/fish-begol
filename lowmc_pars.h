@@ -71,10 +71,10 @@ void lowmc_free(lowmc_t *lowmc);
 void lowmc_key_free(lowmc_key_t* lowmc_key);
 
 /**
- * Updates a given LowMC parameter instance so that the key is 
- * split into three components representing the additive secret 
+ * Updates a given LowMC parameter instance so that the key is
+ * split into three components representing the additive secret
  * sharing of LowMC
- * 
+ *
  * \param lowmc the LowMC parameters
  */
 void lowmc_secret_share(lowmc_t *lowmc, lowmc_key_t *lowmc_key);

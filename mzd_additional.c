@@ -3,23 +3,23 @@
 
 #include <openssl/rand.h>
 
-void mzd_randomize_ssl(mzd_t *val) {
+void mzd_randomize_ssl(mzd_t* val) {
   // similar to mzd_randomize but using RAND_Bytes instead
   const word mask_end = val->high_bitmask;
   for (rci_t i = 0; i < val->nrows; ++i) {
-    RAND_bytes((unsigned char *)val->rows[i], val->width * sizeof(word));
+    RAND_bytes((unsigned char*)val->rows[i], val->width * sizeof(word));
     val->rows[i][val->width - 1] &= mask_end;
   }
 }
 
-mzd_t *mzd_init_random_vector(rci_t n) {
-  mzd_t *A = mzd_init(1, n);
+mzd_t* mzd_init_random_vector(rci_t n) {
+  mzd_t* A = mzd_init(1, n);
   mzd_randomize_ssl(A);
 
   return A;
 }
 
-mzd_t **mzd_init_random_vectors_from_seed(unsigned char key[16], rci_t n, unsigned int count) {
+mzd_t** mzd_init_random_vectors_from_seed(unsigned char key[16], rci_t n, unsigned int count) {
   if (n % (8 * sizeof(word)) != 0)
     return NULL;
 
@@ -129,33 +129,33 @@ mzd_t *mzd_xor(mzd_t *res, mzd_t *first, mzd_t *second) {
 }
 
 
-void mzd_shared_init(mzd_shared_t *shared_value, mzd_t *value) {
+void mzd_shared_init(mzd_shared_t* shared_value, mzd_t* value) {
   shared_value->share_count = 1;
 
-  shared_value->shared    = calloc(1, sizeof(mzd_t *));
+  shared_value->shared    = calloc(1, sizeof(mzd_t*));
   shared_value->shared[0] = mzd_copy(NULL, value);
 }
 
-void mzd_shared_copy(mzd_shared_t *dst, mzd_shared_t *src) {
+void mzd_shared_copy(mzd_shared_t* dst, mzd_shared_t* src) {
   mzd_shared_clear(dst);
 
-  dst->shared = calloc(src->share_count, sizeof(mzd_t *));
+  dst->shared = calloc(src->share_count, sizeof(mzd_t*));
   for (unsigned int i = 0; i < src->share_count; ++i) {
     dst->shared[i] = mzd_copy(NULL, src->shared[i]);
   }
   dst->share_count = src->share_count;
 }
 
-void mzd_shared_from_shares(mzd_shared_t *shared_value, mzd_t **shares, unsigned int share_count) {
+void mzd_shared_from_shares(mzd_shared_t* shared_value, mzd_t** shares, unsigned int share_count) {
   shared_value->share_count = share_count;
-  shared_value->shared      = calloc(share_count, sizeof(mzd_t *));
+  shared_value->shared      = calloc(share_count, sizeof(mzd_t*));
   for (unsigned int i = 0; i < share_count; ++i) {
     shared_value->shared[i] = mzd_copy(NULL, shares[i]);
   }
 }
 
-void mzd_shared_share(mzd_shared_t *shared_value) {
-  mzd_t **tmp = realloc(shared_value->shared, 3 * sizeof(mzd_t *));
+void mzd_shared_share(mzd_shared_t* shared_value) {
+  mzd_t** tmp = realloc(shared_value->shared, 3 * sizeof(mzd_t*));
   if (!tmp) {
     return;
   }
@@ -170,7 +170,7 @@ void mzd_shared_share(mzd_shared_t *shared_value) {
   mzd_add(shared_value->shared[0], shared_value->shared[0], shared_value->shared[2]);
 }
 
-void mzd_shared_clear(mzd_shared_t *shared_value) {
+void mzd_shared_clear(mzd_shared_t* shared_value) {
   for (unsigned int i = 0; i < shared_value->share_count; ++i) {
     mzd_free(shared_value->shared[i]);
   }

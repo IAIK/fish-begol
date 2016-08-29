@@ -2,7 +2,7 @@
 #include "mpc_lowmc.h"
 #include <m4ri/m4ri.h>
 
-static void hash_mzd(SHA256_CTX *ctx, mzd_t *v) {
+static void hash_mzd(SHA256_CTX* ctx, mzd_t* v) {
   const rci_t nrows = v->nrows;
   for (rci_t m = 0; m < nrows; ++m) {
     SHA256_Update(ctx, v->rows[m], sizeof(word) * v->width);
@@ -13,7 +13,7 @@ static void hash_mzd(SHA256_CTX *ctx, mzd_t *v) {
  * Computes the SHA256 hash of a view using openssl (similar as in
  * https://github.com/Sobuno/ZKBoo/blob/master/MPC_SHA256/shared.h)
  */
-void H(unsigned char k[16], mzd_t *y[3], view_t *v, unsigned vidx, unsigned vcnt,
+void H(unsigned char k[16], mzd_t* y[3], view_t* v, unsigned vidx, unsigned vcnt,
        unsigned char r[4], unsigned char hash[SHA256_DIGEST_LENGTH]) {
   SHA256_CTX ctx;
   SHA256_Init(&ctx);
@@ -34,7 +34,7 @@ void H(unsigned char k[16], mzd_t *y[3], view_t *v, unsigned vidx, unsigned vcnt
  * Computes the challenge (as in
  * https://github.com/Sobuno/ZKBoo/blob/master/MPC_SHA256/shared.h)
  */
-void H3(unsigned char c[NUM_ROUNDS][3][SHA256_DIGEST_LENGTH], int *ch) {
+void H3(unsigned char c[NUM_ROUNDS][3][SHA256_DIGEST_LENGTH], int* ch) {
 
   unsigned char hash[SHA256_DIGEST_LENGTH];
   SHA256_CTX ctx;
@@ -62,7 +62,8 @@ void H3(unsigned char c[NUM_ROUNDS][3][SHA256_DIGEST_LENGTH], int *ch) {
   }
 }
 
-void H4(unsigned char c1[NUM_ROUNDS][3][SHA256_DIGEST_LENGTH], unsigned char c2[NUM_ROUNDS][3][SHA256_DIGEST_LENGTH], int* ch) {
+void H4(unsigned char c1[NUM_ROUNDS][3][SHA256_DIGEST_LENGTH],
+        unsigned char c2[NUM_ROUNDS][3][SHA256_DIGEST_LENGTH], int* ch) {
   unsigned char hash[SHA256_DIGEST_LENGTH];
   SHA256_CTX ctx;
   SHA256_Init(&ctx);
@@ -88,5 +89,4 @@ void H4(unsigned char c1[NUM_ROUNDS][3][SHA256_DIGEST_LENGTH], unsigned char c2[
     }
     bitTracker += 2;
   }
-
 }

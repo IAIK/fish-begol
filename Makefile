@@ -1,6 +1,6 @@
 CC=gcc
 
-CFLAGS+=-std=c99
+CFLAGS+=-std=c11
 CFLAGS+=-Wall
 LDLIBS+=-lm4ri -lcrypto
 

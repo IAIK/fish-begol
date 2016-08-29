@@ -42,10 +42,9 @@ struct aes_prng_s {
   EVP_CIPHER_CTX* ctx;
 };
 
-aes_prng_t* aes_prng_init(unsigned char* key)
-{
+aes_prng_t* aes_prng_init(unsigned char* key) {
   aes_prng_t* aes_prng = malloc(sizeof(aes_prng_t));
-  aes_prng->ctx = EVP_CIPHER_CTX_new();
+  aes_prng->ctx        = EVP_CIPHER_CTX_new();
 
   /* A 128 bit IV */
   const unsigned char iv[16] = {'0', '1', '2', '3', '4', '5', '6', '7',
@@ -80,4 +79,3 @@ void aes_prng_get_randomness(aes_prng_t* aes_prng, unsigned char* dst, unsigned 
       handleErrors();
   }
 }
-
