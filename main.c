@@ -332,6 +332,10 @@ static proof_t* create_proof(lowmc_t* lowmc,
 static void free_signature(public_parameters_t* pp, signature_t* signature) {
   free_proof(pp->lowmc, signature->proof_p);
   free_proof(pp->lowmc, signature->proof_s);
+  for (unsigned int i = 0; i < NUM_ROUNDS; ++i) {
+    mzd_shared_clear(&signature->shared_s[i]);
+  }
+
   free(signature);
 }
 
