@@ -362,8 +362,6 @@ static void init_view(lowmc_t* lowmc, view_t* views[NUM_ROUNDS]) {
 
 static signature_t* prove(public_parameters_t* pp, private_key_t* private_key, mzd_t* p) {
   lowmc_t* lowmc         = pp->lowmc;
-  signature_t* signature = calloc(1, sizeof(signature_t));
-
   printf("Prove:\n");
   unsigned char r_p[NUM_ROUNDS][3][4];
   unsigned char keys_p[NUM_ROUNDS][3][16];
@@ -409,6 +407,7 @@ static signature_t* prove(public_parameters_t* pp, private_key_t* private_key, m
   clock_t beginLowmc = clock();
   mzd_t*** c_mpc_p   = calloc(NUM_ROUNDS, sizeof(mzd_t**));
   mzd_t*** c_mpc_s   = calloc(NUM_ROUNDS, sizeof(mzd_t**));
+  signature_t* signature = calloc(1, sizeof(signature_t));
 #pragma omp parallel for
   for (unsigned i = 0; i < NUM_ROUNDS; ++i) {
     lowmc_key_t lowmc_key_s = {0, NULL};
