@@ -17,30 +17,29 @@ static int _mpc_sbox_layer_bitsliced(mzd_t **out, mzd_t **in, rci_t m, view_t *v
     return 0;
   }
 
-  mpc_copy(out, in, sc);
-  mpc_and_const(out, out, mask->mask, sc);
+  mpc_and_const(out, in, mask->mask, sc);
 
   mpc_and_const(vars->x0m, in, mask->x0, sc);
-  mpc_and_const(vars->x1m, in, mask->x1, sc);   
-  mpc_and_const(vars->x2m, in, mask->x2, sc);   
+  mpc_and_const(vars->x1m, in, mask->x1, sc);
+  mpc_and_const(vars->x2m, in, mask->x2, sc);
   mpc_and_const(vars->r0m, rvec, mask->x0, sc);
-  mpc_and_const(vars->r1m, rvec, mask->x1, sc);   
-  mpc_and_const(vars->r2m, rvec, mask->x2, sc);   
+  mpc_and_const(vars->r1m, rvec, mask->x1, sc);
+  mpc_and_const(vars->r2m, rvec, mask->x2, sc);
 
   mpc_shift_left(vars->x0s, vars->x0m, 2, 0, sc);
   mpc_shift_left(vars->r0s, vars->r0m, 2, 0, sc);
-  
+
   mpc_shift_left(vars->x1s, vars->x1m, 1, 0, sc);
   mpc_shift_left(vars->r1s, vars->r1m, 1, 0, sc);
 
-  if(andPtr(vars->r0m, vars->x0s, vars->x1s, vars->r2m, views, i, mask->x2, 0, sc, vars->v) ||
-    andPtr(vars->r2m, vars->x1s, vars->x2m, vars->r0s, views, i, mask->x2, 2, sc, vars->v) ||
-  andPtr(vars->r1m, vars->x0s, vars->x2m, vars->r1s, views, i, mask->x2, 1, sc, vars->v)) {
+  if (andPtr(vars->r0m, vars->x0s, vars->x1s, vars->r2m, views, i, mask->x2, 0, sc, vars->v) ||
+      andPtr(vars->r2m, vars->x1s, vars->x2m, vars->r0s, views, i, mask->x2, 2, sc, vars->v) ||
+      andPtr(vars->r1m, vars->x0s, vars->x2m, vars->r1s, views, i, mask->x2, 1, sc, vars->v)) {
     return -1;
   }
 
   mpc_xor(vars->r2m, vars->r2m, vars->x0s, sc);
- 
+
   mpc_xor(vars->r1m, vars->r1m, vars->x0s, sc);
   mpc_xor(vars->r1m, vars->r1m, vars->x1s, sc);
 
@@ -84,9 +83,8 @@ static int _mpc_sbox_layer(mzd_t **out, mzd_t **in, rci_t m, view_t *views, int 
       tmp2[m] = x0[m];
       tmp3[m] = x0[m];
     }
-    if(andBitPtr(tmp1, x2, r0, views, i, n, sc) ||
-       andBitPtr(tmp2, x2, r1, views, i, n + 1, sc) ||
-       andBitPtr(tmp3, x1, r2, views, i, n + 2, sc)) {
+    if (andBitPtr(tmp1, x2, r0, views, i, n, sc) || andBitPtr(tmp2, x2, r1, views, i, n + 1, sc) ||
+        andBitPtr(tmp3, x1, r2, views, i, n + 2, sc)) {
       return -1;
     }
 
@@ -148,7 +146,7 @@ static mzd_t **_mpc_lowmc_call(lowmc_t *lowmc, lowmc_key_t *lowmc_key, mzd_t *p,
     mpc_copy(x, z, sc);
   }
   mpc_copy(c, x, sc);
-  mpc_copy(views[vcnt].s, c, sc); 
+  mpc_copy(views[vcnt].s, c, sc);
 
   mpc_free(z, sc);
   mpc_free(y, sc);
@@ -204,29 +202,112 @@ static mzd_t **_mpc_lowmc_call_bitsliced(lowmc_t *lowmc, lowmc_key_t *lowmc_key,
   return c;
 }
 
-mzd_t **mpc_lowmc_call(lowmc_t *lowmc, lowmc_key_t *lowmc_key, mzd_t *p, view_t *views, mzd_t ***rvec) {
-  //return _mpc_lowmc_call(lowmc, lowmc_key, p, views, rvec, 3, 0, &mpc_and_bit, 0); 
-  return _mpc_lowmc_call_bitsliced(lowmc, lowmc_key, p, views, rvec, 3, 0, &mpc_and, 0); 
+static mzd_t **_mpc_lowmc_call_bitsliced_shared_p(lowmc_t *lowmc, lowmc_key_t *lowmc_key, mzd_t **p,
+                                         view_t *views, mzd_t ***rvec, unsigned sc, unsigned ch,
+                                         and_ptr andPtr, int *status) {
+  int vcnt = 0;
+
+  for (unsigned i = 0; i < sc; i++)
+    mzd_copy(views[vcnt].s[i], lowmc_key->shared[i]);
+  vcnt++;
+
+  mzd_t **c = mpc_init_empty_share_vector(lowmc->n, sc);
+
+  mzd_t **x = mpc_init_empty_share_vector(lowmc->n, sc);
+  mzd_t **y = mpc_init_empty_share_vector(lowmc->n, sc);
+  mzd_t **z = mpc_init_empty_share_vector(lowmc->n, sc);
+
+  mpc_const_mat_mul(x, lowmc->KMatrix[0], lowmc_key->shared, sc);
+  mpc_add(x, x, p, sc);
+
+  sbox_vars_t *vars = sbox_vars_init(0, lowmc->n, sc);
+
+  mzd_t **t = mpc_init_empty_share_vector(lowmc->n, sc);
+
+  mzd_t *r[3];
+  for (unsigned i = 0; i < lowmc->r; i++) {
+    for (unsigned j = 0; j < sc; j++)
+      r[j]          = rvec[j][i];
+    if (_mpc_sbox_layer_bitsliced(y, x, lowmc->m, views, &vcnt, r, sc, andPtr, &lowmc->mask, vars)) {
+      *status = -1;
+      return NULL;
+    }
+    mpc_const_mat_mul(z, lowmc->LMatrix[i], y, sc);
+    mpc_const_add(z, z, lowmc->Constants[i], sc, ch);
+    mpc_const_mat_mul(t, lowmc->KMatrix[i + 1], lowmc_key->shared, sc);
+    mpc_add(z, z, t, sc);
+    mpc_copy(x, z, sc);
+  }
+  mpc_free(t, sc);
+  mpc_copy(c, x, sc);
+  mpc_copy(views[vcnt].s, c, sc);
+
+  sbox_vars_free(vars, sc);
+
+  mpc_free(z, sc);
+  mpc_free(y, sc);
+  mpc_free(x, sc);
+  return c;
 }
 
-mzd_t **_mpc_lowmc_call_verify(lowmc_t *lowmc, lowmc_key_t *lowmc_key, mzd_t *p, view_t *views, mzd_t ***rvec, int *status, int c) {
-  //return _mpc_lowmc_call(lowmc, lowmc_key, p, views, rvec, 2, c, &mpc_and_bit_verify, status); 
-  return _mpc_lowmc_call_bitsliced(lowmc, lowmc_key, p, views, rvec, 2, c, &mpc_and_verify, status); 
+mzd_t **mpc_lowmc_call(lowmc_t *lowmc, lowmc_key_t *lowmc_key, mzd_t *p, view_t *views,
+                       mzd_t ***rvec) {
+  // return _mpc_lowmc_call(lowmc, lowmc_key, p, views, rvec, 3, 0,
+  // &mpc_and_bit, 0);
+  return _mpc_lowmc_call_bitsliced(lowmc, lowmc_key, p, views, rvec, 3, 0, &mpc_and, 0);
 }
 
-int mpc_lowmc_verify(lowmc_t *lowmc, mzd_t *p, view_t *views, mzd_t ***rvec,
-                     int c) {
+mzd_t **mpc_lowmc_call_shared_p(lowmc_t *lowmc, lowmc_key_t *lowmc_key, mzd_shared_t* p, view_t *views,
+                       mzd_t ***rvec) {
+  // return _mpc_lowmc_call(lowmc, lowmc_key, p, views, rvec, 3, 0,
+  // &mpc_and_bit, 0);
+  return _mpc_lowmc_call_bitsliced_shared_p(lowmc, lowmc_key, p->shared, views, rvec, 3, 0, &mpc_and, 0);
+}
+
+mzd_t **_mpc_lowmc_call_verify(lowmc_t *lowmc, lowmc_key_t *lowmc_key, mzd_t *p, view_t *views,
+                               mzd_t ***rvec, int *status, int c) {
+  // return _mpc_lowmc_call(lowmc, lowmc_key, p, views, rvec, 2, c,
+  // &mpc_and_bit_verify, status);
+  return _mpc_lowmc_call_bitsliced(lowmc, lowmc_key, p, views, rvec, 2, c, &mpc_and_verify, status);
+}
+
+mzd_t **_mpc_lowmc_call_verify_shared_p(lowmc_t *lowmc, lowmc_key_t *lowmc_key, mzd_shared_t *p, view_t *views,
+                               mzd_t ***rvec, int *status, int c) {
+  // return _mpc_lowmc_call(lowmc, lowmc_key, p, views, rvec, 2, c,
+  // &mpc_and_bit_verify, status);
+  return _mpc_lowmc_call_bitsliced_shared_p(lowmc, lowmc_key, p->shared, views, rvec, 2, c, &mpc_and_verify, status);
+}
+
+int mpc_lowmc_verify(lowmc_t *lowmc, mzd_t *p, view_t *views, mzd_t ***rvec, int c) {
   // initialize two key shares from v0
   lowmc_key_t lowmc_key;
   mzd_shared_from_shares(&lowmc_key, views[0].s, 2);
 
   int status = 0;
-  mzd_t **v =
-      _mpc_lowmc_call_verify(lowmc, &lowmc_key, p, views, rvec, &status, c);
+  mzd_t **v  = _mpc_lowmc_call_verify(lowmc, &lowmc_key, p, views, rvec, &status, c);
   if (v)
     mpc_free(v, 2);
 
-  mzd_shared_free(&lowmc_key);
+  mzd_shared_clear(&lowmc_key);
+
+  return status;
+}
+
+int mpc_lowmc_verify_shared_p(lowmc_t *lowmc, mzd_t *p, view_t *views, mzd_t ***rvec, int c) {
+  // initialize two key shares from v0
+  lowmc_key_t lowmc_key;
+  mzd_shared_from_shares(&lowmc_key, views[0].s, 2);
+
+  mzd_shared_t shared_p;
+  mzd_shared_from_shares(&shared_p, views[0].s, 2);
+
+  int status = 0;
+  mzd_t **v  = _mpc_lowmc_call_verify(lowmc, &lowmc_key, p, views, rvec, &status, c);
+  if (v)
+    mpc_free(v, 2);
+
+  mzd_shared_clear(&shared_p);
+  mzd_shared_clear(&lowmc_key);
 
   return status;
 }
