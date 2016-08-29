@@ -1,26 +1,26 @@
 #include "mpc.h"
 #include "mzd_additional.h"
 
-void mpc_set(mzd_t **res, mzd_t **src, unsigned sc) {
+void mpc_set(mzd_t** res, mzd_t** src, unsigned sc) {
   for (unsigned int i = 0; i < sc; i++) {
     mzd_free(res[i]);
     res[i] = src[i];
   }
 }
 
-void mpc_clear(mzd_t **res, unsigned sc) {
+void mpc_clear(mzd_t** res, unsigned sc) {
   for (unsigned int i = 0; i < sc; i++)
     for (int j = 0; j < res[i]->nrows; j++)
       mzd_row_clear_offset(res[i], j, 0);
 }
 
-void mpc_shift_right(mzd_t**res, mzd_t **val, unsigned count, word carry, unsigned sc) {
-  for(unsigned i = 0 ; i < sc ; i++) 
+void mpc_shift_right(mzd_t** res, mzd_t** val, unsigned count, unsigned sc) {
+  for (unsigned i = 0; i < sc; ++i)
     mzd_shift_right(res[i], val[i], count, 0);
 }
 
-void mpc_shift_left(mzd_t **res, mzd_t **val, unsigned count, word carry, unsigned sc) {
-  for(unsigned i = 0 ; i < sc ; i++) 
+void mpc_shift_left(mzd_t** res, mzd_t** val, unsigned count, unsigned sc) {
+  for (unsigned i = 0; i < sc; ++i)
     mzd_shift_left(res[i], val[i], count, 0);
 }
 
@@ -61,7 +61,7 @@ int mpc_and(mzd_t** res, mzd_t** first, mzd_t** second, mzd_t** r, view_t* views
   mzd_free(b);
   mzd_free(c);
 
-  mpc_shift_right(buffer, res, viewshift, 0, sc);
+  mpc_shift_right(buffer, res, viewshift, sc);
   mpc_xor(views[*i].s, views[*i].s, buffer, sc);
   return 0;
 }

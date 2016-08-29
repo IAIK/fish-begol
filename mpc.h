@@ -4,9 +4,9 @@
 #include "m4ri/m4ri.h"
 #include "mpc_lowmc.h"
 
-void mpc_shift_right(mzd_t**res, mzd_t **val, unsigned count, word carry, unsigned sc);
+void mpc_shift_right(mzd_t**res, mzd_t **val, unsigned count, unsigned sc);
 
-void mpc_shift_left(mzd_t **res, mzd_t **val, unsigned count, word carry, unsigned sc);
+void mpc_shift_left(mzd_t **res, mzd_t **val, unsigned count, unsigned sc);
 
 mzd_t **mpc_and_const(mzd_t **res, mzd_t **first, mzd_t *second, unsigned sc);
 

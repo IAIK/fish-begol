@@ -5,13 +5,13 @@
 
 static void sbox_vars_free(sbox_vars_t* vars, unsigned int sc);
 
-typedef int (*BIT_and_ptr)(BIT *, BIT *, BIT *, view_t *, int *, unsigned, unsigned);
-typedef int (*and_ptr)(mzd_t **, mzd_t **, mzd_t **, mzd_t **, view_t *, int *, mzd_t *, unsigned,
-                       unsigned, mzd_t **);
+typedef int (*BIT_and_ptr)(BIT*, BIT*, BIT*, view_t*, int*, unsigned, unsigned);
+typedef int (*and_ptr)(mzd_t**, mzd_t**, mzd_t**, mzd_t**, view_t*, int*, mzd_t*, unsigned,
+                       unsigned, mzd_t**);
 
-static int _mpc_sbox_layer_bitsliced(mzd_t **out, mzd_t **in, rci_t m, view_t *views, int *i,
-                                     mzd_t **rvec, unsigned sc, and_ptr andPtr, mask_t *mask,
-                                     sbox_vars_t *vars) {
+static int _mpc_sbox_layer_bitsliced(mzd_t** out, mzd_t** in, rci_t m, view_t* views, int* i,
+                                     mzd_t** rvec, unsigned sc, and_ptr andPtr, mask_t* mask,
+                                     sbox_vars_t* vars) {
   if (in[0]->ncols - 3 * m < 2) {
     printf("Bitsliced implementation requires in->ncols - 3 * m >= 2\n");
     return 0;
@@ -26,11 +26,11 @@ static int _mpc_sbox_layer_bitsliced(mzd_t **out, mzd_t **in, rci_t m, view_t *v
   mpc_and_const(vars->r1m, rvec, mask->x1, sc);
   mpc_and_const(vars->r2m, rvec, mask->x2, sc);
 
-  mpc_shift_left(vars->x0s, vars->x0m, 2, 0, sc);
-  mpc_shift_left(vars->r0s, vars->r0m, 2, 0, sc);
+  mpc_shift_left(vars->x0s, vars->x0m, 2, sc);
+  mpc_shift_left(vars->r0s, vars->r0m, 2, sc);
 
-  mpc_shift_left(vars->x1s, vars->x1m, 1, 0, sc);
-  mpc_shift_left(vars->r1s, vars->r1m, 1, 0, sc);
+  mpc_shift_left(vars->x1s, vars->x1m, 1, sc);
+  mpc_shift_left(vars->r1s, vars->r1m, 1, sc);
 
   if (andPtr(vars->r0m, vars->x0s, vars->x1s, vars->r2m, views, i, mask->x2, 0, sc, vars->v) ||
       andPtr(vars->r2m, vars->x1s, vars->x2m, vars->r0s, views, i, mask->x2, 2, sc, vars->v) ||
@@ -47,8 +47,8 @@ static int _mpc_sbox_layer_bitsliced(mzd_t **out, mzd_t **in, rci_t m, view_t *v
   mpc_xor(vars->r0m, vars->r0m, vars->x1s, sc);
   mpc_xor(vars->r0m, vars->r0m, vars->x2m, sc);
 
-  mpc_shift_right(vars->x0s, vars->r2m, 2, 0, sc);
-  mpc_shift_right(vars->x1s, vars->r1m, 1, 0, sc);
+  mpc_shift_right(vars->x0s, vars->r2m, 2, sc);
+  mpc_shift_right(vars->x1s, vars->r1m, 1, sc);
 
   mpc_xor(out, out, vars->r0m, sc);
   mpc_xor(out, out, vars->x0s, sc);
