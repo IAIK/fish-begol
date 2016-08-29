@@ -216,13 +216,13 @@ static mzd_t **_mpc_lowmc_call_bitsliced_shared_p(lowmc_t *lowmc, lowmc_key_t *l
   mzd_t **x = mpc_init_empty_share_vector(lowmc->n, sc);
   mzd_t **y = mpc_init_empty_share_vector(lowmc->n, sc);
   mzd_t **z = mpc_init_empty_share_vector(lowmc->n, sc);
+  mzd_t **t = mpc_init_empty_share_vector(lowmc->n, sc);
 
   mpc_const_mat_mul(x, lowmc->KMatrix[0], lowmc_key->shared, sc);
-  mpc_add(x, x, p, sc);
+  mpc_copy(t, p, sc);
+  mpc_add(x, x, t, sc);
 
   sbox_vars_t *vars = sbox_vars_init(0, lowmc->n, sc);
-
-  mzd_t **t = mpc_init_empty_share_vector(lowmc->n, sc);
 
   mzd_t *r[3];
   for (unsigned i = 0; i < lowmc->r; i++) {
