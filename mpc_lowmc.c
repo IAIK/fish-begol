@@ -1,7 +1,10 @@
 #include "mpc_lowmc.h"
-#include "mzd_additional.h"
-#include "mpc.h"
 #include "lowmc_pars.h"
+#include "mpc.h"
+#include "mzd_additional.h"
+
+static void sbox_vars_free(sbox_vars_t* vars, unsigned int sc);
+
 typedef int (*BIT_and_ptr)(BIT *, BIT *, BIT *, view_t *, int *, unsigned, unsigned);
 typedef int (*and_ptr)(mzd_t **, mzd_t **, mzd_t **, mzd_t **, view_t *, int *, mzd_t *, unsigned,
                        unsigned, mzd_t **);
@@ -193,18 +196,7 @@ static mzd_t **_mpc_lowmc_call_bitsliced(lowmc_t *lowmc, lowmc_key_t *lowmc_key,
   mpc_copy(c, x, sc);
   mpc_copy(views[vcnt].s, c, sc);
 
-  mpc_free(vars->x0m, sc);
-  mpc_free(vars->x1m, sc);
-  mpc_free(vars->x2m, sc);
-  mpc_free(vars->r0m, sc);
-  mpc_free(vars->r1m, sc);
-  mpc_free(vars->r2m, sc);
-  mpc_free(vars->x0s, sc);
-  mpc_free(vars->r0s, sc);
-  mpc_free(vars->x1s, sc);
-  mpc_free(vars->r1s, sc);
-  mpc_free(vars->v, sc);
-  free(vars);
+  sbox_vars_free(vars, sc);
 
   mpc_free(z, sc);
   mpc_free(y, sc);
@@ -239,25 +231,39 @@ int mpc_lowmc_verify(lowmc_t *lowmc, mzd_t *p, view_t *views, mzd_t ***rvec,
   return status;
 }
 
+void sbox_vars_free(sbox_vars_t* vars, unsigned int sc) {
+  mpc_free(vars->x0m, sc);
+  mpc_free(vars->x1m, sc);
+  mpc_free(vars->x2m, sc);
+  mpc_free(vars->r0m, sc);
+  mpc_free(vars->r1m, sc);
+  mpc_free(vars->r2m, sc);
+  mpc_free(vars->x0s, sc);
+  mpc_free(vars->r0s, sc);
+  mpc_free(vars->x1s, sc);
+  mpc_free(vars->r1s, sc);
+  mpc_free(vars->v, sc);
+  free(vars);
+}
+
 sbox_vars_t *sbox_vars_init(sbox_vars_t *vars, rci_t n, unsigned sc) {
-  if(vars == 0) 
-    vars = (sbox_vars_t*)malloc(sizeof(sbox_vars_t));
-  
-  vars->x0m = mpc_init_empty_share_vector(n, sc); 
-  vars->x1m = mpc_init_empty_share_vector(n, sc); 
-  vars->x2m = mpc_init_empty_share_vector(n, sc); 
-  vars->r0m = mpc_init_empty_share_vector(n, sc); 
-  vars->r1m = mpc_init_empty_share_vector(n, sc); 
-  vars->r2m = mpc_init_empty_share_vector(n, sc); 
-  vars->x0s = mpc_init_empty_share_vector(n, sc); 
-  vars->x1s = mpc_init_empty_share_vector(n, sc); 
-  vars->r0s = mpc_init_empty_share_vector(n, sc); 
-  vars->r1s = mpc_init_empty_share_vector(n, sc); 
-  vars->v   = mpc_init_empty_share_vector(n, sc); 
+  if (vars == 0)
+    vars = (sbox_vars_t *)malloc(sizeof(sbox_vars_t));
+
+  vars->x0m = mpc_init_empty_share_vector(n, sc);
+  vars->x1m = mpc_init_empty_share_vector(n, sc);
+  vars->x2m = mpc_init_empty_share_vector(n, sc);
+  vars->r0m = mpc_init_empty_share_vector(n, sc);
+  vars->r1m = mpc_init_empty_share_vector(n, sc);
+  vars->r2m = mpc_init_empty_share_vector(n, sc);
+  vars->x0s = mpc_init_empty_share_vector(n, sc);
+  vars->x1s = mpc_init_empty_share_vector(n, sc);
+  vars->r0s = mpc_init_empty_share_vector(n, sc);
+  vars->r1s = mpc_init_empty_share_vector(n, sc);
+  vars->v   = mpc_init_empty_share_vector(n, sc);
 
   return vars;
 }
-
 
 void free_proof(lowmc_t *lowmc, proof_t *proof) {
   for(unsigned i = 0 ; i < NUM_ROUNDS ; i++) {
