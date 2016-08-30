@@ -1,4 +1,5 @@
 #include "mpc.h"
+#include "avx.h"
 #include "mzd_additional.h"
 
 void mpc_set(mzd_t** res, mzd_t** src, unsigned sc) {
@@ -40,12 +41,47 @@ mzd_t **mpc_xor(mzd_t **res, mzd_t **first, mzd_t **second, unsigned sc) {
   return res;
 }
 
+__attribute__((target("avx2"))) int mpc_and_avx(mzd_t** res, mzd_t** first, mzd_t** second,
+                                                mzd_t** r, view_t* views, int* i, mzd_t* mask,
+                                                unsigned viewshift, unsigned sc, mzd_t** buffer) {
+  (void)mask;
+
+  for (unsigned m = 0; m < sc; ++m) {
+    const unsigned j = (m + 1) % 3;
+
+    __m256i firstm  = _mm256_load_si256((__m256i*)first[m]->rows[0]);
+    __m256i secondm = _mm256_load_si256((__m256i*)second[m]->rows[0]);
+
+    __m256i resm = _mm256_and_si256(firstm, secondm);
+
+    __m256i b = _mm256_and_si256(secondm, _mm256_load_si256((__m256i*)first[j]->rows[0]));
+    resm      = _mm256_xor_si256(resm, b);
+
+    b    = _mm256_and_si256(firstm, _mm256_load_si256((__m256i*)second[j]->rows[0]));
+    resm = _mm256_xor_si256(resm, b);
+
+    resm = _mm256_xor_si256(resm, _mm256_load_si256((__m256i*)r[m]->rows[0]));
+    resm = _mm256_xor_si256(resm, _mm256_load_si256((__m256i*)r[j]->rows[0]));
+
+    _mm256_store_si256((__m256i*)res[m]->rows[0], resm);
+
+    resm = m256_shift_right(resm, viewshift);
+    resm = _mm256_xor_si256(resm, _mm256_load_si256((__m256i*)views[*i].s[m]->rows[0]));
+
+    _mm256_store_si256((__m256i*)views[*i].s[m]->rows[0], resm);
+  }
+
+  return 0;
+}
+
 int mpc_and(mzd_t** res, mzd_t** first, mzd_t** second, mzd_t** r, view_t* views, int* i,
             mzd_t* mask, unsigned viewshift, unsigned sc, mzd_t** buffer) {
+  (void)mask;
+
   mzd_t* b = NULL;
   mzd_t* c = NULL;
 
-  for (unsigned m = 0; m < sc; m++) {
+  for (unsigned m = 0; m < sc; ++m) {
     unsigned j = (m + 1) % 3;
     res[m]     = mzd_and(res[m], first[m], second[m]);
 
