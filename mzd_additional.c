@@ -175,3 +175,30 @@ void mzd_shared_clear(mzd_shared_t* shared_value) {
   shared_value->share_count = 0;
   shared_value->shared      = NULL;
 }
+
+mzd_t *mzd_mul_v(mzd_t *c, mzd_t const *v, mzd_t const *At) {
+  if (!c) {
+    c = mzd_init(1, v->ncols);
+  } else {
+    mzd_row_clear_offset(c, 0, 0);
+  }
+
+  return mzd_addmul_v(c, v, At);
+}
+
+mzd_t *mzd_addmul_v(mzd_t *c, mzd_t const *v, mzd_t const *At) {
+  const unsigned int len = At->ncols / (8 * sizeof(word));
+
+  word* cptr = c->rows[0];
+  word* vptr = v->rows[0];
+
+  for (rci_t r = 0; r < At->nrows; ++r) {
+    word* Atptr = At->rows[r];
+
+    for (unsigned int i = 0 ; i < len; ++i) {
+      cptr[i] ^= Atptr[i] & vptr[i];
+    }
+  }
+
+  return c;
+}
