@@ -36,6 +36,7 @@ typedef struct {
 
 sbox_vars_t *sbox_vars_init(sbox_vars_t *vars, rci_t n, unsigned sc);
 
+void clear_proof(lowmc_t *lowmc, proof_t *proof);
 void free_proof(lowmc_t *lowmc, proof_t *proof);
 
 /**

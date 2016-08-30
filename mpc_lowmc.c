@@ -341,7 +341,7 @@ sbox_vars_t *sbox_vars_init(sbox_vars_t *vars, rci_t n, unsigned sc) {
   return vars;
 }
 
-void free_proof(lowmc_t *lowmc, proof_t *proof) {
+void clear_proof(lowmc_t* lowmc, proof_t* proof) {
   for (unsigned i = 0; i < NUM_ROUNDS; i++) {
     mpc_free(proof->y[i], 3);
     for (unsigned j = 0; j < 2 + lowmc->r; j++) {
@@ -363,6 +363,9 @@ void free_proof(lowmc_t *lowmc, proof_t *proof) {
   free(proof->views);
   free(proof->keys);
   free(proof->r);
+}
 
+void free_proof(lowmc_t* lowmc, proof_t* proof) {
+  clear_proof(lowmc, proof);
   free(proof);
 }

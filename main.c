@@ -281,17 +281,16 @@ int old_verify(lowmc_t* lowmc, mzd_t* p, mzd_t* c, proof_t* prf) {
 }
 
 typedef struct {
-  proof_t* proof_s;
-  proof_t* proof_p;
+  proof_t proof_s;
+  proof_t proof_p;
   mzd_shared_t shared_s[NUM_ROUNDS];
 } signature_t;
 
-static proof_t* create_proof(lowmc_t* lowmc,
+static proof_t* create_proof(proof_t* proof, lowmc_t* lowmc,
                              unsigned char hashes[NUM_ROUNDS][3][SHA256_DIGEST_LENGTH],
                              int ch[NUM_ROUNDS], unsigned char r[NUM_ROUNDS][3][4],
                              unsigned char keys[NUM_ROUNDS][3][16], mzd_t*** c_mpc,
                              view_t* views[NUM_ROUNDS]) {
-  proof_t* proof = (proof_t*)malloc(sizeof(proof_t));
   proof->views   = (view_t**)malloc(NUM_ROUNDS * sizeof(view_t*));
 
   proof->r    = (unsigned char***)malloc(NUM_ROUNDS * sizeof(unsigned char**));
@@ -330,8 +329,8 @@ static proof_t* create_proof(lowmc_t* lowmc,
 }
 
 static void free_signature(public_parameters_t* pp, signature_t* signature) {
-  free_proof(pp->lowmc, signature->proof_p);
-  free_proof(pp->lowmc, signature->proof_s);
+  clear_proof(pp->lowmc, &signature->proof_p);
+  clear_proof(pp->lowmc, &signature->proof_s);
   for (unsigned int i = 0; i < NUM_ROUNDS; ++i) {
     mzd_shared_clear(&signature->shared_s[i]);
   }
@@ -448,8 +447,8 @@ static signature_t* prove(public_parameters_t* pp, private_key_t* private_key, m
   clock_t deltaCh = clock() - beginCh;
   printf("Generating challenge          %4lums\n", deltaCh * 1000 / CLOCKS_PER_SEC);
 
-  signature->proof_p = create_proof(lowmc, hashes_p, ch, r_p, keys_p, c_mpc_p, views_p);
-  signature->proof_s = create_proof(lowmc, hashes_s, ch, r_s, keys_s, c_mpc_s, views_s);
+  create_proof(&signature->proof_p, lowmc, hashes_p, ch, r_p, keys_p, c_mpc_p, views_p);
+  create_proof(&signature->proof_s, lowmc, hashes_s, ch, r_s, keys_s, c_mpc_s, views_s);
 
   for (unsigned int i = 0; i < NUM_ROUNDS; i++) {
     unsigned int a = ch[i];
@@ -551,8 +550,8 @@ static int verify_views(lowmc_t* lowmc, mzd_t* p, mzd_shared_t shared_p[NUM_ROUN
 static int verify(public_parameters_t* pp, public_key_t* pk, mzd_t* p, mzd_t* c,
                   signature_t* signature) {
   lowmc_t* lowmc   = pp->lowmc;
-  proof_t* proof_p = signature->proof_p;
-  proof_t* proof_s = signature->proof_s;
+  proof_t* proof_p = &signature->proof_p;
+  proof_t* proof_s = &signature->proof_s;
 
   printf("Verify:\n");
   clock_t beginCh = clock();
