@@ -97,7 +97,6 @@ void sbox_layer(mzd_t* out, mzd_t* in, rci_t m) {
   }
 }
 
-
 mzd_t* lowmc_call(lowmc_t* lowmc, lowmc_key_t* lowmc_key, mzd_t* p) {
   if (p->ncols > lowmc->n) {
     printf("p larger than block size!");
@@ -110,7 +109,6 @@ mzd_t* lowmc_call(lowmc_t* lowmc, lowmc_key_t* lowmc_key, mzd_t* p) {
 
   mzd_copy(x, p);
   mzd_addmul(x, lowmc_key->shared[0], lowmc->KMatrix[0], 0);
-
 
   for (unsigned i = 0; i < lowmc->r; i++) {
     // sbox_layer(y, x, lowmc->m);

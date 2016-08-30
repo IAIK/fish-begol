@@ -25,24 +25,26 @@ void mpc_shift_left(mzd_t** res, mzd_t** val, unsigned count, unsigned sc) {
     mzd_shift_left(res[i], val[i], count);
 }
 
-mzd_t **mpc_and_const(mzd_t **res, mzd_t **first, mzd_t *second, unsigned sc) {
-  if(res == 0) 
+mzd_t** mpc_and_const(mzd_t** res, mzd_t** first, mzd_t* second, unsigned sc) {
+  if (res == 0) {
     res = (mzd_t**)calloc(sizeof(mzd_t*), 3);
-  for(unsigned i = 0 ; i < sc ; i++) 
-    res[i] = mzd_and(res[i], first[i], second);
+  }
+
+  for (unsigned i = 0; i < sc; i++)
+    res[i]        = mzd_and(res[i], first[i], second);
   return res;
 }
 
-mzd_t **mpc_xor(mzd_t **res, mzd_t **first, mzd_t **second, unsigned sc) {
-  if(res == 0) 
+mzd_t** mpc_xor(mzd_t** res, mzd_t** first, mzd_t** second, unsigned sc) {
+  if (res == 0)
     res = (mzd_t**)calloc(sizeof(mzd_t*), 3);
-  for(unsigned i = 0 ; i < sc ; i++) 
-    res[i] = mzd_xor(res[i], first[i], second[i]);
+  for (unsigned i = 0; i < sc; i++)
+    res[i]        = mzd_xor(res[i], first[i], second[i]);
   return res;
 }
 
 __attribute__((target("avx2"))) int mpc_and_avx(mzd_t** res, mzd_t** first, mzd_t** second,
-                                                mzd_t** r, view_t* views, int* i, mzd_t* mask,
+                                                mzd_t** r, view_t* view, mzd_t* mask,
                                                 unsigned viewshift, unsigned sc, mzd_t** buffer) {
   (void)mask;
 
@@ -66,15 +68,15 @@ __attribute__((target("avx2"))) int mpc_and_avx(mzd_t** res, mzd_t** first, mzd_
     _mm256_store_si256((__m256i*)res[m]->rows[0], resm);
 
     resm = m256_shift_right(resm, viewshift);
-    resm = _mm256_xor_si256(resm, _mm256_load_si256((__m256i*)views[*i].s[m]->rows[0]));
+    resm = _mm256_xor_si256(resm, _mm256_load_si256((__m256i*)view->s[m]->rows[0]));
 
-    _mm256_store_si256((__m256i*)views[*i].s[m]->rows[0], resm);
+    _mm256_store_si256((__m256i*)view->s[m]->rows[0], resm);
   }
 
   return 0;
 }
 
-int mpc_and(mzd_t** res, mzd_t** first, mzd_t** second, mzd_t** r, view_t* views, int* i,
+int mpc_and(mzd_t** res, mzd_t** first, mzd_t** second, mzd_t** r, view_t* view,
             mzd_t* mask, unsigned viewshift, unsigned sc, mzd_t** buffer) {
   (void)mask;
 
@@ -98,11 +100,11 @@ int mpc_and(mzd_t** res, mzd_t** first, mzd_t** second, mzd_t** r, view_t* views
   mzd_free(c);
 
   mpc_shift_right(buffer, res, viewshift, sc);
-  mpc_xor(views[*i].s, views[*i].s, buffer, sc);
+  mpc_xor(view->s, view->s, buffer, sc);
   return 0;
 }
 
-int mpc_and_verify(mzd_t** res, mzd_t** first, mzd_t** second, mzd_t** r, view_t* views, int* i,
+int mpc_and_verify(mzd_t** res, mzd_t** first, mzd_t** second, mzd_t** r, view_t* view,
                    mzd_t* mask, unsigned viewshift, unsigned sc, mzd_t** buffer) {
   mzd_t* b = NULL;
   mzd_t* c = NULL;
@@ -124,41 +126,41 @@ int mpc_and_verify(mzd_t** res, mzd_t** first, mzd_t** second, mzd_t** r, view_t
   mzd_free(c);
 
   for (unsigned m = 0; m < sc - 1; m++) {
-    mzd_shift_left(buffer[m], views[*i].s[m], viewshift);
+    mzd_shift_left(buffer[m], view->s[m], viewshift);
     mzd_and(buffer[m], buffer[m], res[m]);
     if (mzd_cmp(buffer[m], res[m])) {
       return -1;
     }
   }
 
-  mzd_shift_left(res[sc - 1], views[*i].s[sc - 1], viewshift);
+  mzd_shift_left(res[sc - 1], view->s[sc - 1], viewshift);
   mzd_and(res[sc - 1], res[sc - 1], mask);
 
   return 0;
 }
 
-int mpc_and_bit(BIT* a, BIT* b, BIT* r, view_t *views, int *i, unsigned bp, unsigned sc) {
+int mpc_and_bit(BIT* a, BIT* b, BIT* r, view_t* views, int* i, unsigned bp, unsigned sc) {
   BIT* wp = (BIT*)malloc(sc * sizeof(BIT));
-  for(unsigned m = 0 ; m < sc ; m++) {
+  for (unsigned m = 0; m < sc; m++) {
     unsigned j = (m + 1) % 3;
-    wp[m] = (a[m] & b[m]) ^ (a[j] & b[m]) ^ (a[m] & b[j]) ^ r[m] ^ r[j];
+    wp[m]      = (a[m] & b[m]) ^ (a[j] & b[m]) ^ (a[m] & b[j]) ^ r[m] ^ r[j];
   }
-  for(unsigned m = 0 ; m < sc ; m++) 
-    a[m] = wp[m];
+  for (unsigned m = 0; m < sc; m++)
+    a[m]          = wp[m];
   mpc_write_bit(views[*i].s, bp, a, sc);
   free(wp);
   return 0;
 }
 
-int mpc_and_bit_verify(BIT* a, BIT* b, BIT* r, view_t *views, int *i, unsigned bp, unsigned sc) {
+int mpc_and_bit_verify(BIT* a, BIT* b, BIT* r, view_t* views, int* i, unsigned bp, unsigned sc) {
   BIT* wp = (BIT*)malloc(sc * sizeof(BIT));
-  for(unsigned m = 0 ; m < sc - 1 ; m++) {
+  for (unsigned m = 0; m < sc - 1; m++) {
     unsigned j = m + 1;
-    wp[m] = (a[m] & b[m]) ^ (a[j] & b[m]) ^ (a[m] & b[j]) ^ r[m] ^ r[j];
+    wp[m]      = (a[m] & b[m]) ^ (a[j] & b[m]) ^ (a[m] & b[j]) ^ r[m] ^ r[j];
   }
-  for(unsigned m = 0 ; m < sc - 1 ; m++) {
+  for (unsigned m = 0; m < sc - 1; m++) {
     a[m] = wp[m];
-    if(a[m] != mzd_read_bit(views[*i].s[m], 0, bp)) {
+    if (a[m] != mzd_read_bit(views[*i].s[m], 0, bp)) {
       return -1;
     }
   }
@@ -168,86 +170,86 @@ int mpc_and_bit_verify(BIT* a, BIT* b, BIT* r, view_t *views, int *i, unsigned b
 }
 
 void mpc_xor_bit(BIT* a, BIT* b, unsigned sc) {
-  for(unsigned i = 0 ; i < sc ; i++) {
+  for (unsigned i = 0; i < sc; i++) {
     a[i] ^= b[i];
   }
 }
 
-void mpc_read_bit(BIT *out, mzd_t **vec, rci_t n, unsigned sc) {
+void mpc_read_bit(BIT* out, mzd_t** vec, rci_t n, unsigned sc) {
   for (unsigned i = 0; i < sc; i++)
-    out[i] = mzd_read_bit(vec[i], 0, n);
+    out[i]        = mzd_read_bit(vec[i], 0, n);
 }
 
-void mpc_write_bit(mzd_t **vec, rci_t n, BIT *bit, unsigned sc) {
-  for(unsigned i = 0 ; i < sc ; i++)
+void mpc_write_bit(mzd_t** vec, rci_t n, BIT* bit, unsigned sc) {
+  for (unsigned i = 0; i < sc; i++)
     mzd_write_bit(vec[i], 0, n, bit[i]);
 }
 
-mzd_t **mpc_add(mzd_t **result, mzd_t **first, mzd_t **second, unsigned sc) {
-  if(result == 0)
+mzd_t** mpc_add(mzd_t** result, mzd_t** first, mzd_t** second, unsigned sc) {
+  if (result == 0)
     result = mpc_init_empty_share_vector(first[0]->ncols, sc);
-  for(unsigned i = 0; i < sc ; i++)
+  for (unsigned i = 0; i < sc; i++)
     mzd_add(result[i], first[i], second[i]);
   return result;
 }
 
-mzd_t **mpc_const_add(mzd_t **result, mzd_t **first, mzd_t *second, unsigned sc, unsigned c) {
-  if(result == 0)
+mzd_t** mpc_const_add(mzd_t** result, mzd_t** first, mzd_t* second, unsigned sc, unsigned c) {
+  if (result == 0)
     result = mpc_init_empty_share_vector(first[0]->ncols, sc);
-  if(c == 0)
+  if (c == 0)
     mzd_add(result[0], first[0], second);
-  else if(c == sc)
+  else if (c == sc)
     mzd_add(result[sc - 1], first[sc - 1], second);
   return result;
 }
 
-mzd_t **mpc_const_mat_mul(mzd_t** result, mzd_t *matrix, mzd_t **vector, unsigned sc) {
-  if(result == 0)
+mzd_t** mpc_const_mat_mul(mzd_t** result, mzd_t* matrix, mzd_t** vector, unsigned sc) {
+  if (result == 0)
     result = mpc_init_empty_share_vector(vector[0]->ncols, sc);
-  for(unsigned i = 0; i < sc ; i++)
+  for (unsigned i = 0; i < sc; i++)
     mzd_mul(result[i], vector[i], matrix, 0);
   return result;
 }
 
-void mpc_copy(mzd_t** out, mzd_t **in, unsigned sc) {
-  for(unsigned i = 0; i < sc ; i++)
+void mpc_copy(mzd_t** out, mzd_t** in, unsigned sc) {
+  for (unsigned i = 0; i < sc; i++)
     mzd_copy(out[i], in[i]);
 }
 
-mzd_t *mpc_reconstruct_from_share(mzd_t** shared_vec) {
-  mzd_t *res = mzd_add(0, shared_vec[0], shared_vec[1]);
+mzd_t* mpc_reconstruct_from_share(mzd_t** shared_vec) {
+  mzd_t* res = mzd_add(0, shared_vec[0], shared_vec[1]);
   mzd_add(res, res, shared_vec[2]);
   return res;
-} 
+}
 
-void mpc_print(mzd_t **shared_vec) {
-  mzd_t *r = mpc_reconstruct_from_share(shared_vec);
+void mpc_print(mzd_t** shared_vec) {
+  mzd_t* r = mpc_reconstruct_from_share(shared_vec);
   mzd_print(r);
   mzd_free(r);
 }
 
-void mpc_free(mzd_t **vec, unsigned sc) {
+void mpc_free(mzd_t** vec, unsigned sc) {
   for (unsigned i = 0; i < sc; i++)
     mzd_free(vec[i]);
   free(vec);
 }
 
-mzd_t **mpc_init_empty_share_vector(rci_t n, unsigned sc) {
-  mzd_t **s = calloc(sc, sizeof(mzd_t *));
+mzd_t** mpc_init_empty_share_vector(rci_t n, unsigned sc) {
+  mzd_t** s = calloc(sc, sizeof(mzd_t*));
   for (unsigned i = 0; i < sc; i++)
     s[i]          = mzd_init(1, n);
   return s;
 }
 
-mzd_t **mpc_init_random_vector(rci_t n, unsigned sc) {
-  mzd_t **s = calloc(sc, sizeof(mzd_t *));
+mzd_t** mpc_init_random_vector(rci_t n, unsigned sc) {
+  mzd_t** s = calloc(sc, sizeof(mzd_t*));
   for (unsigned i = 0; i < sc; i++)
     s[i]          = mzd_init_random_vector(n);
   return s;
 }
 
-mzd_t **mpc_init_plain_share_vector(mzd_t *v) {
-  mzd_t **s = calloc(3, sizeof(mzd_t *));
+mzd_t** mpc_init_plain_share_vector(mzd_t* v) {
+  mzd_t** s = calloc(3, sizeof(mzd_t*));
   s[0]      = mzd_copy(NULL, v);
   s[1]      = mzd_copy(NULL, v);
   s[2]      = mzd_copy(NULL, v);
@@ -255,8 +257,8 @@ mzd_t **mpc_init_plain_share_vector(mzd_t *v) {
   return s;
 }
 
-mzd_t **mpc_init_share_vector(mzd_t *v) {
-  mzd_t **s = calloc(3, sizeof(mzd_t *));
+mzd_t** mpc_init_share_vector(mzd_t* v) {
+  mzd_t** s = calloc(3, sizeof(mzd_t*));
   s[0]      = mzd_init_random_vector(v->ncols);
   s[1]      = mzd_init_random_vector(v->ncols);
   s[2]      = mzd_init(1, v->ncols);
