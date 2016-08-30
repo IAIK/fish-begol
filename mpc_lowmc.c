@@ -40,11 +40,10 @@ static int _mpc_sbox_layer_bitsliced(mzd_t** out, mzd_t** in, rci_t m, view_t* v
 
   mpc_xor(vars->r2m, vars->r2m, vars->x0s, sc);
 
+  mpc_xor(vars->x0s, vars->x0s, vars->x1s, sc);
   mpc_xor(vars->r1m, vars->r1m, vars->x0s, sc);
-  mpc_xor(vars->r1m, vars->r1m, vars->x1s, sc);
 
   mpc_xor(vars->r0m, vars->r0m, vars->x0s, sc);
-  mpc_xor(vars->r0m, vars->r0m, vars->x1s, sc);
   mpc_xor(vars->r0m, vars->r0m, vars->x2m, sc);
 
   mpc_shift_right(vars->x0s, vars->r2m, 2, sc);
