@@ -12,6 +12,8 @@
 #include <openssl/rand.h>
 #include <time.h>
 
+#define TIMING_ITERATIONS 1
+
 typedef struct {
   // The LowMC instance.
   lowmc_t* lowmc;
@@ -32,7 +34,7 @@ static void create_instance(public_parameters_t* pp, private_key_t* private_key,
   printf("Setup:\n");
 
   clock_t beginSetup = clock();
-  lowmc_t* lowmc     = lowmc_init(63, 256, 14, 128);
+  lowmc_t* lowmc     = lowmc_init(62, 192, 15, 128);
   clock_t deltaSetup = clock() - beginSetup;
   printf("LowMC setup                   %4lums\n", deltaSetup * 1000 / CLOCKS_PER_SEC);
 
@@ -649,7 +651,7 @@ int main(int argc, char** argv) {
 
     create_instance(&pp, &private_key, &public_key);
 
-    mzd_t* p = mzd_init_random_vector(256);
+    mzd_t* p = mzd_init_random_vector(192);
 
     clock_t beginRef = clock();
     mzd_t* c         = lowmc_call(pp.lowmc, private_key.s, p);
@@ -681,7 +683,7 @@ int main(int argc, char** argv) {
 
     create_instance(&pp, &private_key, &public_key);
 
-    mzd_t* p = mzd_init_random_vector(256);
+    mzd_t* p = mzd_init_random_vector(192);
 
     clock_t beginRef = clock();
     mzd_t* c         = lowmc_call(pp.lowmc, private_key.s, p);
