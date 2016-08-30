@@ -187,6 +187,11 @@ mzd_t *mzd_mul_v(mzd_t *c, mzd_t const *v, mzd_t const *At) {
 }
 
 mzd_t *mzd_addmul_v(mzd_t *c, mzd_t const *v, mzd_t const *At) {
+  if (At->ncols != c->ncols) {
+    // number of columns does not match
+    return NULL;
+  }
+
   const unsigned int len = At->width;
   const word mask = At->high_bitmask;
   word* cptr = c->rows[0];
