@@ -41,7 +41,7 @@ static void create_instance(public_parameters_t* pp, private_key_t* private_key,
   lowmc_t* lowmc     = lowmc_init(m, n, r, k);
   timings[0] = (clock() - beginSetup) * TIMING_SCALE;
 #ifdef VERBOSE
-  printf("LowMC setup                   %4lu\n", timings[0]);
+  printf("LowMC setup                   %6lu\n", timings[0]);
 #endif
 
   clock_t beginKeygen      = clock();
@@ -49,7 +49,7 @@ static void create_instance(public_parameters_t* pp, private_key_t* private_key,
   lowmc_key_t* lowmc_key_s = lowmc_keygen(lowmc);
   timings[1]               = (clock() - beginKeygen) * TIMING_SCALE;
 #ifdef VERBOSE
-  printf("LowMC key generation          %4lu\n", timings[1]);
+  printf("LowMC key generation          %6lu\n", timings[1]);
 #endif
 
   pp->lowmc      = lowmc;
@@ -60,7 +60,7 @@ static void create_instance(public_parameters_t* pp, private_key_t* private_key,
   public_key->pk      = lowmc_call(lowmc, lowmc_key_k, lowmc_key_s->shared[0]);
   timings[2] = (clock() - beginPubkey) * TIMING_SCALE;
 #ifdef VERBOSE
-  printf("Public key computation        %4lu\n", timings[2]);
+  printf("Public key computation        %6lu\n", timings[2]);
 #endif
 }
 
@@ -110,7 +110,7 @@ proof_t* fis_prove(lowmc_t* lowmc, lowmc_key_t* lowmc_key, mzd_t* p, clock_t *ti
   }
   timings[3] = (clock() - beginRand) * TIMING_SCALE;
 #ifdef VERBOSE
-  printf("MPC randomess generation      %4lu\n", timings[3]);
+  printf("MPC randomess generation      %6lu\n", timings[3]);
 #endif
 
   clock_t beginShare = clock();
@@ -130,7 +130,7 @@ proof_t* fis_prove(lowmc_t* lowmc, lowmc_key_t* lowmc_key, mzd_t* p, clock_t *ti
   timings[4] = (clock() - beginShare) * TIMING_SCALE;
   
 #ifdef VERBOSE
-  printf("MPC secret sharing            %4lu\n", timings[4]);
+  printf("MPC secret sharing            %6lu\n", timings[4]);
 #endif
 
   clock_t beginLowmc = clock();
@@ -140,7 +140,7 @@ proof_t* fis_prove(lowmc_t* lowmc, lowmc_key_t* lowmc_key, mzd_t* p, clock_t *ti
     c_mpc[i]         = mpc_lowmc_call(lowmc, lowmc_key, p, views[i], rvec[i]);
   timings[5] = (clock() - beginLowmc) * TIMING_SCALE;
 #ifdef VERBOSE
-  printf("MPC LowMC encryption          %4lu\n", timings[5]);
+  printf("MPC LowMC encryption          %6lu\n", timings[5]);
 #endif
 
   clock_t beginHash = clock();
@@ -153,7 +153,7 @@ proof_t* fis_prove(lowmc_t* lowmc, lowmc_key_t* lowmc_key, mzd_t* p, clock_t *ti
   }
   timings[6] = (clock() - beginHash) * TIMING_SCALE;
 #ifdef VERBOSE
-  printf("Hashing views                 %4lu\n", timings[6]);
+  printf("Hashing views                 %6lu\n", timings[6]);
 #endif
 
   clock_t beginCh = clock();
@@ -161,7 +161,7 @@ proof_t* fis_prove(lowmc_t* lowmc, lowmc_key_t* lowmc_key, mzd_t* p, clock_t *ti
   H3(hashes, ch);
   timings[7] = (clock() - beginCh) * TIMING_SCALE;
 #ifdef VERBOSE
-  printf("Generating challenge          %4lu\n", timings[7]);
+  printf("Generating challenge          %6lu\n", timings[7]);
 #endif
 
   proof_t* proof = (proof_t*)malloc(sizeof(proof_t));
@@ -223,7 +223,7 @@ int fis_verify(lowmc_t* lowmc, mzd_t* p, mzd_t* c, proof_t* prf, clock_t *timing
   H3(prf->hashes, ch);
   timings[8] = (clock() - beginCh) * TIMING_SCALE;
 #ifdef VERBOSE
-  printf("Recomputing challenge         %4lu\n", timings[8]);
+  printf("Recomputing challenge         %6lu\n", timings[8]);
 #endif
 
   clock_t beginHash = clock();
@@ -242,7 +242,7 @@ int fis_verify(lowmc_t* lowmc, mzd_t* p, mzd_t* c, proof_t* prf, clock_t *timing
   }
   timings[9] = (clock() - beginHash) * TIMING_SCALE;
 #ifdef VERBOSE
-  printf("Verifying hashes              %4lu\n", timings[9]);
+  printf("Verifying hashes              %6lu\n", timings[9]);
 #endif
 
   clock_t beginRec       = clock();
@@ -255,7 +255,7 @@ int fis_verify(lowmc_t* lowmc, mzd_t* p, mzd_t* c, proof_t* prf, clock_t *timing
   }
   timings[10] = (clock() - beginRec) * TIMING_SCALE;
 #ifdef VERBOSE
-  printf("Verifying output shares       %4lu\n", timings[10]);
+  printf("Verifying output shares       %6lu\n", timings[10]);
 #endif
 
   clock_t beginView       = clock();
@@ -266,7 +266,7 @@ int fis_verify(lowmc_t* lowmc, mzd_t* p, mzd_t* c, proof_t* prf, clock_t *timing
       output_share_status = -1;
   timings[11] = (clock() - beginView) * TIMING_SCALE;
 #ifdef VERBOSE
-  printf("Reconstructing output views   %4lu\n", timings[11]);
+  printf("Reconstructing output views   %6lu\n", timings[11]);
 #endif
 
   clock_t beginViewVrfy = clock();
@@ -295,7 +295,7 @@ int fis_verify(lowmc_t* lowmc, mzd_t* p, mzd_t* c, proof_t* prf, clock_t *timing
   }
   timings[12] = (clock() - beginViewVrfy) * TIMING_SCALE;
 #ifdef VERBOSE
-  printf("Verifying views               %4lu\n", timings[12]);
+  printf("Verifying views               %6lu\n", timings[12]);
   printf("\n");
 
   if (hash_status)
@@ -434,7 +434,7 @@ static signature_t* bg_prove(public_parameters_t* pp, private_key_t* private_key
   }
   timings[3] = (clock() - beginRand) * TIMING_SCALE;
 #ifdef VERBOSE
-  printf("MPC randomess generation      %4lu\n", timings[3]);
+  printf("MPC randomess generation      %6lu\n", timings[3]);
 #endif
 
   clock_t beginShare = clock();
@@ -457,7 +457,7 @@ static signature_t* bg_prove(public_parameters_t* pp, private_key_t* private_key
 
   timings[4] = (clock() - beginShare) * TIMING_SCALE;
 #ifdef VERBOSE
-  printf("MPC secret sharing            %4lu\n", timings[4]);
+  printf("MPC secret sharing            %6lu\n", timings[4]);
 #endif
 
   clock_t beginLowmc = clock();
@@ -475,7 +475,7 @@ static signature_t* bg_prove(public_parameters_t* pp, private_key_t* private_key
   }
   timings[5] = (clock() - beginLowmc) * TIMING_SCALE;
 #ifdef VERBOSE
-  printf("MPC LowMC encryption          %4lu\n", timings[5]);
+  printf("MPC LowMC encryption          %6lu\n", timings[5]);
 #endif
 
   mzd_shared_clear(&lowmc_key_k);
@@ -492,7 +492,7 @@ static signature_t* bg_prove(public_parameters_t* pp, private_key_t* private_key
   }
   timings[6] = (clock() - beginHash) * TIMING_SCALE;
 #ifdef VERBOSE
-  printf("Hashing views                 %4lu\n", timings[6]);
+  printf("Hashing views                 %6lu\n", timings[6]);
 #endif
 
   clock_t beginCh = clock();
@@ -500,7 +500,7 @@ static signature_t* bg_prove(public_parameters_t* pp, private_key_t* private_key
   H4(hashes_p, hashes_s, ch);
   timings[7] = (clock() - beginCh) * TIMING_SCALE;
 #ifdef VERBOSE
-  printf("Generating challenge          %4lu\n", timings[7]);
+  printf("Generating challenge          %6lu\n", timings[7]);
 #endif
 
   create_proof(&signature->proof_p, lowmc, hashes_p, ch, r_p, keys_p, c_mpc_p, views_p);
@@ -618,7 +618,7 @@ static int bg_verify(public_parameters_t* pp, public_key_t* pk, mzd_t* p, mzd_t*
   H4(proof_p->hashes, proof_s->hashes, ch);
   timings[8] = (clock() - beginCh) * TIMING_SCALE;
 #ifdef VERBOSE
-  printf("Recomputing challenge         %4lu\n", timings[8]);
+  printf("Recomputing challenge         %6lu\n", timings[8]);
 #endif
 
   clock_t beginHash = clock();
@@ -632,7 +632,7 @@ static int bg_verify(public_parameters_t* pp, public_key_t* pk, mzd_t* p, mzd_t*
 
   timings[9] = (clock() - beginHash) * TIMING_SCALE;
 #ifdef VERBOSE
-  printf("Verifying hashes              %4lu\n", timings[9]);
+  printf("Verifying hashes              %6lu\n", timings[9]);
 #endif
 
   clock_t beginRec       = clock();
@@ -650,7 +650,7 @@ static int bg_verify(public_parameters_t* pp, public_key_t* pk, mzd_t* p, mzd_t*
   }
   timings[10] = (clock() - beginRec) * TIMING_SCALE;
 #ifdef VERBOSE
-  printf("Verifying output shares       %4lu\n", timings[10]);
+  printf("Verifying output shares       %6lu\n", timings[10]);
 #endif
 
   clock_t beginView       = clock();
@@ -666,7 +666,7 @@ static int bg_verify(public_parameters_t* pp, public_key_t* pk, mzd_t* p, mzd_t*
   }
   timings[11] = (clock() - beginView) * TIMING_SCALE;
 #ifdef VERBOSE
-  printf("Reconstructing output views   %4lu\n", timings[11]);
+  printf("Reconstructing output views   %6lu\n", timings[11]);
 #endif
 
   clock_t beginViewVrfy  = clock();
@@ -679,7 +679,7 @@ static int bg_verify(public_parameters_t* pp, public_key_t* pk, mzd_t* p, mzd_t*
   }
   timings[12] = (clock() - beginViewVrfy) * TIMING_SCALE;
 #ifdef VERBOSE
-  printf("Verifying views               %4lu\n", timings[12]);
+  printf("Verifying views               %6lu\n", timings[12]);
   printf("\n");
 
   if (hash_status)
@@ -758,7 +758,7 @@ int main(int argc, char** argv) {
     mzd_t* c         = lowmc_call(pp.lowmc, private_key.s, p);
 #ifdef VERBOSE
     clock_t deltaRef = (clock() - beginRef) * TIMING_SCALE;
-    printf("LowMC reference encryption    %4lu\n", deltaRef);
+    printf("LowMC reference encryption    %6lu\n", deltaRef);
     printf("\n");
 #endif
 
@@ -803,7 +803,7 @@ int main(int argc, char** argv) {
     mzd_t* c         = lowmc_call(pp.lowmc, private_key.s, p);
 #ifdef VERBOSE
     clock_t deltaRef = (clock() - beginRef) * TIMING_SCALE;
-    printf("LowMC reference encryption    %4lu\n", deltaRef);
+    printf("LowMC reference encryption    %6lu\n", deltaRef);
     printf("\n");
 #endif
 
