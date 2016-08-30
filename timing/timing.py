@@ -10,7 +10,7 @@ def main():
         m, n, r = get_params(line)
         timings = open("timings-{0}-{1}-{2}-{3}.csv".format(m, n, r, k), "w")
         subprocess.Popen("./{0} {1} {2} {3} {4} {5}".format(args.executable, 
-                         m, n, r, k, args.iterations), shell=True, stdout=timings)
+                         m, n, r, k, args.iterations), shell=True, stdout=timings).wait()
       
       
     
