@@ -43,6 +43,40 @@ mzd_t** mpc_xor(mzd_t** res, mzd_t** first, mzd_t** second, unsigned sc) {
   return res;
 }
 
+__attribute__((target("sse2"))) int mpc_and_sse(mzd_t** res, mzd_t** first, mzd_t** second,
+                                                mzd_t** r, view_t* view, mzd_t* mask,
+                                                unsigned viewshift, unsigned sc, mzd_t** buffer) {
+  (void)mask;
+
+  for (unsigned m = 0; m < sc; ++m) {
+    const unsigned j = (m + 1) % 3;
+
+    __m128i firstm  = _mm_load_si128((__m128i*)first[m]->rows[0]);
+    __m128i secondm = _mm_load_si128((__m128i*)second[m]->rows[0]);
+
+    __m128i resm = _mm_and_si128(firstm, secondm);
+
+    __m128i b = _mm_and_si128(secondm, _mm_load_si128((__m128i*)first[j]->rows[0]));
+    resm      = _mm_xor_si128(resm, b);
+
+    b    = _mm_and_si128(firstm, _mm_load_si128((__m128i*)second[j]->rows[0]));
+    resm = _mm_xor_si128(resm, b);
+
+    resm = _mm_xor_si128(resm, _mm_load_si128((__m128i*)r[m]->rows[0]));
+    resm = _mm_xor_si128(resm, _mm_load_si128((__m128i*)r[j]->rows[0]));
+
+    _mm_store_si128((__m128i*)res[m]->rows[0], resm);
+
+    resm = m128_shift_right(resm, viewshift);
+    resm = _mm_xor_si128(resm, _mm_load_si128((__m128i*)view->s[m]->rows[0]));
+
+    _mm_store_si128((__m128i*)view->s[m]->rows[0], resm);
+  }
+
+  return 0;
+}
+
+
 __attribute__((target("avx2"))) int mpc_and_avx(mzd_t** res, mzd_t** first, mzd_t** second,
                                                 mzd_t** r, view_t* view, mzd_t* mask,
                                                 unsigned viewshift, unsigned sc, mzd_t** buffer) {
@@ -101,6 +135,49 @@ int mpc_and(mzd_t** res, mzd_t** first, mzd_t** second, mzd_t** r, view_t* view,
 
   mpc_shift_right(buffer, res, viewshift, sc);
   mpc_xor(view->s, view->s, buffer, sc);
+  return 0;
+}
+
+__attribute__((target("sse4.1"))) int mpc_and_verify_sse(mzd_t** res, mzd_t** first, mzd_t** second,
+                                                       mzd_t** r, view_t* view, mzd_t* mask,
+                                                       unsigned viewshift, unsigned sc,
+                                                       mzd_t** buffer) {
+  (void)buffer;
+
+  for (unsigned m = 0; m < sc - 1; ++m) {
+    const unsigned j = (m + 1);
+
+    __m128i firstm  = _mm_load_si128((__m128i*)first[m]->rows[0]);
+    __m128i secondm = _mm_load_si128((__m128i*)second[m]->rows[0]);
+
+    __m128i resm = _mm_and_si128(firstm, secondm);
+
+    __m128i b = _mm_and_si128(secondm, _mm_load_si128((__m128i*)first[j]->rows[0]));
+    resm      = _mm_xor_si128(resm, b);
+
+    b    = _mm_and_si128(firstm, _mm_load_si128((__m128i*)second[j]->rows[0]));
+    resm = _mm_xor_si128(resm, b);
+
+    resm = _mm_xor_si128(resm, _mm_load_si128((__m128i*)r[m]->rows[0]));
+    resm = _mm_xor_si128(resm, _mm_load_si128((__m128i*)r[j]->rows[0]));
+
+    _mm_store_si128((__m128i*)res[m]->rows[0], resm);
+
+    __m128i sm = _mm_load_si128((__m128i*)view->s[m]->rows[0]);
+    sm         = m128_shift_left(sm, viewshift);
+    sm         = _mm_and_si128(sm, resm);
+
+    sm = _mm_xor_si128(sm, resm);
+    if (!_mm_testz_si128(sm, sm)) {
+      return 1;
+    }
+  }
+
+  __m128i rsc = _mm_load_si128((__m128i*)view->s[sc - 1]->rows[0]);
+  rsc         = m128_shift_left(rsc, viewshift);
+  rsc         = _mm_and_si128(rsc, _mm_load_si128((__m128i*)mask->rows[0]));
+  _mm_store_si128((__m128i*)res[sc - 1]->rows[0], rsc);
+
   return 0;
 }
 

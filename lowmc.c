@@ -47,6 +47,39 @@ static void sbox_layer_bitsliced(mzd_t* out, mzd_t* in, rci_t m, mask_t* mask) {
   mzd_free(x0m);
 }
 
+__attribute__((target("sse2"))) static void sbox_layer_sse(mzd_t* out, mzd_t* in, mask_t* mask) {
+  __m128i min = _mm_load_si128((__m128i*)in->rows[0]);
+
+  __m128i x0m = _mm_and_si128(min, _mm_load_si128((__m128i*)mask->x0->rows[0]));
+  __m128i x1m = _mm_and_si128(min, _mm_load_si128((__m128i*)mask->x1->rows[0]));
+  __m128i x2m = _mm_and_si128(min, _mm_load_si128((__m128i*)mask->x2->rows[0]));
+
+  x0m = m128_shift_left(x0m, 2);
+  x1m = m128_shift_left(x1m, 1);
+
+  __m128i t0 = _mm_and_si128(x1m, x2m);
+  __m128i t1 = _mm_and_si128(x0m, x2m);
+  __m128i t2 = _mm_and_si128(x0m, x1m);
+
+  t0 = _mm_xor_si128(t0, x0m);
+
+  x0m = _mm_xor_si128(x0m, x1m);
+  t1  = _mm_xor_si128(t1, x0m);
+
+  t2 = _mm_xor_si128(t2, x0m);
+  t2 = _mm_xor_si128(t2, x2m);
+
+  t0 = m128_shift_right(t0, 2);
+  t1 = m128_shift_right(t1, 1);
+
+  __m128i mout = _mm_and_si128(min, _mm_load_si128((__m128i*)mask->mask->rows[0]));
+
+  mout = _mm_xor_si128(mout, t2);
+  mout = _mm_xor_si128(mout, t1);
+  mout = _mm_xor_si128(mout, t0);
+  _mm_store_si128((__m128i*)out->rows[0], mout);
+}
+
 /**
  * AVX2 version of LowMC. It assumes that mzd_t's row[0] is always 32 byte
  * aligned.
@@ -112,7 +145,9 @@ mzd_t* lowmc_call(lowmc_t* lowmc, lowmc_key_t* lowmc_key, mzd_t* p) {
 
   for (unsigned i = 0; i < lowmc->r; i++) {
     // sbox_layer(y, x, lowmc->m);
-    if (__builtin_cpu_supports("avx2") && y->ncols == 256) {
+    if (__builtin_cpu_supports("sse2") && y->ncols == 128) {
+      sbox_layer_sse(y, x, &lowmc->mask);
+    } else if (__builtin_cpu_supports("avx2") && y->ncols == 256) {
       sbox_layer_avx(y, x, &lowmc->mask);
     } else {
       sbox_layer_bitsliced(y, x, lowmc->m, &lowmc->mask);
