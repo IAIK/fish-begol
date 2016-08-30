@@ -9,12 +9,11 @@
 static void sbox_vars_free(sbox_vars_t* vars, unsigned int sc);
 
 typedef int (*BIT_and_ptr)(BIT*, BIT*, BIT*, view_t*, int*, unsigned, unsigned);
-typedef int (*and_ptr)(mzd_t**, mzd_t**, mzd_t**, mzd_t**, view_t*, mzd_t*, unsigned,
-                       unsigned, mzd_t**);
+typedef int (*and_ptr)(mzd_t**, mzd_t**, mzd_t**, mzd_t**, view_t*, mzd_t*, unsigned, unsigned,
+                       mzd_t**);
 
-static int _mpc_sbox_layer_bitsliced(mzd_t** out, mzd_t** in, rci_t m, view_t* view,
-                                     mzd_t** rvec, unsigned sc, and_ptr andPtr, mask_t* mask,
-                                     sbox_vars_t* vars) {
+static int _mpc_sbox_layer_bitsliced(mzd_t** out, mzd_t** in, rci_t m, view_t* view, mzd_t** rvec,
+                                     unsigned sc, and_ptr andPtr, mask_t* mask, sbox_vars_t* vars) {
   if (in[0]->ncols - 3 * m < 2) {
     printf("Bitsliced implementation requires in->ncols - 3 * m >= 2\n");
     return 0;
@@ -59,16 +58,15 @@ static int _mpc_sbox_layer_bitsliced(mzd_t** out, mzd_t** in, rci_t m, view_t* v
   return 0;
 }
 
-__attribute__((target("avx2")))
-static int _mpc_sbox_layer_bitsliced_avx(mzd_t** out, mzd_t** in, rci_t m, view_t* view,
-                                     mzd_t** rvec, unsigned sc, and_ptr andPtr, mask_t* mask,
-                                     sbox_vars_t* vars) {
-  __m256i mx0 = _mm256_load_si256((__m256i*) mask->x0->rows[0]);
-  __m256i mx1 = _mm256_load_si256((__m256i*) mask->x1->rows[0]);
-  __m256i mx2 = _mm256_load_si256((__m256i*) mask->x2->rows[0]);
+__attribute__((target("avx2"))) static int
+_mpc_sbox_layer_bitsliced_avx(mzd_t** out, mzd_t** in, rci_t m, view_t* view, mzd_t** rvec,
+                              unsigned sc, and_ptr andPtr, mask_t* mask, sbox_vars_t* vars) {
+  __m256i mx0 = _mm256_load_si256((__m256i*)mask->x0->rows[0]);
+  __m256i mx1 = _mm256_load_si256((__m256i*)mask->x1->rows[0]);
+  __m256i mx2 = _mm256_load_si256((__m256i*)mask->x2->rows[0]);
 
   for (unsigned int m = 0; m < sc; ++m) {
-    __m256i min = _mm256_load_si256((__m256i*) in[m]->rows[0]);
+    __m256i min = _mm256_load_si256((__m256i*)in[m]->rows[0]);
 
     __m256i x0m = _mm256_and_si256(min, mx0);
     __m256i x1m = _mm256_and_si256(min, mx1);
@@ -77,25 +75,25 @@ static int _mpc_sbox_layer_bitsliced_avx(mzd_t** out, mzd_t** in, rci_t m, view_
     __m256i x0s = m256_shift_left(x0m, 2);
     __m256i x1s = m256_shift_left(x1m, 1);
 
-    _mm256_store_si256((__m256i*) vars->x2m[m]->rows[0], x2m);
-    _mm256_store_si256((__m256i*) vars->x0s[m]->rows[0], x0s);
-    _mm256_store_si256((__m256i*) vars->x1s[m]->rows[0], x1s);
+    _mm256_store_si256((__m256i*)vars->x2m[m]->rows[0], x2m);
+    _mm256_store_si256((__m256i*)vars->x0s[m]->rows[0], x0s);
+    _mm256_store_si256((__m256i*)vars->x1s[m]->rows[0], x1s);
 
-    min = _mm256_load_si256((__m256i*) rvec[m]->rows[0]);
+    min = _mm256_load_si256((__m256i*)rvec[m]->rows[0]);
 
     x0m = _mm256_and_si256(min, mx0);
     x1m = _mm256_and_si256(min, mx1);
     x2m = _mm256_and_si256(min, mx2);
 
-    _mm256_store_si256((__m256i*) vars->r0m[m]->rows[0], x0m);
-    _mm256_store_si256((__m256i*) vars->r1m[m]->rows[0], x1m);
-    _mm256_store_si256((__m256i*) vars->r2m[m]->rows[0], x2m);
+    _mm256_store_si256((__m256i*)vars->r0m[m]->rows[0], x0m);
+    _mm256_store_si256((__m256i*)vars->r1m[m]->rows[0], x1m);
+    _mm256_store_si256((__m256i*)vars->r2m[m]->rows[0], x2m);
 
     x0s = m256_shift_left(x0m, 2);
     x1s = m256_shift_left(x1m, 1);
 
-    _mm256_store_si256((__m256i*) vars->r0s[m]->rows[0], x0s);
-    _mm256_store_si256((__m256i*) vars->r1s[m]->rows[0], x1s);
+    _mm256_store_si256((__m256i*)vars->r0s[m]->rows[0], x0s);
+    _mm256_store_si256((__m256i*)vars->r1s[m]->rows[0], x1s);
   }
 
   if (andPtr(vars->r0m, vars->x0s, vars->x1s, vars->r2m, view, mask->x2, 0, sc, vars->v) ||
@@ -104,26 +102,26 @@ static int _mpc_sbox_layer_bitsliced_avx(mzd_t** out, mzd_t** in, rci_t m, view_
     return -1;
   }
 
-  __m256i mmask = _mm256_load_si256((__m256i*) mask->mask->rows[0]);
+  __m256i mmask = _mm256_load_si256((__m256i*)mask->mask->rows[0]);
   for (unsigned int m = 0; m < sc; ++m) {
     // mpc_xor(vars->r2m, vars->r2m, vars->x0s, sc);
-    __m256i x0s = _mm256_load_si256((__m256i*) vars->x0s[m]->rows[0]);
-    __m256i r2m = _mm256_load_si256((__m256i*) vars->r2m[m]->rows[0]);
-    r2m = _mm256_xor_si256(r2m, x0s);
+    __m256i x0s = _mm256_load_si256((__m256i*)vars->x0s[m]->rows[0]);
+    __m256i r2m = _mm256_load_si256((__m256i*)vars->r2m[m]->rows[0]);
+    r2m         = _mm256_xor_si256(r2m, x0s);
 
     // mpc_xor(vars->x0s, vars->x0s, vars->x1s, sc);
-    __m256i x1s = _mm256_load_si256((__m256i*) vars->x1s[m]->rows[0]);
-    x0s = _mm256_xor_si256(x0s, x1s);
+    __m256i x1s = _mm256_load_si256((__m256i*)vars->x1s[m]->rows[0]);
+    x0s         = _mm256_xor_si256(x0s, x1s);
     // mpc_xor(vars->r1m, vars->r1m, vars->x0s, sc);
-    __m256i r1m = _mm256_xor_si256(x0s, _mm256_load_si256((__m256i*) vars->r1m[m]->rows[0]));
+    __m256i r1m = _mm256_xor_si256(x0s, _mm256_load_si256((__m256i*)vars->r1m[m]->rows[0]));
 
     // mpc_and_const(out, in, mask->mask, sc);
-    __m256i mout = _mm256_and_si256(mmask, _mm256_load_si256((__m256i*) in[m]->rows[0]));
+    __m256i mout = _mm256_and_si256(mmask, _mm256_load_si256((__m256i*)in[m]->rows[0]));
 
     // mpc_xor(vars->r0m, vars->r0m, vars->x0s, sc);
-    __m256i r0m = _mm256_xor_si256(x0s, _mm256_load_si256((__m256i*) vars->r0m[m]->rows[0]));
+    __m256i r0m = _mm256_xor_si256(x0s, _mm256_load_si256((__m256i*)vars->r0m[m]->rows[0]));
     // mpc_xor(vars->r0m, vars->r0m, vars->x2m, sc);
-    r0m = _mm256_xor_si256(r0m, _mm256_load_si256((__m256i*) vars->x2m[m]->rows[0]));
+    r0m = _mm256_xor_si256(r0m, _mm256_load_si256((__m256i*)vars->x2m[m]->rows[0]));
     // mpc_xor(out, out, vars->r0m, sc);
     mout = _mm256_xor_si256(mout, r0m);
 
@@ -137,12 +135,11 @@ static int _mpc_sbox_layer_bitsliced_avx(mzd_t** out, mzd_t** in, rci_t m, view_
     // mpc_xor(out, out, vars->x1s, sc);
     mout = _mm256_xor_si256(mout, x1s);
 
-    _mm256_store_si256((__m256i*) out[m]->rows[0], mout);
+    _mm256_store_si256((__m256i*)out[m]->rows[0], mout);
   }
 
   return 0;
 }
-
 
 static int _mpc_sbox_layer(mzd_t** out, mzd_t** in, rci_t m, view_t* views, int* i, mzd_t** rvec,
                            unsigned sc, BIT_and_ptr andBitPtr) {
@@ -218,7 +215,7 @@ static mzd_t** _mpc_lowmc_call(lowmc_t* lowmc, lowmc_key_t* lowmc_key, mzd_t* p,
   mzd_t* r[3];
   for (unsigned i = 0; i < lowmc->r; i++) {
     for (unsigned j = 0; j < sc; j++) {
-      r[j]          = rvec[j][i];
+      r[j] = rvec[j][i];
     }
     if (_mpc_sbox_layer(y, x, lowmc->m, views, &vcnt, r, sc, andBitPtr)) {
       *status = -1;
@@ -268,16 +265,16 @@ static mzd_t** _mpc_lowmc_call_bitsliced(lowmc_t* lowmc, lowmc_key_t* lowmc_key,
   mzd_t* r[3];
   for (unsigned i = 0; i < lowmc->r; ++i, ++vcnt) {
     for (unsigned j = 0; j < sc; j++) {
-      r[j]          = rvec[j][i];
+      r[j] = rvec[j][i];
     }
 
     int ret = 0;
     if (__builtin_cpu_supports("avx2") && lowmc->n == 256) {
       ret = _mpc_sbox_layer_bitsliced_avx(y, x, lowmc->m, &views[vcnt], r, sc, andPtr, &lowmc->mask,
-                                  vars);
+                                          vars);
     } else {
       ret = _mpc_sbox_layer_bitsliced(y, x, lowmc->m, &views[vcnt], r, sc, andPtr, &lowmc->mask,
-                                  vars);
+                                      vars);
     }
     if (ret) {
       *status = -1;
@@ -329,16 +326,16 @@ static mzd_t** _mpc_lowmc_call_bitsliced_shared_p(lowmc_t* lowmc, lowmc_key_t* l
   mzd_t* r[3];
   for (unsigned i = 0; i < lowmc->r; ++i, ++vcnt) {
     for (unsigned j = 0; j < sc; j++) {
-      r[j]          = rvec[j][i];
+      r[j] = rvec[j][i];
     }
 
     int ret = 0;
     if (__builtin_cpu_supports("avx2") && lowmc->n == 256) {
       ret = _mpc_sbox_layer_bitsliced_avx(y, x, lowmc->m, &views[vcnt], r, sc, andPtr, &lowmc->mask,
-                                  vars);
+                                          vars);
     } else {
       ret = _mpc_sbox_layer_bitsliced(y, x, lowmc->m, &views[vcnt], r, sc, andPtr, &lowmc->mask,
-                                  vars);
+                                      vars);
     }
     if (ret) {
       *status = -1;
@@ -385,16 +382,20 @@ mzd_t** _mpc_lowmc_call_verify(lowmc_t* lowmc, lowmc_key_t* lowmc_key, mzd_t* p,
                                mzd_t*** rvec, int* status, int c) {
   // return _mpc_lowmc_call(lowmc, lowmc_key, p, views, rvec, 2, c,
   // &mpc_and_bit_verify, status);
-  return _mpc_lowmc_call_bitsliced(lowmc, lowmc_key, p, views, rvec, 2, c, &mpc_and_verify, status,
-                                   false);
+  return _mpc_lowmc_call_bitsliced(
+      lowmc, lowmc_key, p, views, rvec, 2, c,
+      __builtin_cpu_supports("avx2") && lowmc->n == 256 ? &mpc_and_verify_avx : &mpc_and_verify,
+      status, false);
 }
 
 mzd_t** _mpc_lowmc_call_verify_shared_p(lowmc_t* lowmc, lowmc_key_t* lowmc_key, mzd_shared_t* p,
                                         view_t* views, mzd_t*** rvec, int* status, int c) {
   // return _mpc_lowmc_call(lowmc, lowmc_key, p, views, rvec, 2, c,
   // &mpc_and_bit_verify, status);
-  return _mpc_lowmc_call_bitsliced_shared_p(lowmc, lowmc_key, p->shared, views, rvec, 2, c,
-                                            &mpc_and_verify, status, false);
+  return _mpc_lowmc_call_bitsliced_shared_p(
+      lowmc, lowmc_key, p->shared, views, rvec, 2, c,
+      __builtin_cpu_supports("avx2") && lowmc->n == 256 ? &mpc_and_verify_avx : &mpc_and_verify,
+      status, false);
 }
 
 int mpc_lowmc_verify(lowmc_t* lowmc, mzd_t* p, view_t* views, mzd_t*** rvec, int c) {

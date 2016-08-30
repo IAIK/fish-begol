@@ -76,8 +76,8 @@ __attribute__((target("avx2"))) int mpc_and_avx(mzd_t** res, mzd_t** first, mzd_
   return 0;
 }
 
-int mpc_and(mzd_t** res, mzd_t** first, mzd_t** second, mzd_t** r, view_t* view,
-            mzd_t* mask, unsigned viewshift, unsigned sc, mzd_t** buffer) {
+int mpc_and(mzd_t** res, mzd_t** first, mzd_t** second, mzd_t** r, view_t* view, mzd_t* mask,
+            unsigned viewshift, unsigned sc, mzd_t** buffer) {
   (void)mask;
 
   mzd_t* b = NULL;
@@ -104,8 +104,51 @@ int mpc_and(mzd_t** res, mzd_t** first, mzd_t** second, mzd_t** r, view_t* view,
   return 0;
 }
 
-int mpc_and_verify(mzd_t** res, mzd_t** first, mzd_t** second, mzd_t** r, view_t* view,
-                   mzd_t* mask, unsigned viewshift, unsigned sc, mzd_t** buffer) {
+__attribute__((target("avx2"))) int mpc_and_verify_avx(mzd_t** res, mzd_t** first, mzd_t** second,
+                                                       mzd_t** r, view_t* view, mzd_t* mask,
+                                                       unsigned viewshift, unsigned sc,
+                                                       mzd_t** buffer) {
+  (void)buffer;
+
+  for (unsigned m = 0; m < sc - 1; ++m) {
+    const unsigned j = (m + 1);
+
+    __m256i firstm  = _mm256_load_si256((__m256i*)first[m]->rows[0]);
+    __m256i secondm = _mm256_load_si256((__m256i*)second[m]->rows[0]);
+
+    __m256i resm = _mm256_and_si256(firstm, secondm);
+
+    __m256i b = _mm256_and_si256(secondm, _mm256_load_si256((__m256i*)first[j]->rows[0]));
+    resm      = _mm256_xor_si256(resm, b);
+
+    b    = _mm256_and_si256(firstm, _mm256_load_si256((__m256i*)second[j]->rows[0]));
+    resm = _mm256_xor_si256(resm, b);
+
+    resm = _mm256_xor_si256(resm, _mm256_load_si256((__m256i*)r[m]->rows[0]));
+    resm = _mm256_xor_si256(resm, _mm256_load_si256((__m256i*)r[j]->rows[0]));
+
+    _mm256_store_si256((__m256i*)res[m]->rows[0], resm);
+
+    __m256i sm = _mm256_load_si256((__m256i*)view->s[m]->rows[0]);
+    sm         = m256_shift_left(sm, viewshift);
+    sm         = _mm256_and_si256(sm, resm);
+
+    sm = _mm256_xor_si256(sm, resm);
+    if (!_mm256_testz_si256(sm, sm)) {
+      return 1;
+    }
+  }
+
+  __m256i rsc = _mm256_load_si256((__m256i*)view->s[sc - 1]->rows[0]);
+  rsc         = m256_shift_left(rsc, viewshift);
+  rsc         = _mm256_and_si256(rsc, _mm256_load_si256((__m256i*)mask->rows[0]));
+  _mm256_store_si256((__m256i*)res[sc - 1]->rows[0], rsc);
+
+  return 0;
+}
+
+int mpc_and_verify(mzd_t** res, mzd_t** first, mzd_t** second, mzd_t** r, view_t* view, mzd_t* mask,
+                   unsigned viewshift, unsigned sc, mzd_t** buffer) {
   mzd_t* b = NULL;
   mzd_t* c = NULL;
 
