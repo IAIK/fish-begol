@@ -4,6 +4,7 @@
 #include <immintrin.h>
 
 #define FN_ATTRIBUTES_AVX2 __attribute__((__always_inline__, target("avx2")))
+#define FN_ATTRIBUTES_SSE2 __attribute__((__always_inline__, target("sse2")))
 
 /**
  * \brief Perform a left shift on a 256 bit value.
@@ -26,5 +27,30 @@ static inline __m256i FN_ATTRIBUTES_AVX2 m256_shift_right(__m256i data, unsigned
   data           = _mm256_srli_epi64(data, count);
   return _mm256_or_si256(data, carry);
 }
+
+/**
+ * \brief Perform a left shift on a 128 bit value.
+ */
+static inline __m128i FN_ATTRIBUTES_SSE2 m128_shift_left(__m128i data, unsigned int count) {
+  __m128i carry  = _mm_srli_epi64(data, 64 - count);
+  __m128i upper  = _mm_slli_si128(carry, 8);
+  __m128i lower  = _mm_srli_si128(carry, 8);
+  carry          = _mm_or_si128(upper, lower);
+  data           = _mm_slli_epi64(data, count);
+  return _mm_or_si128(data, carry);
+}
+
+/**
+ * \brief Perform a right shift on a 128 bit value.
+ */
+static inline __m128i FN_ATTRIBUTES_SSE2 m128_shift_right(__m128i data, unsigned int count) {
+  __m128i carry  = _mm_slli_epi64(data, 64 - count);
+  __m128i upper  = _mm_slli_si128(carry, 8);
+  __m128i lower  = _mm_srli_si128(carry, 8);
+  carry          = _mm_or_si128(upper, lower);
+  data           = _mm_srli_epi64(data, count);
+  return _mm_or_si128(data, carry);
+}
+
 
 #endif
