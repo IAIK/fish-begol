@@ -419,7 +419,7 @@ static mzd_t** _mpc_lowmc_call_bitsliced_shared_p(lowmc_t* lowmc, lowmc_key_t* l
     if (__builtin_cpu_supports("sse2") && lowmc->n == 128) {
       ret = _mpc_sbox_layer_bitsliced_sse(y, x, lowmc->m, &views[vcnt], r, sc, andPtr, &lowmc->mask,
                                           vars);
-    } if (__builtin_cpu_supports("avx2") && lowmc->n == 256) {
+    } else if (__builtin_cpu_supports("avx2") && lowmc->n == 256) {
       ret = _mpc_sbox_layer_bitsliced_avx(y, x, lowmc->m, &views[vcnt], r, sc, andPtr, &lowmc->mask,
                                           vars);
     } else {
