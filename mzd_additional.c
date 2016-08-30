@@ -187,17 +187,17 @@ mzd_t *mzd_mul_v(mzd_t *c, mzd_t const *v, mzd_t const *At) {
 }
 
 mzd_t *mzd_addmul_v(mzd_t *c, mzd_t const *v, mzd_t const *At) {
-  const unsigned int len = At->ncols / (8 * sizeof(word));
-
+  const unsigned int len = At->width;
+  const word mask = At->high_bitmask;
   word* cptr = c->rows[0];
-  word* vptr = v->rows[0];
+  word const* vptr = v->rows[0];
 
   for (rci_t r = 0; r < At->nrows; ++r) {
     word* Atptr = At->rows[r];
-
-    for (unsigned int i = 0 ; i < len; ++i) {
+    for (unsigned int i = 0 ; i < len - 1; ++i) {
       cptr[i] ^= Atptr[i] & vptr[i];
     }
+    cptr[len - 1] = (cptr[len - 1] ^ (Atptr[len -1] & vptr[len - 1])) & mask;
   }
 
   return c;
