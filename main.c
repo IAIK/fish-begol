@@ -401,20 +401,23 @@ static signature_t* prove(public_parameters_t* pp, private_key_t* private_key, m
   mzd_shared_init(&lowmc_key_k, private_key->k->shared[0]);
   lowmc_secret_share(lowmc, &lowmc_key_k);
 
+  signature_t* signature = calloc(1, sizeof(signature_t));
+  #pragma omp parallel for
+  for (unsigned i = 0; i < NUM_ROUNDS; ++i) {
+    mzd_shared_init(&signature->shared_s[i], private_key->s->shared[0]);
+    lowmc_secret_share(lowmc, &signature->shared_s[i]);
+  }
+
   clock_t deltaShare = clock() - beginShare;
   printf("MPC secret sharing            %4lums\n", deltaShare * 1000 / CLOCKS_PER_SEC);
 
   clock_t beginLowmc = clock();
   mzd_t*** c_mpc_p   = calloc(NUM_ROUNDS, sizeof(mzd_t**));
   mzd_t*** c_mpc_s   = calloc(NUM_ROUNDS, sizeof(mzd_t**));
-  signature_t* signature = calloc(1, sizeof(signature_t));
 #pragma omp parallel for
   for (unsigned i = 0; i < NUM_ROUNDS; ++i) {
     lowmc_key_t lowmc_key_s = {0, NULL};
-    mzd_shared_init(&lowmc_key_s, private_key->s->shared[0]);
-    lowmc_secret_share(lowmc, &lowmc_key_s);
-
-    mzd_shared_copy(&signature->shared_s[i], &lowmc_key_s);
+    mzd_shared_copy(&lowmc_key_s, &signature->shared_s[i]);
 
     c_mpc_p[i] = mpc_lowmc_call(lowmc, &lowmc_key_s, p, views_p[i], rvec_p[i]);
     c_mpc_s[i] = mpc_lowmc_call_shared_p(lowmc, &lowmc_key_k, &lowmc_key_s, views_s[i], rvec_s[i]);
