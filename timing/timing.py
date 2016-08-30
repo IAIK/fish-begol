@@ -9,13 +9,13 @@ def main():
     for line in f.readlines():
       if line.rstrip():
         m, n, r = get_params(line)
-        fname = "timings-{0}-{1}-{2}-{3}.csv".format(m, n, r, k)
+        fname = "{0}-{1}".format(m, r)
         octarg = " ".join([octarg, fname])
         with open(fname, "w") as timings:
           subprocess.Popen("./{0} {1} {2} {3} {4} {5}".format(args.executable, 
                            m, n, r, k, args.iterations), shell=True, stdout=timings).wait()
-    subprocess.Popen("octave {0} {1}".format(args.octavescript, octarg), shell=True).wait()
-      
+    subprocess.Popen("octave {0} {1} {2} {3}".format(args.octavescript, n, k, octarg), shell=True).wait()
+    subprocess.Popen("rm {0}".format(octarg), shell=True).wait()  
       
     
 def get_params(line):
