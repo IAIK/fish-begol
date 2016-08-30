@@ -94,7 +94,7 @@ void mzd_shift_left(mzd_t* res, mzd_t* val, unsigned count) {
   res->rows[0][0] = val->rows[0][0] << count;
 }
 
-/* mzd_t *mzd_and(mzd_t *res, mzd_t *first, mzd_t *second) {
+mzd_t *mzd_and(mzd_t *res, mzd_t *first, mzd_t *second) {
   if(res == 0) {
     res = mzd_init(1, first->ncols);
   }
@@ -107,9 +107,9 @@ void mzd_shift_left(mzd_t* res, mzd_t* val, unsigned count) {
     result_ptr[i] = first_ptr[i] & second_ptr[i];
   }
   return res;
-} */
+}
 
-/* mzd_t *mzd_xor(mzd_t *res, mzd_t *first, mzd_t *second) {
+mzd_t *mzd_xor(mzd_t *res, mzd_t *first, mzd_t *second) {
   if(res == 0) {
     res = mzd_init(1, first->ncols);
   }
@@ -122,77 +122,6 @@ void mzd_shift_left(mzd_t* res, mzd_t* val, unsigned count) {
   for(unsigned int i = 0 ; i < len; ++i) {
     result_ptr[i] = first_ptr[i] ^ second_ptr[i];
   }
-
-  return res;
-} */
-
-#include <immintrin.h>
-
-__attribute__((target("avx2"))) mzd_t* mzd_and(mzd_t* res, mzd_t* first, mzd_t* second) {
-  if (res == 0) {
-    res = mzd_init(1, first->ncols);
-  }
-
-  const unsigned int len    = first->ncols / (8 * sizeof(word));
-  const unsigned int factor = sizeof(__m256i) / sizeof(word);
-  const unsigned int dlen   = len / factor;
-
-  word* first_ptr  = first->rows[0];
-  word* second_ptr = second->rows[0];
-  word* result_ptr = res->rows[0];
-
-  __m256i* mm_first_ptr  = (__m256i*)first_ptr;
-  __m256i* mm_second_ptr = (__m256i*)second_ptr;
-  __m256i* mm_result_ptr = (__m256i*)result_ptr;
-
-  unsigned int i = 0;
-  for (; i < dlen; ++i, ++mm_first_ptr, ++mm_second_ptr, ++mm_result_ptr) {
-    // result_ptr[i] = first_ptr[i] ^ second_ptr[i];
-    __m256i xmm1 = _mm256_loadu_si256(mm_first_ptr);
-    __m256i xmm2 = _mm256_loadu_si256(mm_second_ptr);
-
-    _mm256_storeu_si256(mm_result_ptr, _mm256_and_si256(xmm1, xmm2));
-  }
-
-  /*  i *= factor;
-    for (; i < len; ++i) {
-      result_ptr[i] = first_ptr[i] & second_ptr[i];
-    }*/
-
-  return res;
-}
-
-__attribute__((target("avx2"))) mzd_t* mzd_xor(mzd_t* res, mzd_t* first, mzd_t* second) {
-  if (res == 0) {
-    res = mzd_init(1, first->ncols);
-  }
-
-  const unsigned int len    = first->ncols / (8 * sizeof(word));
-  const unsigned int factor = sizeof(__m256i) / sizeof(word);
-  const unsigned int dlen   = len / factor;
-
-  word* first_ptr  = first->rows[0];
-  word* second_ptr = second->rows[0];
-  word* result_ptr = res->rows[0];
-
-  __m256i* mm_first_ptr  = (__m256i*)first_ptr;
-  __m256i* mm_second_ptr = (__m256i*)second_ptr;
-  __m256i* mm_result_ptr = (__m256i*)result_ptr;
-
-  unsigned int i = 0;
-  for (; i < dlen; ++i, ++mm_first_ptr, ++mm_second_ptr, ++mm_result_ptr) {
-    // result_ptr[i] = first_ptr[i] ^ second_ptr[i];
-    __m256i xmm1 = _mm256_loadu_si256(mm_first_ptr);
-    __m256i xmm2 = _mm256_loadu_si256(mm_second_ptr);
-
-    _mm256_storeu_si256(mm_result_ptr, _mm256_xor_si256(xmm1, xmm2));
-  }
-
-  /*
-  i *= factor;
-  for (; i < len; ++i) {
-    result_ptr[i] = first_ptr[i] ^ second_ptr[i];
-  } */
 
   return res;
 }
