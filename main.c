@@ -12,9 +12,8 @@
 #include <openssl/rand.h>
 #include <time.h>
 
-#define TIMING_ITERATIONS 1
-#define TIMING_SCALE 1000 / CLOCKS_PER_SEC;
-#define VERBOSE
+#define TIMING_SCALE 1000000 / CLOCKS_PER_SEC;
+//#define VERBOSE
 
 typedef struct {
   // The LowMC instance.
@@ -707,9 +706,9 @@ static int bg_verify(public_parameters_t* pp, public_key_t* pk, mzd_t* p, mzd_t*
   return hash_status || output_share_status || reconstruct_status || view_verify_status;
 }
 
-void print_timings(clock_t timings[TIMING_ITERATIONS][13]) {
-  for(unsigned i = 0 ; i < TIMING_ITERATIONS ; i++) {
-    for(unsigned j = 0 ; j < 13 ; j++) {
+void print_timings(clock_t** timings, int iter, int numt) {
+  for(unsigned i = 0 ; i < iter ; i++) {
+    for(unsigned j = 0 ; j < numt ; j++) {
       printf("%lu", timings[i][j]);
       if(j < 12) printf(",");
     }
@@ -717,31 +716,34 @@ void print_timings(clock_t timings[TIMING_ITERATIONS][13]) {
   } 
 }
 
-void parse_args(int params[4], int argc, char **argv) {
-  if(argc != 5) {
-    printf("Usage ./mpc_lowmc [Number of SBoxes] [Blocksize] [Rounds] [Keysize]\n"); 
+void parse_args(int params[5], int argc, char **argv) {
+  if(argc != 6) {
+    printf("Usage ./mpc_lowmc [Number of SBoxes] [Blocksize] [Rounds] [Keysize] [Numiter]\n"); 
     exit(-1);
   }
   params[0] = atoi(argv[1]);
   params[1] = atoi(argv[2]);
   params[2] = atoi(argv[3]);
   params[3] = atoi(argv[4]);
+  params[4] = atoi(argv[5]);
 }
 
 int main(int argc, char** argv) {
   init_EVP();
   openmp_thread_setup();
  
-  int args[4];
+  int args[5];
   parse_args(args, argc, argv);
 
 #ifdef VERBOSE
   printf("Fiat-Shamir Signature:\n\n");
 #endif
 
-  clock_t timings_fis[TIMING_ITERATIONS][13];  
+  clock_t **timings_fis = (clock_t**)malloc(args[4] * sizeof(clock_t*));
+  for(int i = 0 ; i < args[4] ; i++)
+    timings_fis[i] = (clock_t*)malloc(13 * sizeof(clock_t));  
 
-  for (int i = 0; i != TIMING_ITERATIONS; ++i) {
+  for (int i = 0; i != args[4]; ++i) {
     public_parameters_t pp;
     private_key_t private_key;
     public_key_t public_key;
@@ -775,16 +777,18 @@ int main(int argc, char** argv) {
   }
 
 #ifndef VERBOSE
-  print_timings(timings_fis);
+  print_timings(timings_fis, args[4], 13);
 #endif
 
 #ifdef VERBOSE
   printf("BG Signature:\n\n");
 #endif
   
-  clock_t timings_bg[TIMING_ITERATIONS][13];
+  clock_t **timings_bg = (clock_t**)malloc(args[4] * sizeof(clock_t*));
+  for(int i = 0 ; i < args[4] ; i++)
+    timings_bg[i] = (clock_t*)malloc(13 * sizeof(clock_t));  
 
-  for (int i = 0; i != TIMING_ITERATIONS; ++i) {
+  for (int i = 0; i != args[4]; ++i) {
     public_parameters_t pp;
     private_key_t private_key;
     public_key_t public_key;
@@ -815,8 +819,15 @@ int main(int argc, char** argv) {
   }
 
 #ifndef VERBOSE
-  print_timings(timings_bg);
+  print_timings(timings_bg, args[4], 13);
 #endif
+
+  for(int i = 0; i < args[4] ; i++) {
+    free(timings_fis[i]);
+    free(timings_bg[i]);
+  }
+  free(timings_fis);
+  free(timings_bg);
 
   openmp_thread_cleanup();
   cleanup_EVP();
