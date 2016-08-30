@@ -16,22 +16,22 @@ BIT getrandbit() {
   static int initialized = 0;
   static word w[1];
   static int count = 8 * sizeof(word);
-  
-  if(!initialized) {
-    RAND_bytes((unsigned char*) w, sizeof(word));
+
+  if (!initialized) {
+    RAND_bytes((unsigned char*)w, sizeof(word));
     initialized = 1;
   }
 
-  if(count == 0) {
-    RAND_bytes((unsigned char*) w, sizeof(word));
+  if (count == 0) {
+    RAND_bytes((unsigned char*)w, sizeof(word));
     count = 8 * sizeof(word);
   }
-  
+
   BIT b = *w & 0x01;
   *w >>= 1;
   count--;
   return b;
-} 
+}
 
 static void handleErrors(void) {
   ERR_print_errors_fp(stderr);

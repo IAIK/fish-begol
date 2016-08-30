@@ -63,9 +63,8 @@ lowmc_t* lowmc_init(size_t m, size_t n, size_t r, size_t k) {
 
   lowmc->LMatrix = calloc(sizeof(mzd_t*), r);
   for (unsigned i = 0; i < r; i++) {
-    mzd_t* mat        = mzd_sample_lmatrix(n);
-    lowmc->LMatrix[i] = mzd_transpose(0, mat);
-    mzd_free(mat);
+    // We do not need to transpose here, since it is an nxn matrix.
+    lowmc->LMatrix[i] = mzd_sample_lmatrix(n);
   }
 
   lowmc->Constants = calloc(sizeof(mzd_t*), r);
@@ -74,9 +73,8 @@ lowmc_t* lowmc_init(size_t m, size_t n, size_t r, size_t k) {
   }
   lowmc->KMatrix = calloc(sizeof(mzd_t*), r + 1);
   for (unsigned i = 0; i < r + 1; i++) {
-    mzd_t* mat        = mzd_sample_kmatrix(n, k);
-    lowmc->KMatrix[i] = mzd_transpose(0, mat);
-    mzd_free(mat);
+    // Instead of transposing create kxn matrix instead of nxk.
+    lowmc->KMatrix[i] = mzd_sample_kmatrix(k, n);
   }
 
   prepare_masks(&lowmc->mask, n, m);
