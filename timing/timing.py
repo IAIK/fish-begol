@@ -11,9 +11,9 @@ def main():
         m, n, r = get_params(line)
         fname = "timings-{0}-{1}-{2}-{3}.csv".format(m, n, r, k)
         octarg = " ".join([octarg, fname])
-        timings = open(fname, "w")
-        subprocess.Popen("./{0} {1} {2} {3} {4} {5}".format(args.executable, 
-                         m, n, r, k, args.iterations), shell=True, stdout=timings).wait()
+        with open(fname, "w") as timings:
+          subprocess.Popen("./{0} {1} {2} {3} {4} {5}".format(args.executable, 
+                           m, n, r, k, args.iterations), shell=True, stdout=timings).wait()
     subprocess.Popen("octave {0} {1}".format(args.octavescript, octarg), shell=True).wait()
       
       
