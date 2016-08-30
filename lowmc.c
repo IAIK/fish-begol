@@ -2,6 +2,8 @@
 #include "lowmc_pars.h"
 #include "mzd_additional.h"
 
+#include "avx.h"
+
 static void sbox_layer_bitsliced(mzd_t* out, mzd_t* in, rci_t m, mask_t* mask) {
   if (in->ncols - 3 * m < 2) {
     printf("Bitsliced implementation requires in->ncols - 3 * m >= 2\n");
@@ -43,26 +45,6 @@ static void sbox_layer_bitsliced(mzd_t* out, mzd_t* in, rci_t m, mask_t* mask) {
   mzd_free(x2m);
   mzd_free(x1m);
   mzd_free(x0m);
-}
-
-#include <immintrin.h>
-
-__attribute__((target("avx2"))) static inline __m256i m256_shift_left(__m256i data,
-                                                                      unsigned int count) {
-  __m256i carry  = _mm256_srli_epi64(data, 64 - count);
-  __m256i rotate = _mm256_permute4x64_epi64(carry, _MM_SHUFFLE(2, 1, 0, 3));
-  carry          = _mm256_blend_epi32(_mm256_setzero_si256(), rotate, _MM_SHUFFLE(3, 3, 3, 0));
-  data           = _mm256_slli_epi64(data, count);
-  return _mm256_or_si256(data, carry);
-}
-
-__attribute__((target("avx2"))) static inline __m256i m256_shift_right(__m256i data,
-                                                                       unsigned int count) {
-  __m256i carry  = _mm256_slli_epi64(data, 64 - count);
-  __m256i rotate = _mm256_permute4x64_epi64(carry, _MM_SHUFFLE(0, 3, 2, 1));
-  carry          = _mm256_blend_epi32(_mm256_setzero_si256(), rotate, _MM_SHUFFLE(0, 3, 3, 3));
-  data           = _mm256_srli_epi64(data, count);
-  return _mm256_or_si256(data, carry);
 }
 
 /**
