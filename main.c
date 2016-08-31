@@ -56,28 +56,16 @@ static void fis_sign_verify(int args[5]) {
     create_instance(&pp, timings_fis[i], args[0], args[1], args[2], args[3]);
     fis_create_key(&pp, &private_key, &public_key, timings_fis[i]);
 
-    mzd_t* p = mzd_init(1, args[1]);
-
-#ifdef VERBOSE
-    clock_t beginRef = clock();
-#endif
-    mzd_t* c         = lowmc_call(pp.lowmc, private_key.k, p);
-#ifdef VERBOSE
-    clock_t deltaRef = (clock() - beginRef) * TIMING_SCALE;
-    printf("LowMC reference encryption    %6lu\n", deltaRef);
-    printf("\n");
-#endif
-
     lowmc_key_t key = { 0, NULL };
     mzd_shared_copy(&key, private_key.k);
 
-    proof_t* prf = fis_prove(pp.lowmc, &key, p, m, 10, timings_fis[i]);
-    fis_verify(pp.lowmc, p, c, prf, m, 10, timings_fis[i]);
+    fis_signature_t* sig = fis_sign(&pp, &private_key, m, timings_fis[i]);
+    if(fis_verify(&pp, &public_key, m, sig, timings_fis[i])) {
+      printf("error\n");
+    }
 
-    free_proof(pp.lowmc, prf);
+    fis_destroy_signature(&pp, sig);
     mzd_shared_clear(&key);
-    mzd_free(p);
-    mzd_free(c);
 
     destroy_instance(&pp);
     fis_destroy_key(&private_key, &public_key);

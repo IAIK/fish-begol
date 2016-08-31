@@ -32,8 +32,7 @@ void fis_destroy_key(fis_private_key_t* private_key, fis_public_key_t* public_ke
   public_key->pk = NULL;
 }
 
-
-proof_t* fis_prove(lowmc_t* lowmc, lowmc_key_t* lowmc_key, mzd_t* p, char *m, unsigned m_len, clock_t *timings) {
+static proof_t* fis_prove(lowmc_t* lowmc, lowmc_key_t* lowmc_key, mzd_t* p, char *m, unsigned m_len, clock_t *timings) {
 #ifdef VERBOSE
   printf("Prove:\n");
 #endif
@@ -169,7 +168,7 @@ proof_t* fis_prove(lowmc_t* lowmc, lowmc_key_t* lowmc_key, mzd_t* p, char *m, un
   return proof;
 }
 
-int fis_verify(lowmc_t* lowmc, mzd_t* p, mzd_t* c, proof_t* prf, char *m, unsigned m_len, clock_t *timings) {
+static int fis_proof_verify(lowmc_t* lowmc, mzd_t* p, mzd_t* c, proof_t* prf, char *m, unsigned m_len, clock_t *timings) {
 #ifdef VERBOSE
   printf("Verify:\n");
 #endif
@@ -276,3 +275,25 @@ int fis_verify(lowmc_t* lowmc, mzd_t* p, mzd_t* c, proof_t* prf, char *m, unsign
 
   return hash_status || output_share_status || reconstruct_status || view_verify_status;
 }
+
+fis_signature_t *fis_sign(public_parameters_t* pp, fis_private_key_t* private_key, char *m, clock_t *timings) {
+  fis_signature_t *sig = (fis_signature_t*)malloc(sizeof(fis_signature_t));
+  mzd_t *p = mzd_init(1, pp->lowmc->n);
+  sig->proof = fis_prove(pp->lowmc, private_key->k, p, m, strlen(m), timings);
+  mzd_free(p);
+  return sig;
+}
+
+int fis_verify(public_parameters_t* pp, fis_public_key_t *public_key, char *m, fis_signature_t *sig, clock_t *timings) {
+  mzd_t *p = mzd_init(1, pp->lowmc->n);
+  int res = fis_proof_verify(pp->lowmc, p, public_key->pk, sig->proof, m, strlen(m), timings);
+  mzd_free(p);
+  return res;
+}
+
+void fis_destroy_signature(public_parameters_t* pp, fis_signature_t *signature) {
+  free_proof(pp->lowmc, signature->proof);
+  free(signature);
+}
+
+
