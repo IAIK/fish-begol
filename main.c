@@ -37,13 +37,7 @@ void parse_args(int params[5], int argc, char **argv) {
   params[4] = atoi(argv[5]);
 }
 
-int main(int argc, char** argv) {
-  init_EVP();
-  openmp_thread_setup();
- 
-  int args[5];
-  parse_args(args, argc, argv);
-
+static void fis_sign_verify(int args[5]) {
 #ifdef VERBOSE
   printf("Fiat-Shamir Signature:\n\n");
 #endif
@@ -93,6 +87,12 @@ int main(int argc, char** argv) {
   print_timings(timings_fis, args[4], 13);
 #endif
 
+  for(int i = 0; i < args[4] ; i++) 
+    free(timings_fis[i]);
+  free(timings_fis);
+}
+
+static void bg_sign_verify(int args[5]) {
 #ifdef VERBOSE
   printf("BG Signature:\n\n");
 #endif
@@ -137,12 +137,20 @@ int main(int argc, char** argv) {
   print_timings(timings_bg, args[4], 13);
 #endif
 
-  for(int i = 0; i < args[4] ; i++) {
-    free(timings_fis[i]);
+  for(int i = 0; i < args[4] ; i++) 
     free(timings_bg[i]);
-  }
-  free(timings_fis);
   free(timings_bg);
+}
+
+int main(int argc, char** argv) {
+  init_EVP();
+  openmp_thread_setup();
+ 
+  int args[5];
+  parse_args(args, argc, argv);
+
+  fis_sign_verify(args);
+  bg_sign_verify(args);
 
   openmp_thread_cleanup();
   cleanup_EVP();
