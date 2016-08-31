@@ -70,8 +70,12 @@ static proof_t* fis_prove(lowmc_t* lowmc, lowmc_key_t* lowmc_key, mzd_t* p, char
   clock_t beginShare = clock();
   view_t *views[NUM_ROUNDS];
   init_view(lowmc, views);
-
-  lowmc_secret_share(lowmc, lowmc_key);
+  
+  mzd_shared_t s[NUM_ROUNDS];
+  for(int i = 0 ; i < NUM_ROUNDS ; i++) {
+    mzd_shared_init(&s[i], lowmc_key->shared[0]);
+    lowmc_secret_share(lowmc, &s[i]);
+  }
   timings[4] = (clock() - beginShare) * TIMING_SCALE;
   
 #ifdef VERBOSE
@@ -82,7 +86,7 @@ static proof_t* fis_prove(lowmc_t* lowmc, lowmc_key_t* lowmc_key, mzd_t* p, char
   mzd_t*** c_mpc     = (mzd_t***)malloc(NUM_ROUNDS * sizeof(mzd_t**));
 #pragma omp parallel for
   for (unsigned i    = 0; i < NUM_ROUNDS; i++)
-    c_mpc[i]         = mpc_lowmc_call(lowmc, lowmc_key, p, views[i], rvec[i]);
+    c_mpc[i]         = mpc_lowmc_call(lowmc, &s[i], p, views[i], rvec[i]);
   timings[5] = (clock() - beginLowmc) * TIMING_SCALE;
 #ifdef VERBOSE
   printf("MPC LowMC encryption          %6lu\n", timings[5]);
@@ -113,6 +117,7 @@ static proof_t* fis_prove(lowmc_t* lowmc, lowmc_key_t* lowmc_key, mzd_t* p, char
 
 #pragma omp parallel for
   for (unsigned j = 0; j < NUM_ROUNDS; j++) {
+    mzd_shared_clear(&s[j]);
     for (unsigned i = 0; i < 3; i++)
       mpc_free(rvec[j][i], lowmc->r);
     for (unsigned i = 0; i < lowmc->r + 2; i++) {
