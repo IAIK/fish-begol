@@ -27,6 +27,9 @@ proof_t* create_proof(proof_t* proof, lowmc_t* lowmc,
                       int ch[NUM_ROUNDS], unsigned char r[NUM_ROUNDS][3][4],
                       unsigned char keys[NUM_ROUNDS][3][16], mzd_t*** c_mpc,
                       view_t* views[NUM_ROUNDS]) {
+  if(!proof) 
+    proof = (proof_t*)malloc(sizeof(proof_t));
+  
   proof->views   = (view_t**)malloc(NUM_ROUNDS * sizeof(view_t*));
 
   proof->r    = (unsigned char***)malloc(NUM_ROUNDS * sizeof(unsigned char**));

@@ -68,18 +68,9 @@ static proof_t* fis_prove(lowmc_t* lowmc, lowmc_key_t* lowmc_key, mzd_t* p, char
 #endif
 
   clock_t beginShare = clock();
-  view_t views[NUM_ROUNDS][2 + lowmc->r];
-#pragma omp parallel for
-  for (unsigned i = 0; i < NUM_ROUNDS; i++) {
-    views[i][0].s = (mzd_t**)malloc(3 * sizeof(mzd_t*));
-    for (unsigned m    = 0; m < 3; m++)
-      views[i][0].s[m] = mzd_init(1, lowmc->k);
-    for (unsigned n = 1; n < 2 + lowmc->r; n++) {
-      views[i][n].s = (mzd_t**)malloc(3 * sizeof(mzd_t*));
-      for (unsigned m    = 0; m < 3; m++)
-        views[i][n].s[m] = mzd_init(1, lowmc->n);
-    }
-  }
+  view_t *views[NUM_ROUNDS];
+  init_view(lowmc, views);
+
   lowmc_secret_share(lowmc, lowmc_key);
   timings[4] = (clock() - beginShare) * TIMING_SCALE;
   
@@ -118,40 +109,7 @@ static proof_t* fis_prove(lowmc_t* lowmc, lowmc_key_t* lowmc_key, mzd_t* p, char
   printf("Generating challenge          %6lu\n", timings[7]);
 #endif
 
-  proof_t* proof = (proof_t*)malloc(sizeof(proof_t));
-  proof->views   = (view_t**)malloc(NUM_ROUNDS * sizeof(view_t*));
-
-  proof->r    = (unsigned char***)malloc(NUM_ROUNDS * sizeof(unsigned char**));
-  proof->keys = (unsigned char***)malloc(NUM_ROUNDS * sizeof(unsigned char**));
-  memcpy(proof->hashes, hashes, NUM_ROUNDS * 3 * SHA256_DIGEST_LENGTH * sizeof(char));
-
-#pragma omp parallel for
-  for (unsigned i = 0; i < NUM_ROUNDS; i++) {
-    int a = ch[i];
-    int b = (a + 1) % 3;
-    int c = (a + 2) % 3;
-
-    proof->r[i]    = (unsigned char**)malloc(2 * sizeof(unsigned char*));
-    proof->r[i][0] = (unsigned char*)malloc(4 * sizeof(unsigned char));
-    proof->r[i][1] = (unsigned char*)malloc(4 * sizeof(unsigned char));
-    memcpy(proof->r[i][0], r[i][a], 4 * sizeof(char));
-    memcpy(proof->r[i][1], r[i][b], 4 * sizeof(char));
-
-    proof->keys[i]    = (unsigned char**)malloc(2 * sizeof(unsigned char*));
-    proof->keys[i][0] = (unsigned char*)malloc(16 * sizeof(unsigned char));
-    proof->keys[i][1] = (unsigned char*)malloc(16 * sizeof(unsigned char));
-    memcpy(proof->keys[i][0], keys[i][a], 16 * sizeof(char));
-    memcpy(proof->keys[i][1], keys[i][b], 16 * sizeof(char));
-
-    proof->views[i] = (view_t*)malloc((2 + lowmc->r) * sizeof(view_t));
-    for (unsigned j = 0; j < 2 + lowmc->r; j++) {
-      proof->views[i][j].s    = (mzd_t**)malloc(2 * sizeof(mzd_t*));
-      proof->views[i][j].s[0] = views[i][j].s[a];
-      proof->views[i][j].s[1] = views[i][j].s[b];
-      mzd_free(views[i][j].s[c]);
-    }
-  }
-  proof->y = c_mpc;
+  proof_t* proof = create_proof(0, lowmc, hashes, ch, r, keys, c_mpc, views);
 
 #pragma omp parallel for
   for (unsigned j = 0; j < NUM_ROUNDS; j++) {
