@@ -18,9 +18,9 @@ void mzd_shift_right(mzd_t* res, mzd_t *val, unsigned count);
 
 void mzd_shift_left(mzd_t* res, mzd_t *val, unsigned count);
 
-mzd_t *mzd_and(mzd_t *res, mzd_t *first, mzd_t *second);
+mzd_t *mzd_and(mzd_t *res, mzd_t const *first, mzd_t const *second);
 
-mzd_t *mzd_xor(mzd_t *res, mzd_t *first, mzd_t *second);
+mzd_t *mzd_xor(mzd_t *res, mzd_t const *first, mzd_t const *second);
 
 void mzd_shift_right_inplace(mzd_t *val, unsigned int count);
 
