@@ -237,8 +237,8 @@ _mpc_sbox_layer_bitsliced_sse(mzd_t** out, mzd_t** in, rci_t m, view_t* view, mz
     __m128i x1m = _mm_and_si128(min, mx1);
     __m128i x2m = _mm_and_si128(min, mx2);
 
-    __m128i x0s = m128_shift_left(x0m, 2);
-    __m128i x1s = m128_shift_left(x1m, 1);
+    __m128i x0s = mm128_shift_left(x0m, 2);
+    __m128i x1s = mm128_shift_left(x1m, 1);
 
     _mm_store_si128((__m128i*)vars->x2m[m]->rows[0], x2m);
     _mm_store_si128((__m128i*)vars->x0s[m]->rows[0], x0s);
@@ -254,8 +254,8 @@ _mpc_sbox_layer_bitsliced_sse(mzd_t** out, mzd_t** in, rci_t m, view_t* view, mz
     _mm_store_si128((__m128i*)vars->r1m[m]->rows[0], x1m);
     _mm_store_si128((__m128i*)vars->r2m[m]->rows[0], x2m);
 
-    x0s = m128_shift_left(x0m, 2);
-    x1s = m128_shift_left(x1m, 1);
+    x0s = mm128_shift_left(x0m, 2);
+    x1s = mm128_shift_left(x1m, 1);
 
     _mm_store_si128((__m128i*)vars->r0s[m]->rows[0], x0s);
     _mm_store_si128((__m128i*)vars->r1s[m]->rows[0], x1s);
@@ -291,12 +291,12 @@ _mpc_sbox_layer_bitsliced_sse(mzd_t** out, mzd_t** in, rci_t m, view_t* view, mz
     mout = _mm_xor_si128(mout, r0m);
 
     // mpc_shift_right(vars->x0s, vars->r2m, 2, sc);
-    x0s = m128_shift_right(r2m, 2);
+    x0s = mm128_shift_right(r2m, 2);
     // mpc_xor(out, out, vars->x0s, sc);
     mout = _mm_xor_si128(mout, x0s);
 
     // mpc_shift_right(vars->x1s, vars->r1m, 1, sc);
-    x1s = m128_shift_right(r1m, 1);
+    x1s = mm128_shift_right(r1m, 1);
     // mpc_xor(out, out, vars->x1s, sc);
     mout = _mm_xor_si128(mout, x1s);
 
@@ -320,8 +320,8 @@ _mpc_sbox_layer_bitsliced_avx(mzd_t** out, mzd_t** in, rci_t m, view_t* view, mz
     __m256i x1m = _mm256_and_si256(min, mx1);
     __m256i x2m = _mm256_and_si256(min, mx2);
 
-    __m256i x0s = m256_shift_left(x0m, 2);
-    __m256i x1s = m256_shift_left(x1m, 1);
+    __m256i x0s = mm256_shift_left(x0m, 2);
+    __m256i x1s = mm256_shift_left(x1m, 1);
 
     _mm256_store_si256((__m256i*)vars->x2m[m]->rows[0], x2m);
     _mm256_store_si256((__m256i*)vars->x0s[m]->rows[0], x0s);
@@ -337,8 +337,8 @@ _mpc_sbox_layer_bitsliced_avx(mzd_t** out, mzd_t** in, rci_t m, view_t* view, mz
     _mm256_store_si256((__m256i*)vars->r1m[m]->rows[0], x1m);
     _mm256_store_si256((__m256i*)vars->r2m[m]->rows[0], x2m);
 
-    x0s = m256_shift_left(x0m, 2);
-    x1s = m256_shift_left(x1m, 1);
+    x0s = mm256_shift_left(x0m, 2);
+    x1s = mm256_shift_left(x1m, 1);
 
     _mm256_store_si256((__m256i*)vars->r0s[m]->rows[0], x0s);
     _mm256_store_si256((__m256i*)vars->r1s[m]->rows[0], x1s);
@@ -374,12 +374,12 @@ _mpc_sbox_layer_bitsliced_avx(mzd_t** out, mzd_t** in, rci_t m, view_t* view, mz
     mout = _mm256_xor_si256(mout, r0m);
 
     // mpc_shift_right(vars->x0s, vars->r2m, 2, sc);
-    x0s = m256_shift_right(r2m, 2);
+    x0s = mm256_shift_right(r2m, 2);
     // mpc_xor(out, out, vars->x0s, sc);
     mout = _mm256_xor_si256(mout, x0s);
 
     // mpc_shift_right(vars->x1s, vars->r1m, 1, sc);
-    x1s = m256_shift_right(r1m, 1);
+    x1s = mm256_shift_right(r1m, 1);
     // mpc_xor(out, out, vars->x1s, sc);
     mout = _mm256_xor_si256(mout, x1s);
 
@@ -719,8 +719,9 @@ void sbox_vars_free(sbox_vars_t* vars, unsigned int sc) {
 }
 
 sbox_vars_t* sbox_vars_init(sbox_vars_t* vars, rci_t n, unsigned sc) {
-  if (vars == 0)
-    vars = (sbox_vars_t*)malloc(sizeof(sbox_vars_t));
+  if (!vars) {
+    vars = calloc(1, sizeof(sbox_vars_t));
+  }
 
   vars->x0m = mpc_init_empty_share_vector(n, sc);
   vars->x1m = mpc_init_empty_share_vector(n, sc);

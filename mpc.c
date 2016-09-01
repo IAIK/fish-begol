@@ -69,7 +69,7 @@ __attribute__((target("sse2"))) int mpc_and_sse(mzd_t** res, mzd_t** first, mzd_
 
     _mm_store_si128((__m128i*)res[m]->rows[0], resm);
 
-    resm = m128_shift_right(resm, viewshift);
+    resm = mm128_shift_right(resm, viewshift);
     resm = _mm_xor_si128(resm, _mm_load_si128((__m128i*)view->s[m]->rows[0]));
 
     _mm_store_si128((__m128i*)view->s[m]->rows[0], resm);
@@ -103,7 +103,7 @@ __attribute__((target("avx2"))) int mpc_and_avx(mzd_t** res, mzd_t** first, mzd_
 
     _mm256_store_si256((__m256i*)res[m]->rows[0], resm);
 
-    resm = m256_shift_right(resm, viewshift);
+    resm = mm256_shift_right(resm, viewshift);
     resm = _mm256_xor_si256(resm, _mm256_load_si256((__m256i*)view->s[m]->rows[0]));
 
     _mm256_store_si256((__m256i*)view->s[m]->rows[0], resm);
@@ -166,7 +166,7 @@ __attribute__((target("sse4.1"))) int mpc_and_verify_sse(mzd_t** res, mzd_t** fi
     _mm_store_si128((__m128i*)res[m]->rows[0], resm);
 
     __m128i sm = _mm_load_si128((__m128i*)view->s[m]->rows[0]);
-    sm         = m128_shift_left(sm, viewshift);
+    sm         = mm128_shift_left(sm, viewshift);
     sm         = _mm_and_si128(sm, resm);
 
     sm = _mm_xor_si128(sm, resm);
@@ -176,7 +176,7 @@ __attribute__((target("sse4.1"))) int mpc_and_verify_sse(mzd_t** res, mzd_t** fi
   }
 
   __m128i rsc = _mm_load_si128((__m128i*)view->s[sc - 1]->rows[0]);
-  rsc         = m128_shift_left(rsc, viewshift);
+  rsc         = mm128_shift_left(rsc, viewshift);
   rsc         = _mm_and_si128(rsc, _mm_load_si128((__m128i*)mask->rows[0]));
   _mm_store_si128((__m128i*)res[sc - 1]->rows[0], rsc);
 
@@ -209,7 +209,7 @@ __attribute__((target("avx2"))) int mpc_and_verify_avx(mzd_t** res, mzd_t** firs
     _mm256_store_si256((__m256i*)res[m]->rows[0], resm);
 
     __m256i sm = _mm256_load_si256((__m256i*)view->s[m]->rows[0]);
-    sm         = m256_shift_left(sm, viewshift);
+    sm         = mm256_shift_left(sm, viewshift);
     sm         = _mm256_and_si256(sm, resm);
 
     sm = _mm256_xor_si256(sm, resm);
@@ -219,7 +219,7 @@ __attribute__((target("avx2"))) int mpc_and_verify_avx(mzd_t** res, mzd_t** firs
   }
 
   __m256i rsc = _mm256_load_si256((__m256i*)view->s[sc - 1]->rows[0]);
-  rsc         = m256_shift_left(rsc, viewshift);
+  rsc         = mm256_shift_left(rsc, viewshift);
   rsc         = _mm256_and_si256(rsc, _mm256_load_si256((__m256i*)mask->rows[0]));
   _mm256_store_si256((__m256i*)res[sc - 1]->rows[0], rsc);
 
