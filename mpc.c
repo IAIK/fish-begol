@@ -309,7 +309,7 @@ mzd_t** mpc_add(mzd_t** result, mzd_t** first, mzd_t** second, unsigned sc) {
   if (result == 0)
     result = mpc_init_empty_share_vector(first[0]->ncols, sc);
   for (unsigned i = 0; i < sc; i++)
-    mzd_add(result[i], first[i], second[i]);
+    mzd_xor(result[i], first[i], second[i]);
   return result;
 }
 
@@ -317,9 +317,9 @@ mzd_t** mpc_const_add(mzd_t** result, mzd_t** first, mzd_t* second, unsigned sc,
   if (result == 0)
     result = mpc_init_empty_share_vector(first[0]->ncols, sc);
   if (c == 0)
-    mzd_add(result[0], first[0], second);
+    mzd_xor(result[0], first[0], second);
   else if (c == sc)
-    mzd_add(result[sc - 1], first[sc - 1], second);
+    mzd_xor(result[sc - 1], first[sc - 1], second);
   return result;
 }
 
@@ -337,8 +337,8 @@ void mpc_copy(mzd_t** out, mzd_t** in, unsigned sc) {
 }
 
 mzd_t* mpc_reconstruct_from_share(mzd_t** shared_vec) {
-  mzd_t* res = mzd_add(0, shared_vec[0], shared_vec[1]);
-  mzd_add(res, res, shared_vec[2]);
+  mzd_t* res = mzd_xor(0, shared_vec[0], shared_vec[1]);
+  mzd_xor(res, res, shared_vec[2]);
   return res;
 }
 
@@ -383,8 +383,8 @@ mzd_t** mpc_init_share_vector(mzd_t* v) {
   s[1]      = mzd_init_random_vector(v->ncols);
   s[2]      = mzd_init(1, v->ncols);
 
-  mzd_add(s[2], s[0], s[1]);
-  mzd_add(s[2], s[2], v);
+  mzd_xor(s[2], s[0], s[1]);
+  mzd_xor(s[2], s[2], v);
 
   return s;
 }

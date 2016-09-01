@@ -318,8 +318,8 @@ void mzd_shared_share(mzd_shared_t* shared_value) {
   shared_value->shared[1] = mzd_init_random_vector(shared_value->shared[0]->ncols);
   shared_value->shared[2] = mzd_init_random_vector(shared_value->shared[0]->ncols);
 
-  mzd_add(shared_value->shared[0], shared_value->shared[0], shared_value->shared[1]);
-  mzd_add(shared_value->shared[0], shared_value->shared[0], shared_value->shared[2]);
+  mzd_xor(shared_value->shared[0], shared_value->shared[0], shared_value->shared[1]);
+  mzd_xor(shared_value->shared[0], shared_value->shared[0], shared_value->shared[2]);
 }
 
 void mzd_shared_clear(mzd_shared_t* shared_value) {
