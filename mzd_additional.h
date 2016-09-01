@@ -26,6 +26,8 @@ void mzd_shift_right_inplace(mzd_t *val, unsigned int count);
 
 void mzd_shift_left_inplace(mzd_t *val, unsigned int count);
 
+int mzd_equal(mzd_t const *frist, mzd_t const* second);
+
 typedef struct {
   unsigned int share_count;
   mzd_t** shared;

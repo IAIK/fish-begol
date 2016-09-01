@@ -250,7 +250,7 @@ int mpc_and_verify(mzd_t** res, mzd_t** first, mzd_t** second, mzd_t** r, view_t
   for (unsigned m = 0; m < sc - 1; m++) {
     mzd_shift_left(buffer[m], view->s[m], viewshift);
     mzd_xor(buffer[m], buffer[m], res[m]);
-    if (mzd_cmp(buffer[m], res[m])) {
+    if (mzd_equal(buffer[m], res[m])) {
       return -1;
     }
   }

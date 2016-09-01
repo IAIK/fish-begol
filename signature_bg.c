@@ -250,8 +250,8 @@ static int verify_views(lowmc_t* lowmc, mzd_t* p, mzd_shared_t shared_p[NUM_ROUN
     mzd_copy(c_ch[1], proof->views[i][lowmc->r + 1].s[1]);
 
     if (verify(lowmc, p, shared_p != NULL ? &shared_p[i] : NULL, proof->views[i], rv, ch[i]) ||
-        mzd_cmp(c_ch[0], proof->views[i][1 + lowmc->r].s[0]) ||
-        mzd_cmp(c_ch[1], proof->views[i][1 + lowmc->r].s[1])) {
+        mzd_equal(c_ch[0], proof->views[i][1 + lowmc->r].s[0]) ||
+        mzd_equal(c_ch[1], proof->views[i][1 + lowmc->r].s[1])) {
       view_verify_status |= -1;
     }
 
@@ -298,12 +298,12 @@ static int bg_proof_verify(public_parameters_t* pp, bg_public_key_t* pk, mzd_t* 
   int reconstruct_status = 0;
   for (unsigned int i = 0; i < NUM_ROUNDS; i++) {
     mzd_t* c_mpcr = mpc_reconstruct_from_share(proof_p->y[i]);
-    if (mzd_cmp(signature->c, c_mpcr) != 0)
+    if (mzd_equal(signature->c, c_mpcr) != 0)
       reconstruct_status = -1;
     mzd_free(c_mpcr);
 
     c_mpcr = mpc_reconstruct_from_share(proof_s->y[i]);
-    if (mzd_cmp(pk->pk, c_mpcr) != 0)
+    if (mzd_equal(pk->pk, c_mpcr) != 0)
       reconstruct_status = -1;
     mzd_free(c_mpcr);
   }
@@ -316,11 +316,11 @@ static int bg_proof_verify(public_parameters_t* pp, bg_public_key_t* pk, mzd_t* 
   int output_share_status = 0;
 #pragma omp parallel for reduction(| : output_share_status)
   for (unsigned int i = 0; i < NUM_ROUNDS; i++) {
-    if (mzd_cmp(proof_p->y[i][ch[i]], proof_p->views[i][lowmc->r + 1].s[0]) ||
-        mzd_cmp(proof_p->y[i][(ch[i] + 1) % 3], proof_p->views[i][lowmc->r + 1].s[1]))
+    if (mzd_equal(proof_p->y[i][ch[i]], proof_p->views[i][lowmc->r + 1].s[0]) ||
+        mzd_equal(proof_p->y[i][(ch[i] + 1) % 3], proof_p->views[i][lowmc->r + 1].s[1]))
       output_share_status |= -1;
-    if (mzd_cmp(proof_s->y[i][ch[i]], proof_s->views[i][lowmc->r + 1].s[0]) ||
-        mzd_cmp(proof_s->y[i][(ch[i] + 1) % 3], proof_s->views[i][lowmc->r + 1].s[1]))
+    if (mzd_equal(proof_s->y[i][ch[i]], proof_s->views[i][lowmc->r + 1].s[0]) ||
+        mzd_equal(proof_s->y[i][(ch[i] + 1) % 3], proof_s->views[i][lowmc->r + 1].s[1]))
       output_share_status |= -1;
   }
   timings[11] = (clock() - beginView) * TIMING_SCALE;
