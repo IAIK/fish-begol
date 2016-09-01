@@ -1,7 +1,7 @@
 #! /bin/octave -qf
 
 function create_plot(prefix, args, data)
-  fig = figure('papersize', [1000, 1000]);
+  fig = figure;
   [ax, h1, h2] = plotyy(1:rows(data), data(:, 1:3), 1:rows(data), data(:,4));
   set(h1(1), 'marker', '.','markersize', 8, 'color', 'blue', 'linewidth', 2);
   set(h1(2), 'marker', 'diamond','markersize', 2, 'color', 'red', 'linewidth', 2);
