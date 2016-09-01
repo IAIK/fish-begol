@@ -45,7 +45,7 @@ static void fis_sign_verify(int args[5]) {
   printf("Fiat-Shamir Signature:\n\n");
 #endif
 
-  char m[10] = "1234567890";
+  char m[11] = "1234567890";
 
   clock_t **timings_fis = (clock_t**)malloc(args[4] * sizeof(clock_t*));
   for(int i = 0 ; i < args[4] ; i++)
