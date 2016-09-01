@@ -115,7 +115,7 @@ static bg_signature_t* bg_prove(public_parameters_t* pp, bg_private_key_t* priva
     mzd_shared_clear(&lowmc_key_s[i]);
     mzd_shared_clear(&lowmc_key_k[i]);
   }
-  signature->c = mpc_reconstruct_from_share(c_mpc_s[0]);
+  signature->c = mpc_reconstruct_from_share(c_mpc_p[0]);
   timings[5] = (clock() - beginLowmc) * TIMING_SCALE;
 #ifdef VERBOSE
   printf("MPC LowMC encryption          %6lu\n", timings[5]);
