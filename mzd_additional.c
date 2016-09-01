@@ -108,8 +108,7 @@ static inline mzd_t *mzd_and_sse(mzd_t *res, mzd_t const *first, mzd_t const *se
     __m128i const* mfirstptr = __builtin_assume_aligned(firstptr, 16);
     __m128i const* msecondptr = __builtin_assume_aligned(secondptr, 16);
 
-    do
-    {
+    do {
       *mresptr++ = _mm_and_si128(*mfirstptr++, *msecondptr++);
       width -= sizeof(__m128i) / sizeof(word);
     } while (width * sizeof(word) * 8 >= 128);
@@ -119,13 +118,11 @@ static inline mzd_t *mzd_and_sse(mzd_t *res, mzd_t const *first, mzd_t const *se
     secondptr = (word*) msecondptr;
   }
 
-  while (width)
-  {
+  while (width--) {
     *resptr++ = *firstptr++ & *secondptr++;
-    --width;
   }
-
   *(--resptr) &= mask;
+
   return res;
 }
 
@@ -142,8 +139,7 @@ static inline mzd_t *mzd_and_avx(mzd_t *res, mzd_t const *first, mzd_t const *se
     __m256i const* mfirstptr = __builtin_assume_aligned(firstptr, 32);
     __m256i const* msecondptr = __builtin_assume_aligned(secondptr, 32);
 
-    do
-    {
+    do {
       *mresptr++ = _mm256_and_si256(*mfirstptr++, *msecondptr++);
       width -= sizeof(__m256i) / sizeof(word);
     } while (width * sizeof(word) * 8 >= 256);
@@ -153,13 +149,11 @@ static inline mzd_t *mzd_and_avx(mzd_t *res, mzd_t const *first, mzd_t const *se
     secondptr = (word*) msecondptr;
   }
 
-  while (width)
-  {
+  while (width--) {
     *resptr++ = *firstptr++ & *secondptr++;
-    --width;
   }
-
   *(--resptr) &= mask;
+
   return res;
 }
 
@@ -201,8 +195,7 @@ static inline mzd_t *mzd_xor_sse(mzd_t *res, mzd_t const *first, mzd_t const *se
     __m128i const* mfirstptr = __builtin_assume_aligned(firstptr, 16);
     __m128i const* msecondptr = __builtin_assume_aligned(secondptr, 16);
 
-    do
-    {
+    do {
       *mresptr++ = _mm_xor_si128(*mfirstptr++, *msecondptr++);
       width -= sizeof(__m128i) / sizeof(word);
     } while (width * sizeof(word) * 8 >= 128);
@@ -212,10 +205,8 @@ static inline mzd_t *mzd_xor_sse(mzd_t *res, mzd_t const *first, mzd_t const *se
     secondptr = (word*) msecondptr;
   }
 
-  while (width)
-  {
+  while (width--) {
     *resptr++ = *firstptr++ ^ *secondptr++;
-    --width;
   }
 
   *(--resptr) &= mask;
@@ -235,8 +226,7 @@ static inline mzd_t *mzd_xor_avx(mzd_t *res, mzd_t const *first, mzd_t const *se
     __m256i const* mfirstptr = __builtin_assume_aligned(firstptr, 32);
     __m256i const* msecondptr = __builtin_assume_aligned(secondptr, 32);
 
-    do
-    {
+    do {
       *mresptr++ = _mm256_xor_si256(*mfirstptr++, *msecondptr++);
       width -= sizeof(__m256i) / sizeof(word);
     } while (width * sizeof(word) * 8 >= 256);
@@ -246,13 +236,11 @@ static inline mzd_t *mzd_xor_avx(mzd_t *res, mzd_t const *first, mzd_t const *se
     secondptr = (word*) msecondptr;
   }
 
-  while (width)
-  {
+  while (width--) {
     *resptr++ = *firstptr++ ^ *secondptr++;
-    --width;
   }
-
   *(--resptr) &= mask;
+
   return res;
 }
 
@@ -355,8 +343,7 @@ static inline mzd_t *mzd_addmul_v_sse(mzd_t *c, mzd_t const *v, mzd_t const *At)
     __m128i const* mAtptr = __builtin_assume_aligned(Atptr, 16);
     const unsigned int rowstride = At->rowstride * sizeof(word) / sizeof(__m128i);
 
-    do
-    {
+    do {
       __m128i const* Atmp = mAtptr;
       __m128i mc = *mcptr;
       const __m128i mv = *mvptr;
@@ -377,8 +364,7 @@ static inline mzd_t *mzd_addmul_v_sse(mzd_t *c, mzd_t const *v, mzd_t const *At)
     Atptr = (word*) mAtptr;
   }
 
-  while (width)
-  {
+  while (width--) {
     word const* Atmp = Atptr;
     for (rci_t r = 0; r < At->nrows; ++r, Atmp += At->rowstride) {
         *cptr ^= *Atmp & *vptr;
@@ -387,7 +373,6 @@ static inline mzd_t *mzd_addmul_v_sse(mzd_t *c, mzd_t const *v, mzd_t const *At)
     ++cptr;
     ++vptr;
     ++Atptr;
-    --width;
   }
 
   *(--cptr) &= mask;
@@ -408,8 +393,7 @@ static inline mzd_t *mzd_addmul_v_avx(mzd_t *c, mzd_t const *v, mzd_t const *At)
     __m256i const* mAtptr = __builtin_assume_aligned(Atptr, 32);
     const unsigned int rowstride = At->rowstride * sizeof(word) / sizeof(__m256i);
 
-    do
-    {
+    do {
       __m256i const* Atmp = mAtptr;
       __m256i mc = *mcptr;
       const __m256i mv = *mvptr;
@@ -430,8 +414,7 @@ static inline mzd_t *mzd_addmul_v_avx(mzd_t *c, mzd_t const *v, mzd_t const *At)
     Atptr = (word*) mAtptr;
   }
 
-  while (width)
-  {
+  while (width--) {
     word const* Atmp = Atptr;
     for (rci_t r = 0; r < At->nrows; ++r, Atmp += At->rowstride) {
         *cptr ^= *Atmp & *vptr;
@@ -440,7 +423,6 @@ static inline mzd_t *mzd_addmul_v_avx(mzd_t *c, mzd_t const *v, mzd_t const *At)
     ++cptr;
     ++vptr;
     ++Atptr;
-    --width;
   }
 
   *(--cptr) &= mask;
