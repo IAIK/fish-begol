@@ -2,8 +2,41 @@
 #include "lowmc.h"
 #include "hashing_util.h"
 #include "mpc.h"
+#include "io.h"
 
 #include <openssl/rand.h>
+
+unsigned char *bg_sig_to_char_array(public_parameters_t *pp, bg_signature_t *sig, unsigned *len) {
+  unsigned len1 = 0;
+  unsigned char* p1 = proof_to_char_array(pp->lowmc, &sig->proof_s, &len1);
+  unsigned len2 = 0;
+  unsigned char* p2 = proof_to_char_array(pp->lowmc, &sig->proof_p, &len2);
+  unsigned char* c = mzd_to_char_array(sig->c, pp->lowmc->n / 8);
+  
+  *len = len1 + len2 + (pp->lowmc->n / 8);
+  
+  unsigned char *result = (unsigned char *)malloc(*len * sizeof(unsigned char));
+  unsigned char *temp = result;
+  memcpy(temp, p1, len1); temp += len1;
+  memcpy(temp, p2, len2); temp += len2;
+  memcpy(temp, c, pp->lowmc->n / 8);
+  
+  free(p1);
+  free(p2);
+  free(c);
+  
+  return result;
+}
+
+bg_signature_t *bg_sig_from_char_array(public_parameters_t *pp, unsigned char *data) {
+  bg_signature_t *sig = (bg_signature_t*)malloc(sizeof(bg_signature_t));
+  unsigned len = 0;
+  proof_from_char_array(pp->lowmc, &sig->proof_s, data, &len); data += len;
+  proof_from_char_array(pp->lowmc, &sig->proof_p, data, &len); data += len;
+  sig->c = mzd_from_char_array(data, pp->lowmc->n / 8, pp->lowmc->n);
+
+  return sig;
+}
 
 void bg_create_key(public_parameters_t* pp, bg_private_key_t* private_key,
                           bg_public_key_t* public_key, clock_t* timings) {

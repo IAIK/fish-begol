@@ -11,8 +11,9 @@ unsigned char *fis_sig_to_char_array(public_parameters_t *pp, fis_signature_t *s
 }
 
 fis_signature_t *fis_sig_from_char_array(public_parameters_t *pp, unsigned char *data) {
+  unsigned len = 0;
   fis_signature_t *sig = (fis_signature_t*)malloc(sizeof(fis_signature_t));
-  sig->proof = proof_from_char_array(pp->lowmc, data);
+  sig->proof = proof_from_char_array(pp->lowmc, 0, data, &len);
   return sig;
 }
 

@@ -78,12 +78,16 @@ unsigned char* proof_to_char_array(lowmc_t *lowmc, proof_t *proof, unsigned *len
    return result;
 }
 
-proof_t *proof_from_char_array(lowmc_t *lowmc, unsigned char *data) {
-  proof_t *proof = (proof_t*)malloc(sizeof(proof_t));
+proof_t *proof_from_char_array(lowmc_t *lowmc, proof_t *proof, unsigned char *data, unsigned *len) {
+  if(!proof)
+    proof = (proof_t*)malloc(sizeof(proof_t));
   
   unsigned first_view_bytes = lowmc->k / 8;
   unsigned full_mzd_size = lowmc->n / 8;
   unsigned single_mzd_bytes = ((3 * lowmc->m) + 7) / 8;
+  unsigned mzd_bytes = 2 * (lowmc->r * single_mzd_bytes + first_view_bytes + full_mzd_size) + 3 * full_mzd_size;
+  *len = NUM_ROUNDS * (3 * SHA256_DIGEST_LENGTH + 40 + mzd_bytes);
+
   unsigned char *temp = data;
 
   proof->views   = (view_t**)malloc(NUM_ROUNDS * sizeof(view_t*));

@@ -111,6 +111,14 @@ static void bg_sign_verify(int args[5]) {
     mzd_t* m = mzd_init_random_vector(args[1]);
 
     bg_signature_t* signature = bg_sign(&pp, &private_key, m, timings_bg[i]);
+
+    unsigned len = 0;
+    unsigned char *data = bg_sig_to_char_array(&pp, signature, &len);
+    timings_bg[i][13] = len;
+    bg_free_signature(&pp, signature);
+    signature = bg_sig_from_char_array(&pp, data);
+    free(data);
+
     if(bg_verify(&pp, &public_key, m, signature, timings_bg[i])) {
       printf("error\n");
     }

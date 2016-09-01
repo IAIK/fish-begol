@@ -34,7 +34,7 @@ typedef struct {
   mzd_t **v;
 } sbox_vars_t;
 
-proof_t *proof_from_char_array(lowmc_t *lowmc, unsigned char *data);
+proof_t *proof_from_char_array(lowmc_t *lowmc, proof_t *proof, unsigned char *data, unsigned *len);
 
 unsigned char *proof_to_char_array(lowmc_t *lowmc, proof_t *proof, unsigned *len); 
 
