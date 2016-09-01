@@ -42,7 +42,7 @@ void mzd_shift_right_inplace(mzd_t* val, unsigned int count) {
     return;
   }
 
-  const unsigned int nwords     = val->ncols / (8 * sizeof(word));
+  const unsigned int nwords     = val->width;
   const unsigned int left_count = 8 * sizeof(word) - count;
 
   for (unsigned int i = 0; i < nwords - 1; ++i) {
@@ -56,7 +56,7 @@ void mzd_shift_left_inplace(mzd_t* val, unsigned count) {
     return;
   }
 
-  const unsigned int nwords      = val->ncols / (8 * sizeof(word));
+  const unsigned int nwords      = val->width;
   const unsigned int right_count = 8 * sizeof(word) - count;
 
   for (unsigned int i = nwords - 1; i > 0; --i) {
@@ -71,7 +71,7 @@ void mzd_shift_right(mzd_t* res, mzd_t* val, unsigned count) {
     return;
   }
 
-  const unsigned int nwords     = val->ncols / (8 * sizeof(word));
+  const unsigned int nwords     = val->width;
   const unsigned int left_count = 8 * sizeof(word) - count;
 
   for (unsigned int i = 0; i < nwords - 1; ++i) {
@@ -86,7 +86,7 @@ void mzd_shift_left(mzd_t* res, mzd_t* val, unsigned count) {
     return;
   }
 
-  const unsigned int nwords      = val->ncols / (8 * sizeof(word));
+  const unsigned int nwords      = val->width;
   const unsigned int right_count = 8 * sizeof(word) - count;
 
   for (unsigned int i = nwords - 1; i > 0; --i) {
