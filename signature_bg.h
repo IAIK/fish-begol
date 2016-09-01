@@ -16,6 +16,7 @@ typedef struct {
 typedef struct {
   proof_t proof_s;
   proof_t proof_p;
+  mzd_t *c;
 } bg_signature_t;
 
 void bg_create_key(public_parameters_t* pp, bg_private_key_t* private_key,
@@ -25,9 +26,8 @@ void bg_destroy_key(bg_private_key_t* private_key, bg_public_key_t* public_key);
 
 void bg_free_signature(public_parameters_t* pp, bg_signature_t* signature);
 
-bg_signature_t* bg_prove(public_parameters_t* pp, bg_private_key_t* private_key, mzd_t* p, clock_t *timings);
+bg_signature_t *bg_sign(public_parameters_t* pp, bg_private_key_t* private_key, mzd_t *m, clock_t *timings);
 
-int bg_verify(public_parameters_t* pp, bg_public_key_t* pk, mzd_t* p, mzd_t* c,
-              bg_signature_t* signature, clock_t *timings);
+int bg_verify(public_parameters_t* pp, bg_public_key_t *public_key, mzd_t *m, bg_signature_t *sig, clock_t *timings);
 
 #endif

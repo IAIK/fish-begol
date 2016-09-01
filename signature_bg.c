@@ -43,7 +43,7 @@ void bg_free_signature(public_parameters_t* pp, bg_signature_t* signature) {
   free(signature);
 }
 
-bg_signature_t* bg_prove(public_parameters_t* pp, bg_private_key_t* private_key, mzd_t* p, clock_t *timings) {
+static bg_signature_t* bg_prove(public_parameters_t* pp, bg_private_key_t* private_key, mzd_t* p, clock_t *timings) {
   lowmc_t* lowmc         = pp->lowmc;
 #ifdef VERBOSE
   printf("Prove:\n");
@@ -115,6 +115,7 @@ bg_signature_t* bg_prove(public_parameters_t* pp, bg_private_key_t* private_key,
     mzd_shared_clear(&lowmc_key_s[i]);
     mzd_shared_clear(&lowmc_key_k[i]);
   }
+  signature->c = mpc_reconstruct_from_share(c_mpc_s[0]);
   timings[5] = (clock() - beginLowmc) * TIMING_SCALE;
 #ifdef VERBOSE
   printf("MPC LowMC encryption          %6lu\n", timings[5]);
@@ -230,7 +231,7 @@ static int verify_views(lowmc_t* lowmc, mzd_t* p, mzd_shared_t shared_p[NUM_ROUN
   return view_verify_status;
 }
 
-int bg_verify(public_parameters_t* pp, bg_public_key_t* pk, mzd_t* p, mzd_t* c,
+static int bg_proof_verify(public_parameters_t* pp, bg_public_key_t* pk, mzd_t* p, 
                   bg_signature_t* signature, clock_t *timings) {
   lowmc_t* lowmc   = pp->lowmc;
   proof_t* proof_p = &signature->proof_p;
@@ -264,7 +265,7 @@ int bg_verify(public_parameters_t* pp, bg_public_key_t* pk, mzd_t* p, mzd_t* c,
   int reconstruct_status = 0;
   for (unsigned int i = 0; i < NUM_ROUNDS; i++) {
     mzd_t* c_mpcr = mpc_reconstruct_from_share(proof_p->y[i]);
-    if (mzd_cmp(c, c_mpcr) != 0)
+    if (mzd_cmp(signature->c, c_mpcr) != 0)
       reconstruct_status = -1;
     mzd_free(c_mpcr);
 
@@ -339,3 +340,12 @@ int bg_verify(public_parameters_t* pp, bg_public_key_t* pk, mzd_t* p, mzd_t* c,
 
   return hash_status || output_share_status || reconstruct_status || view_verify_status;
 }
+
+bg_signature_t *bg_sign(public_parameters_t* pp, bg_private_key_t* private_key, mzd_t *m, clock_t *timings) {
+  return bg_prove(pp, private_key, m, timings);
+}
+
+int bg_verify(public_parameters_t* pp, bg_public_key_t *public_key, mzd_t *m, bg_signature_t *sig, clock_t *timings) {
+  return bg_proof_verify(pp, public_key, m, sig, timings);
+}
+

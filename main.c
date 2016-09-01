@@ -108,25 +108,17 @@ static void bg_sign_verify(int args[5]) {
     create_instance(&pp, timings_bg[i], args[0], args[1], args[2], args[3]);
     bg_create_key(&pp, &private_key, &public_key, timings_bg[i]);
 
-    mzd_t* p = mzd_init_random_vector(args[1]);
+    mzd_t* m = mzd_init_random_vector(args[1]);
 
-#ifdef VERBOSE
-    clock_t beginRef = clock();
-#endif
-    mzd_t* c         = lowmc_call(pp.lowmc, private_key.s, p);
-#ifdef VERBOSE
-    clock_t deltaRef = (clock() - beginRef) * TIMING_SCALE;
-    printf("LowMC reference encryption    %6lu\n", deltaRef);
-    printf("\n");
-#endif
-
-    bg_signature_t* signature = bg_prove(&pp, &private_key, p, timings_bg[i]);
-    bg_verify(&pp, &public_key, p, c, signature, timings_bg[i]);
+    bg_signature_t* signature = bg_sign(&pp, &private_key, m, timings_bg[i]);
+m = mzd_init_random_vector(args[1]);
+    if(!bg_verify(&pp, &public_key, m, signature, timings_bg[i])) {
+      printf("error\n");
+    }
 
     bg_free_signature(&pp, signature);
  
-    mzd_free(p);
-    mzd_free(c);
+    mzd_free(m);
 
     destroy_instance(&pp);
     bg_destroy_key(&private_key, &public_key);
