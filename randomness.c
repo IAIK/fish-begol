@@ -69,7 +69,7 @@ void aes_prng_get_randomness(aes_prng_t* aes_prng, unsigned char* dst, unsigned 
   const unsigned char plaintext[16] = {'0'};
 
   int len = 0;
-  for (unsigned int j = 0; j < count; j += 16, dst += 16) {
+  for (unsigned int j = 0; j < count / 16; ++j, dst += 16) {
     if (1 != EVP_EncryptUpdate(aes_prng->ctx, dst, &len, plaintext, sizeof(plaintext)))
       handleErrors();
   }
