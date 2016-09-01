@@ -30,16 +30,18 @@ mzd_t** mpc_and_const(mzd_t** res, mzd_t** first, mzd_t* second, unsigned sc) {
     res = (mzd_t**)calloc(sizeof(mzd_t*), 3);
   }
 
-  for (unsigned i = 0; i < sc; i++)
-    res[i]        = mzd_and(res[i], first[i], second);
+  for (unsigned i = 0; i < sc; i++) {
+    res[i] = mzd_xor(res[i], first[i], second);
+  }
   return res;
 }
 
 mzd_t** mpc_xor(mzd_t** res, mzd_t** first, mzd_t** second, unsigned sc) {
   if (res == 0)
     res = (mzd_t**)calloc(sizeof(mzd_t*), 3);
-  for (unsigned i = 0; i < sc; i++)
-    res[i]        = mzd_xor(res[i], first[i], second[i]);
+  for (unsigned i = 0; i < sc; i++) {
+    res[i] = mzd_xor(res[i], first[i], second[i]);
+  }
   return res;
 }
 
@@ -119,10 +121,10 @@ int mpc_and(mzd_t** res, mzd_t** first, mzd_t** second, mzd_t** r, view_t* view,
 
   for (unsigned m = 0; m < sc; ++m) {
     unsigned j = (m + 1) % 3;
-    res[m]     = mzd_and(res[m], first[m], second[m]);
+    res[m]     = mzd_xor(res[m], first[m], second[m]);
 
-    b = mzd_and(b, first[j], second[m]);
-    c = mzd_and(c, first[m], second[j]);
+    b = mzd_xor(b, first[j], second[m]);
+    c = mzd_xor(c, first[m], second[j]);
 
     mzd_xor(res[m], res[m], b);
     mzd_xor(res[m], res[m], c);
@@ -231,10 +233,10 @@ int mpc_and_verify(mzd_t** res, mzd_t** first, mzd_t** second, mzd_t** r, view_t
 
   for (unsigned m = 0; m < sc - 1; m++) {
     unsigned j = m + 1;
-    res[m]     = mzd_and(res[m], first[m], second[m]);
+    res[m]     = mzd_xor(res[m], first[m], second[m]);
 
-    b = mzd_and(b, first[j], second[m]);
-    c = mzd_and(c, first[m], second[j]);
+    b = mzd_xor(b, first[j], second[m]);
+    c = mzd_xor(c, first[m], second[j]);
 
     mzd_xor(res[m], res[m], b);
     mzd_xor(res[m], res[m], c);
@@ -247,14 +249,14 @@ int mpc_and_verify(mzd_t** res, mzd_t** first, mzd_t** second, mzd_t** r, view_t
 
   for (unsigned m = 0; m < sc - 1; m++) {
     mzd_shift_left(buffer[m], view->s[m], viewshift);
-    mzd_and(buffer[m], buffer[m], res[m]);
+    mzd_xor(buffer[m], buffer[m], res[m]);
     if (mzd_cmp(buffer[m], res[m])) {
       return -1;
     }
   }
 
   mzd_shift_left(res[sc - 1], view->s[sc - 1], viewshift);
-  mzd_and(res[sc - 1], res[sc - 1], mask);
+  mzd_xor(res[sc - 1], res[sc - 1], mask);
 
   return 0;
 }
