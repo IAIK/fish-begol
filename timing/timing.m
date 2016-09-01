@@ -23,7 +23,7 @@ function create_plot(prefix, args, data)
   set(get(ax(2),'Ylabel'),'String','Signature Size [kB]');
   legend(ax(1), "Instance Gen", "Sign", "Verify");
   set (gca, "position", [0.1 0.1 0.8 0.8]) 
-  print(fig, strcat(prefix, "-", args{1}, "-", args{2}, ".jpg"), "-djpg", "-loose");
+  print(fig, strcat(prefix, "-", args{1}, "-", args{2}, ".png"), "-dpng", "-loose");
 endfunction
 
 arg_list = argv();
