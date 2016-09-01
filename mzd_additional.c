@@ -1,6 +1,9 @@
 #include "mzd_additional.h"
 #include "randomness.h"
+
+#ifdef WITH_OPT
 #include "avx.h"
+#endif
 
 #include <openssl/rand.h>
 
@@ -95,6 +98,7 @@ void mzd_shift_left(mzd_t* res, mzd_t* val, unsigned count) {
   res->rows[0][0] = val->rows[0][0] << count;
 }
 
+#ifdef WITH_OPT
 __attribute__((target("sse2")))
 static inline mzd_t *mzd_and_sse(mzd_t *res, mzd_t const *first, mzd_t const *second) {
   unsigned int width = first->width;
@@ -156,17 +160,20 @@ static inline mzd_t *mzd_and_avx(mzd_t *res, mzd_t const *first, mzd_t const *se
 
   return res;
 }
+#endif
 
 mzd_t *mzd_and(mzd_t *res, mzd_t const *first, mzd_t const *second) {
   if(res == 0) {
     res = mzd_init(1, first->ncols);
   }
 
+#ifdef WITH_OPT
   if (__builtin_cpu_supports("avx2") && first->ncols >= 256) {
     return mzd_and_avx(res, first, second);
   } else if (__builtin_cpu_supports("sse2")) {
     return mzd_and_sse(res, first, second);
   }
+#endif
 
   unsigned int width = first->width;
   const word mask = first->high_bitmask;
@@ -182,6 +189,7 @@ mzd_t *mzd_and(mzd_t *res, mzd_t const *first, mzd_t const *second) {
   return res;
 }
 
+#ifdef WITH_OPT
 __attribute__((target("sse2")))
 static inline mzd_t *mzd_xor_sse(mzd_t *res, mzd_t const *first, mzd_t const *second) {
   unsigned int width = first->width;
@@ -243,17 +251,20 @@ static inline mzd_t *mzd_xor_avx(mzd_t *res, mzd_t const *first, mzd_t const *se
 
   return res;
 }
+#endif
 
 mzd_t *mzd_xor(mzd_t *res, mzd_t const *first, mzd_t const *second) {
   if(res == 0) {
     res = mzd_init(1, first->ncols);
   }
 
+#ifdef WITH_OPT
   if (__builtin_cpu_supports("avx2") && first->ncols >= 256) {
     return mzd_xor_avx(res, first, second);
   } else if (__builtin_cpu_supports("sse2")) {
     return mzd_xor_sse(res, first, second);
   }
+#endif
 
   unsigned int width = first->width;
   const word mask = first->high_bitmask;
@@ -329,6 +340,7 @@ mzd_t *mzd_mul_v(mzd_t *c, mzd_t const *v, mzd_t const *At) {
   return mzd_addmul_v(c, v, At);
 }
 
+#ifdef WITH_OPT
 __attribute__((target("sse2")))
 static inline mzd_t *mzd_addmul_v_sse(mzd_t *c, mzd_t const *v, mzd_t const *At) {
   unsigned int width = At->width;
@@ -428,7 +440,7 @@ static inline mzd_t *mzd_addmul_v_avx(mzd_t *c, mzd_t const *v, mzd_t const *At)
   *(--cptr) &= mask;
   return c;
 }
-
+#endif
 
 mzd_t *mzd_addmul_v(mzd_t *c, mzd_t const *v, mzd_t const *At) {
   if (At->ncols != c->ncols) {
@@ -436,11 +448,13 @@ mzd_t *mzd_addmul_v(mzd_t *c, mzd_t const *v, mzd_t const *At) {
     return NULL;
   }
 
+#ifdef WITH_OPT
   if (__builtin_cpu_supports("avx2") && At->ncols >= 256) {
     return mzd_addmul_v_avx(c, v, At);
   } else if (__builtin_cpu_supports("sse2")) {
     return mzd_addmul_v_sse(c, v, At);
   }
+#endif
 
   const unsigned int len = At->width;
   const word mask = At->high_bitmask;
@@ -458,6 +472,7 @@ mzd_t *mzd_addmul_v(mzd_t *c, mzd_t const *v, mzd_t const *At) {
   return c;
 }
 
+#ifdef WITH_OPT
 __attribute__((target("sse2")))
 static inline int mzd_equal_sse(mzd_t const *first, mzd_t const *second) {
   unsigned int width = first->width;
@@ -489,11 +504,14 @@ static inline int mzd_equal_sse(mzd_t const *first, mzd_t const *second) {
 
   return 0;
 }
+#endif
 
 int mzd_equal(mzd_t const *first, mzd_t const* second) {
+#ifdef WITH_OPT
   if (__builtin_cpu_supports("sse2")) {
     return mzd_equal_sse(first, second);
   }
+#endif
 
   return mzd_cmp(first, second);
 }
