@@ -10,6 +10,7 @@
 #include "signature_common.h"
 #include "signature_bg.h"
 #include "signature_fis.h"
+#include "io.h"
 
 #include <inttypes.h>
 
@@ -113,7 +114,7 @@ static void bg_sign_verify(int args[5]) {
     bg_verify(&pp, &public_key, p, c, signature, timings_bg[i]);
 
     bg_free_signature(&pp, signature);
-
+ 
     mzd_free(p);
     mzd_free(c);
 
