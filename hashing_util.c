@@ -34,7 +34,7 @@ void H(unsigned char k[16], mzd_t* y[3], view_t* v, unsigned vidx, unsigned vcnt
  * Computes the challenge (similar as in
  * https://github.com/Sobuno/ZKBoo/blob/master/MPC_SHA256/shared.h)
  */
-void H3(unsigned char c[NUM_ROUNDS][3][SHA256_DIGEST_LENGTH], char *m, unsigned m_len, int* ch) {
+void fis_H3(unsigned char c[NUM_ROUNDS][3][SHA256_DIGEST_LENGTH], char *m, unsigned m_len, int* ch) {
 
   unsigned char hash[SHA256_DIGEST_LENGTH];
   SHA256_CTX ctx;
@@ -63,7 +63,7 @@ void H3(unsigned char c[NUM_ROUNDS][3][SHA256_DIGEST_LENGTH], char *m, unsigned 
   }
 }
 
-void H4(unsigned char c1[NUM_ROUNDS][3][SHA256_DIGEST_LENGTH],
+void bg_H3(unsigned char c1[NUM_ROUNDS][3][SHA256_DIGEST_LENGTH],
         unsigned char c2[NUM_ROUNDS][3][SHA256_DIGEST_LENGTH], int* ch) {
   unsigned char hash[SHA256_DIGEST_LENGTH];
   SHA256_CTX ctx;

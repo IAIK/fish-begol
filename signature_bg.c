@@ -142,7 +142,7 @@ bg_signature_t* bg_prove(public_parameters_t* pp, bg_private_key_t* private_key,
 
   clock_t beginCh = clock();
   int ch[NUM_ROUNDS];
-  H4(hashes_p, hashes_s, ch);
+  bg_H3(hashes_p, hashes_s, ch);
   timings[7] = (clock() - beginCh) * TIMING_SCALE;
 #ifdef VERBOSE
   printf("Generating challenge          %6lu\n", timings[7]);
@@ -260,7 +260,7 @@ int bg_verify(public_parameters_t* pp, bg_public_key_t* pk, mzd_t* p, mzd_t* c,
 #endif
   clock_t beginCh = clock();
   int ch[NUM_ROUNDS];
-  H4(proof_p->hashes, proof_s->hashes, ch);
+  bg_H3(proof_p->hashes, proof_s->hashes, ch);
   timings[8] = (clock() - beginCh) * TIMING_SCALE;
 #ifdef VERBOSE
   printf("Recomputing challenge         %6lu\n", timings[8]);
