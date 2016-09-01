@@ -14,12 +14,13 @@ typedef int (*and_ptr)(mzd_t**, mzd_t**, mzd_t**, mzd_t**, view_t*, mzd_t*, unsi
                        mzd_t**);
 
 
-unsigned char* proof_to_char_array(lowmc_t *lowmc, proof_t *proof) {
+unsigned char* proof_to_char_array(lowmc_t *lowmc, proof_t *proof, unsigned *len) {
    unsigned first_view_bytes = lowmc->k / 8;
    unsigned full_mzd_size = lowmc->n / 8;
-   unsigned single_mzd_bytes = full_mzd_size;//= ((3 * lowmc->m) + 7) / 8;
+   unsigned single_mzd_bytes = ((3 * lowmc->m) + 7) / 8;
    unsigned mzd_bytes = 2 * (lowmc->r * single_mzd_bytes + first_view_bytes + full_mzd_size) + 3 * full_mzd_size;
-   unsigned char* result = (unsigned char*)malloc(NUM_ROUNDS * (3 * SHA256_DIGEST_LENGTH + 40 + mzd_bytes) * sizeof(unsigned char));
+   *len = NUM_ROUNDS * (3 * SHA256_DIGEST_LENGTH + 40 + mzd_bytes);
+   unsigned char* result = (unsigned char*)malloc(*len * sizeof(unsigned char));
    
    unsigned char* temp = result;
    memcpy(temp, proof->hashes, NUM_ROUNDS * 3 * SHA256_DIGEST_LENGTH * sizeof(unsigned char)); temp += NUM_ROUNDS * 3 * SHA256_DIGEST_LENGTH;
@@ -82,7 +83,7 @@ proof_t *proof_from_char_array(lowmc_t *lowmc, unsigned char *data) {
   
   unsigned first_view_bytes = lowmc->k / 8;
   unsigned full_mzd_size = lowmc->n / 8;
-  unsigned single_mzd_bytes = full_mzd_size;//= ((3 * lowmc->m) + 7) / 8;
+  unsigned single_mzd_bytes = ((3 * lowmc->m) + 7) / 8;
   unsigned char *temp = data;
 
   proof->views   = (view_t**)malloc(NUM_ROUNDS * sizeof(view_t*));

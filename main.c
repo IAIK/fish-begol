@@ -16,15 +16,17 @@
 
 #include <time.h>
 
+#ifndef VERBOSE
 static void print_timings(clock_t** timings, int iter, int numt) {
   for(unsigned i = 0 ; i < iter ; i++) {
     for(unsigned j = 0 ; j < numt ; j++) {
       printf("%lu", timings[i][j]);
-      if(j < 12) printf(",");
+      if(j < numt - 1) printf(",");
     }
     printf("\n");
   } 
 }
+#endif
 
 void parse_args(int params[5], int argc, char **argv) {
   if(argc != 6) {
@@ -47,7 +49,7 @@ static void fis_sign_verify(int args[5]) {
 
   clock_t **timings_fis = (clock_t**)malloc(args[4] * sizeof(clock_t*));
   for(int i = 0 ; i < args[4] ; i++)
-    timings_fis[i] = (clock_t*)malloc(13 * sizeof(clock_t));  
+    timings_fis[i] = (clock_t*)calloc(14, sizeof(clock_t));  
 
   for (int i = 0; i != args[4]; ++i) {
     public_parameters_t pp;
@@ -62,14 +64,18 @@ static void fis_sign_verify(int args[5]) {
 
     fis_signature_t* sig = fis_sign(&pp, &private_key, m, timings_fis[i]);
 
-    unsigned char *data = fis_sig_to_char_array(&pp, sig);
-    fis_signature_t *sigr = fis_sig_from_char_array(&pp, data);
+    unsigned len = 0;
+    unsigned char *data = fis_sig_to_char_array(&pp, sig, &len);
+    timings_fis[i][13] = len;
+    fis_free_signature(&pp, sig);
+    sig = fis_sig_from_char_array(&pp, data);
+    free(data);
 
-    if(fis_verify(&pp, &public_key, m, sigr, timings_fis[i])) {
+    if(fis_verify(&pp, &public_key, m, sig, timings_fis[i])) {
       printf("error\n");
     }
 
-    fis_destroy_signature(&pp, sig);
+    fis_free_signature(&pp, sig);
     mzd_shared_clear(&key);
 
     destroy_instance(&pp);
@@ -77,7 +83,7 @@ static void fis_sign_verify(int args[5]) {
   }
 
 #ifndef VERBOSE
-  print_timings(timings_fis, args[4], 13);
+  print_timings(timings_fis, args[4], 14);
 #endif
 
   for(int i = 0; i < args[4] ; i++) 
@@ -92,7 +98,7 @@ static void bg_sign_verify(int args[5]) {
   
   clock_t **timings_bg = (clock_t**)malloc(args[4] * sizeof(clock_t*));
   for(int i = 0 ; i < args[4] ; i++)
-    timings_bg[i] = (clock_t*)malloc(13 * sizeof(clock_t));  
+    timings_bg[i] = (clock_t*)calloc(14, sizeof(clock_t));  
 
   for (int i = 0; i != args[4]; ++i) {
     public_parameters_t pp;
@@ -127,7 +133,7 @@ static void bg_sign_verify(int args[5]) {
   }
 
 #ifndef VERBOSE
-  print_timings(timings_bg, args[4], 13);
+  print_timings(timings_bg, args[4], 14);
 #endif
 
   for(int i = 0; i < args[4] ; i++) 

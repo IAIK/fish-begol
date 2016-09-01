@@ -6,8 +6,8 @@
 
 #include <openssl/rand.h>
 
-unsigned char *fis_sig_to_char_array(public_parameters_t *pp, fis_signature_t *sig) {
-  return proof_to_char_array(pp->lowmc, sig->proof);
+unsigned char *fis_sig_to_char_array(public_parameters_t *pp, fis_signature_t *sig, unsigned *len) {
+  return proof_to_char_array(pp->lowmc, sig->proof, len);
 }
 
 fis_signature_t *fis_sig_from_char_array(public_parameters_t *pp, unsigned char *data) {
@@ -266,7 +266,7 @@ int fis_verify(public_parameters_t* pp, fis_public_key_t *public_key, char *m, f
   return res;
 }
 
-void fis_destroy_signature(public_parameters_t* pp, fis_signature_t *signature) {
+void fis_free_signature(public_parameters_t* pp, fis_signature_t *signature) {
   free_proof(pp->lowmc, signature->proof);
   free(signature);
 }

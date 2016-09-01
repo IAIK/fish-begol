@@ -16,7 +16,7 @@ typedef struct {
   proof_t *proof;
 } fis_signature_t;
 
-unsigned char *fis_sig_to_char_array(public_parameters_t *pp, fis_signature_t *sig);
+unsigned char *fis_sig_to_char_array(public_parameters_t *pp, fis_signature_t *sig, unsigned *len);
 
 fis_signature_t *fis_sig_from_char_array(public_parameters_t *pp, unsigned char *data);
 
@@ -29,6 +29,6 @@ fis_signature_t *fis_sign(public_parameters_t* pp, fis_private_key_t* private_ke
 
 int fis_verify(public_parameters_t* pp, fis_public_key_t *public_key, char *m, fis_signature_t *sig, clock_t *timings);
 
-void fis_destroy_signature(public_parameters_t *pp, fis_signature_t *signature);
+void fis_free_signature(public_parameters_t *pp, fis_signature_t *signature);
 
 #endif

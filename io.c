@@ -32,14 +32,11 @@ mzd_t *mzd_from_char_array(unsigned char *data, unsigned len, unsigned vec_len) 
   const unsigned word_count      = vec_len / (8 * sizeof(word));
   const unsigned num_full_words  = len / 8;
   const unsigned bytes_last_word = len - (num_full_words * 8); 
-  
-  //printf("wc: %d, nfw: %d, blw: %d\n", word_count, num_full_words, bytes_last_word);
 
   word *d  = result->rows[0];
   word *in = (word*)data;
   unsigned idx = word_count - 1;
   for(unsigned i = 0 ; i < num_full_words ; i++) {
-  //  printf("i %d\n", i);
     memcpy(&d[idx], in, sizeof(word));
     in++;
     idx--;

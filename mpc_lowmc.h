@@ -36,7 +36,7 @@ typedef struct {
 
 proof_t *proof_from_char_array(lowmc_t *lowmc, unsigned char *data);
 
-unsigned char *proof_to_char_array(lowmc_t *lowmc, proof_t *proof); 
+unsigned char *proof_to_char_array(lowmc_t *lowmc, proof_t *proof, unsigned *len); 
 
 proof_t *create_proof(proof_t* proof, lowmc_t* lowmc,
                       unsigned char hashes[NUM_ROUNDS][3][SHA256_DIGEST_LENGTH],
