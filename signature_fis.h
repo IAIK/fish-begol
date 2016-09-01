@@ -16,6 +16,10 @@ typedef struct {
   proof_t *proof;
 } fis_signature_t;
 
+unsigned char *fis_sig_to_char_array(public_parameters_t *pp, fis_signature_t *sig);
+
+fis_signature_t *fis_sig_from_char_array(public_parameters_t *pp, unsigned char *data);
+
 void fis_create_key(public_parameters_t* pp, fis_private_key_t* private_key,
                     fis_public_key_t* public_key, clock_t* timings);
 

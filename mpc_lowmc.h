@@ -34,6 +34,16 @@ typedef struct {
   mzd_t **v;
 } sbox_vars_t;
 
+proof_t *proof_from_char_array(lowmc_t *lowmc, unsigned char *data);
+
+unsigned char *proof_to_char_array(lowmc_t *lowmc, proof_t *proof); 
+
+proof_t *create_proof(proof_t* proof, lowmc_t* lowmc,
+                      unsigned char hashes[NUM_ROUNDS][3][SHA256_DIGEST_LENGTH],
+                      int ch[NUM_ROUNDS], unsigned char r[NUM_ROUNDS][3][4],
+                      unsigned char keys[NUM_ROUNDS][3][16], mzd_t*** c_mpc,
+                      view_t* views[NUM_ROUNDS]);
+
 sbox_vars_t *sbox_vars_init(sbox_vars_t *vars, rci_t n, unsigned sc);
 
 void clear_proof(lowmc_t *lowmc, proof_t *proof);

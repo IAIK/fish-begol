@@ -61,7 +61,11 @@ static void fis_sign_verify(int args[5]) {
     mzd_shared_copy(&key, private_key.k);
 
     fis_signature_t* sig = fis_sign(&pp, &private_key, m, timings_fis[i]);
-    if(fis_verify(&pp, &public_key, m, sig, timings_fis[i])) {
+
+    unsigned char *data = fis_sig_to_char_array(&pp, sig);
+    fis_signature_t *sigr = fis_sig_from_char_array(&pp, data);
+
+    if(fis_verify(&pp, &public_key, m, sigr, timings_fis[i])) {
       printf("error\n");
     }
 

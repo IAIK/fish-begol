@@ -1,24 +1,21 @@
 #include "m4ri/m4ri.h"
 #include "io.h"
 
-unsigned char *toCharArray(mzd_t *data, short numbits, unsigned *len) {
-  if(!numbits)
+unsigned char *mzd_to_char_array(mzd_t *data, unsigned numbytes) {
+  if(!numbytes)
     return 0;
-
-  *len = (numbits + 7) / 8;
 
   const unsigned vec_len         = data->ncols;
   const unsigned word_count      = vec_len / (8 * sizeof(word));
-  const unsigned num_full_words  = *len / 8;
-  const unsigned bytes_last_word = *len - (num_full_words * 8); 
-  unsigned char *result = (unsigned char*)malloc(*len * sizeof(unsigned char));
+  const unsigned num_full_words  = numbytes / 8;
+  const unsigned bytes_last_word = numbytes - (num_full_words * 8); 
+  unsigned char *result = (unsigned char*)malloc(numbytes * sizeof(unsigned char));
 
-//  printf("numbits: %d\n len: %d\n numwords: %d\n, bytes last word: %d\n", numbits, *len, num_full_words, bytes_last_word);
-  mzd_print(data);
   word *d = data->rows[0];
   unsigned char *temp = result;
   int i = word_count - 1;
-  for(; i > (word_count - 1) - num_full_words  ; i--) {
+  int j = i - num_full_words;
+  for(; i > j; i--) {
     memcpy(temp, &d[i], sizeof(word));
     temp += sizeof(word);
   }
@@ -29,17 +26,20 @@ unsigned char *toCharArray(mzd_t *data, short numbits, unsigned *len) {
   return result;
 }
 
-mzd_t *fromCharArray(unsigned char *data, unsigned len, unsigned numbits, unsigned vec_len) {
+mzd_t *mzd_from_char_array(unsigned char *data, unsigned len, unsigned vec_len) {
   mzd_t *result = mzd_init(1, vec_len);
 
   const unsigned word_count      = vec_len / (8 * sizeof(word));
   const unsigned num_full_words  = len / 8;
   const unsigned bytes_last_word = len - (num_full_words * 8); 
   
+  //printf("wc: %d, nfw: %d, blw: %d\n", word_count, num_full_words, bytes_last_word);
+
   word *d  = result->rows[0];
   word *in = (word*)data;
   unsigned idx = word_count - 1;
-  for(int i = 0 ; i < num_full_words ; i++) {
+  for(unsigned i = 0 ; i < num_full_words ; i++) {
+  //  printf("i %d\n", i);
     memcpy(&d[idx], in, sizeof(word));
     in++;
     idx--;

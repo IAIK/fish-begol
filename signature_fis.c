@@ -2,8 +2,20 @@
 #include "lowmc.h"
 #include "hashing_util.h"
 #include "mpc.h"
+#include "mpc_lowmc.h"
 
 #include <openssl/rand.h>
+
+unsigned char *fis_sig_to_char_array(public_parameters_t *pp, fis_signature_t *sig) {
+  return proof_to_char_array(pp->lowmc, sig->proof);
+}
+
+fis_signature_t *fis_sig_from_char_array(public_parameters_t *pp, unsigned char *data) {
+  fis_signature_t *sig = (fis_signature_t*)malloc(sizeof(fis_signature_t));
+  sig->proof = proof_from_char_array(pp->lowmc, data);
+  return sig;
+}
+
 
 void fis_create_key(public_parameters_t* pp, fis_private_key_t* private_key,
                            fis_public_key_t* public_key, clock_t* timings) {
@@ -142,7 +154,7 @@ static int fis_proof_verify(lowmc_t* lowmc, mzd_t* p, mzd_t* c, proof_t* prf, ch
 #ifdef VERBOSE
   printf("Recomputing challenge         %6lu\n", timings[8]);
 #endif
-
+  
   clock_t beginHash = clock();
   unsigned char hash[SHA256_DIGEST_LENGTH];
   int hash_status = 0;
