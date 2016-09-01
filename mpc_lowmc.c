@@ -629,7 +629,7 @@ static inline and_ptr select_and(lowmc_t* lowmc) {
 }
 
 static inline and_ptr select_and_verify(lowmc_t* lowmc) {
-  if (__builtin_cpu_supports("sse4.1") && lowmc->n == 128) {
+  if (__builtin_cpu_supports("sse2") && lowmc->n == 128) {
     return &mpc_and_verify_sse;
   } else if (__builtin_cpu_supports("avx2") && lowmc->n == 256) {
     return &mpc_and_verify_avx;

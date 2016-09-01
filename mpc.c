@@ -140,7 +140,7 @@ int mpc_and(mzd_t** res, mzd_t** first, mzd_t** second, mzd_t** r, view_t* view,
   return 0;
 }
 
-__attribute__((target("sse4.1"))) int mpc_and_verify_sse(mzd_t** res, mzd_t** first, mzd_t** second,
+__attribute__((target("sse2"))) int mpc_and_verify_sse(mzd_t** res, mzd_t** first, mzd_t** second,
                                                        mzd_t** r, view_t* view, mzd_t* mask,
                                                        unsigned viewshift, unsigned sc,
                                                        mzd_t** buffer) {
@@ -169,8 +169,8 @@ __attribute__((target("sse4.1"))) int mpc_and_verify_sse(mzd_t** res, mzd_t** fi
     sm         = mm128_shift_left(sm, viewshift);
     sm         = _mm_and_si128(sm, resm);
 
-    sm = _mm_xor_si128(sm, resm);
-    if (!_mm_testz_si128(sm, sm)) {
+    const unsigned int same = _mm_movemask_epi8(_mm_cmpeq_epi8(sm, resm));
+    if (same != 0xffff) {
       return 1;
     }
   }
