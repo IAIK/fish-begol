@@ -214,7 +214,7 @@ static inline mzd_t *mzd_xor_sse(mzd_t *res, mzd_t const *first, mzd_t const *se
 
   while (width)
   {
-    *resptr++ = *firstptr++ & *secondptr++;
+    *resptr++ = *firstptr++ ^ *secondptr++;
     --width;
   }
 
@@ -248,7 +248,7 @@ static inline mzd_t *mzd_xor_avx(mzd_t *res, mzd_t const *first, mzd_t const *se
 
   while (width)
   {
-    *resptr++ = *firstptr++ & *secondptr++;
+    *resptr++ = *firstptr++ ^ *secondptr++;
     --width;
   }
 
@@ -274,7 +274,7 @@ mzd_t *mzd_xor(mzd_t *res, mzd_t const *first, mzd_t const *second) {
   word* resptr = res->rows[0];
 
   while (width--) {
-    *resptr++ = *firstptr++ & *secondptr++;
+    *resptr++ = *firstptr++ ^ *secondptr++;
   }
   *(--resptr) &= mask;
 
