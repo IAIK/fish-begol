@@ -16,7 +16,6 @@ typedef struct {
 typedef struct {
   proof_t proof_s;
   proof_t proof_p;
-  mzd_shared_t shared_s[NUM_ROUNDS];
 } bg_signature_t;
 
 void bg_create_key(public_parameters_t* pp, bg_private_key_t* private_key,

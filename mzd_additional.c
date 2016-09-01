@@ -95,34 +95,188 @@ void mzd_shift_left(mzd_t* res, mzd_t* val, unsigned count) {
   res->rows[0][0] = val->rows[0][0] << count;
 }
 
-mzd_t *mzd_and(mzd_t *res, mzd_t *first, mzd_t *second) {
-  if(res == 0) {
-    res = mzd_init(1, first->ncols);
-  }
-  const unsigned int len = first->ncols / (8 * sizeof(word));
-  word* first_ptr = first->rows[0];
-  word* second_ptr = second->rows[0];
-  word* result_ptr = res->rows[0];
+__attribute__((target("sse2")))
+static inline mzd_t *mzd_and_sse(mzd_t *res, mzd_t const *first, mzd_t const *second) {
+  unsigned int width = first->width;
+  const word mask = first->high_bitmask;
+  word* resptr = res->rows[0];
+  word const* firstptr = first->rows[0];
+  word const* secondptr = second->rows[0];
 
-  for(unsigned int i = 0 ; i < len; ++i) {
-    result_ptr[i] = first_ptr[i] & second_ptr[i];
+  if (width * sizeof(word) * 8 >= 128) {
+    __m128i* mresptr = __builtin_assume_aligned(resptr, 16);
+    __m128i const* mfirstptr = __builtin_assume_aligned(firstptr, 16);
+    __m128i const* msecondptr = __builtin_assume_aligned(secondptr, 16);
+
+    do
+    {
+      *mresptr++ = _mm_and_si128(*mfirstptr++, *msecondptr++);
+      width -= sizeof(__m128i) / sizeof(word);
+    } while (width * sizeof(word) * 8 >= 128);
+
+    resptr = (word*) mresptr;
+    firstptr = (word*) mfirstptr;
+    secondptr = (word*) msecondptr;
   }
+
+  while (width)
+  {
+    *resptr++ = *firstptr++ & *secondptr++;
+    --width;
+  }
+
+  *(--resptr) &= mask;
   return res;
 }
 
-mzd_t *mzd_xor(mzd_t *res, mzd_t *first, mzd_t *second) {
+__attribute__((target("avx2")))
+static inline mzd_t *mzd_and_avx(mzd_t *res, mzd_t const *first, mzd_t const *second) {
+  unsigned int width = first->width;
+  const word mask = first->high_bitmask;
+  word* resptr = res->rows[0];
+  word const* firstptr = first->rows[0];
+  word const* secondptr = second->rows[0];
+
+  if (width * sizeof(word) * 8 >= 256) {
+    __m256i* mresptr = __builtin_assume_aligned(resptr, 32);
+    __m256i const* mfirstptr = __builtin_assume_aligned(firstptr, 32);
+    __m256i const* msecondptr = __builtin_assume_aligned(secondptr, 32);
+
+    do
+    {
+      *mresptr++ = _mm256_and_si256(*mfirstptr++, *msecondptr++);
+      width -= sizeof(__m256i) / sizeof(word);
+    } while (width * sizeof(word) * 8 >= 256);
+
+    resptr = (word*) mresptr;
+    firstptr = (word*) mfirstptr;
+    secondptr = (word*) msecondptr;
+  }
+
+  while (width)
+  {
+    *resptr++ = *firstptr++ & *secondptr++;
+    --width;
+  }
+
+  *(--resptr) &= mask;
+  return res;
+}
+
+mzd_t *mzd_and(mzd_t *res, mzd_t const *first, mzd_t const *second) {
   if(res == 0) {
     res = mzd_init(1, first->ncols);
   }
 
-  const unsigned int len = first->ncols / (8 * sizeof(word));
-  word* first_ptr = first->rows[0];
-  word* second_ptr = second->rows[0];
-  word* result_ptr = res->rows[0];
-
-  for(unsigned int i = 0 ; i < len; ++i) {
-    result_ptr[i] = first_ptr[i] ^ second_ptr[i];
+  if (__builtin_cpu_supports("avx2") && first->ncols >= 256) {
+    return mzd_and_avx(res, first, second);
+  } else if (__builtin_cpu_supports("sse2")) {
+    return mzd_and_sse(res, first, second);
   }
+
+  unsigned int width = first->width;
+  const word mask = first->high_bitmask;
+  word const* firstptr = first->rows[0];
+  word const* secondptr = second->rows[0];
+  word* resptr = res->rows[0];
+
+  while (width--) {
+    *resptr++ = *firstptr++ & *secondptr++;
+  }
+  *(--resptr) &= mask;
+
+  return res;
+}
+
+__attribute__((target("sse2")))
+static inline mzd_t *mzd_xor_sse(mzd_t *res, mzd_t const *first, mzd_t const *second) {
+  unsigned int width = first->width;
+  const word mask = first->high_bitmask;
+  word* resptr = res->rows[0];
+  word const* firstptr = first->rows[0];
+  word const* secondptr = second->rows[0];
+
+  if (width * sizeof(word) * 8 >= 128) {
+    __m128i* mresptr = __builtin_assume_aligned(resptr, 16);
+    __m128i const* mfirstptr = __builtin_assume_aligned(firstptr, 16);
+    __m128i const* msecondptr = __builtin_assume_aligned(secondptr, 16);
+
+    do
+    {
+      *mresptr++ = _mm_xor_si128(*mfirstptr++, *msecondptr++);
+      width -= sizeof(__m128i) / sizeof(word);
+    } while (width * sizeof(word) * 8 >= 128);
+
+    resptr = (word*) mresptr;
+    firstptr = (word*) mfirstptr;
+    secondptr = (word*) msecondptr;
+  }
+
+  while (width)
+  {
+    *resptr++ = *firstptr++ ^ *secondptr++;
+    --width;
+  }
+
+  *(--resptr) &= mask;
+  return res;
+}
+
+__attribute__((target("avx2")))
+static inline mzd_t *mzd_xor_avx(mzd_t *res, mzd_t const *first, mzd_t const *second) {
+  unsigned int width = first->width;
+  const word mask = first->high_bitmask;
+  word* resptr = res->rows[0];
+  word const* firstptr = first->rows[0];
+  word const* secondptr = second->rows[0];
+
+  if (width * sizeof(word) * 8 >= 256) {
+    __m256i* mresptr = __builtin_assume_aligned(resptr, 32);
+    __m256i const* mfirstptr = __builtin_assume_aligned(firstptr, 32);
+    __m256i const* msecondptr = __builtin_assume_aligned(secondptr, 32);
+
+    do
+    {
+      *mresptr++ = _mm256_xor_si256(*mfirstptr++, *msecondptr++);
+      width -= sizeof(__m256i) / sizeof(word);
+    } while (width * sizeof(word) * 8 >= 256);
+
+    resptr = (word*) mresptr;
+    firstptr = (word*) mfirstptr;
+    secondptr = (word*) msecondptr;
+  }
+
+  while (width)
+  {
+    *resptr++ = *firstptr++ ^ *secondptr++;
+    --width;
+  }
+
+  *(--resptr) &= mask;
+  return res;
+}
+
+mzd_t *mzd_xor(mzd_t *res, mzd_t const *first, mzd_t const *second) {
+  if(res == 0) {
+    res = mzd_init(1, first->ncols);
+  }
+
+  if (__builtin_cpu_supports("avx2") && first->ncols >= 256) {
+    return mzd_xor_avx(res, first, second);
+  } else if (__builtin_cpu_supports("sse2")) {
+    return mzd_xor_sse(res, first, second);
+  }
+
+  unsigned int width = first->width;
+  const word mask = first->high_bitmask;
+  word const* firstptr = first->rows[0];
+  word const* secondptr = second->rows[0];
+  word* resptr = res->rows[0];
+
+  while (width--) {
+    *resptr++ = *firstptr++ ^ *secondptr++;
+  }
+  *(--resptr) &= mask;
 
   return res;
 }
@@ -164,8 +318,8 @@ void mzd_shared_share(mzd_shared_t* shared_value) {
   shared_value->shared[1] = mzd_init_random_vector(shared_value->shared[0]->ncols);
   shared_value->shared[2] = mzd_init_random_vector(shared_value->shared[0]->ncols);
 
-  mzd_add(shared_value->shared[0], shared_value->shared[0], shared_value->shared[1]);
-  mzd_add(shared_value->shared[0], shared_value->shared[0], shared_value->shared[2]);
+  mzd_xor(shared_value->shared[0], shared_value->shared[0], shared_value->shared[1]);
+  mzd_xor(shared_value->shared[0], shared_value->shared[0], shared_value->shared[2]);
 }
 
 void mzd_shared_clear(mzd_shared_t* shared_value) {
@@ -301,7 +455,7 @@ mzd_t *mzd_addmul_v(mzd_t *c, mzd_t const *v, mzd_t const *At) {
   }
 
   if (__builtin_cpu_supports("avx2") && At->ncols >= 256) {
-    return mzd_addmul_v_sse(c, v, At);
+    return mzd_addmul_v_avx(c, v, At);
   } else if (__builtin_cpu_supports("sse2")) {
     return mzd_addmul_v_sse(c, v, At);
   }

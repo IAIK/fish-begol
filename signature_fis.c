@@ -119,7 +119,7 @@ static proof_t* fis_prove(lowmc_t* lowmc, lowmc_key_t* lowmc_key, mzd_t* p, char
 
   clock_t beginCh = clock();
   int ch[NUM_ROUNDS];
-  H3(hashes, m, m_len, ch);
+  fis_H3(hashes, m, m_len, ch);
   timings[7] = (clock() - beginCh) * TIMING_SCALE;
 #ifdef VERBOSE
   printf("Generating challenge          %6lu\n", timings[7]);
@@ -149,7 +149,7 @@ static int fis_proof_verify(lowmc_t* lowmc, mzd_t* p, mzd_t* c, proof_t* prf, ch
 #endif
   clock_t beginCh = clock();
   int ch[NUM_ROUNDS];
-  H3(prf->hashes, m, m_len, ch);
+  fis_H3(prf->hashes, m, m_len, ch);
   timings[8] = (clock() - beginCh) * TIMING_SCALE;
 #ifdef VERBOSE
   printf("Recomputing challenge         %6lu\n", timings[8]);
