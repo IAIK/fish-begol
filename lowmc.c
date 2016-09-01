@@ -153,7 +153,7 @@ mzd_t* lowmc_call(lowmc_t* lowmc, lowmc_key_t* lowmc_key, mzd_t* p) {
       sbox_layer_bitsliced(y, x, lowmc->m, &lowmc->mask);
     }
     mzd_mul_v(z, y, lowmc->LMatrix[i]);
-    mzd_add(z, z, lowmc->Constants[i]);
+    mzd_xor(z, z, lowmc->Constants[i]);
     mzd_addmul_v(z, lowmc_key->shared[0], lowmc->KMatrix[i + 1]);
     mzd_copy(x, z);
   }
