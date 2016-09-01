@@ -301,7 +301,7 @@ mzd_t *mzd_addmul_v(mzd_t *c, mzd_t const *v, mzd_t const *At) {
   }
 
   if (__builtin_cpu_supports("avx2") && At->ncols >= 256) {
-    return mzd_addmul_v_sse(c, v, At);
+    return mzd_addmul_v_avx(c, v, At);
   } else if (__builtin_cpu_supports("sse2")) {
     return mzd_addmul_v_sse(c, v, At);
   }
