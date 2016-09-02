@@ -539,6 +539,10 @@ static inline int mzd_equal_avx(mzd_t const *first, mzd_t const *second) {
 #endif
 
 int mzd_equal(mzd_t const *first, mzd_t const* second) {
+  if (first->ncols != second->ncols) {
+    return 1;
+  }
+
 #ifdef WITH_OPT
   if (__builtin_cpu_supports("avx2") && first->ncols >= 256) {
     return mzd_equal_avx(first, second);
