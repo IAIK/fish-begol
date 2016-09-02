@@ -1,5 +1,6 @@
 import argparse
 import subprocess
+import os
 
 def main():
   args = parse_args()
@@ -15,9 +16,8 @@ def main():
           subprocess.Popen("./{0} {1} {2} {3} {4} {5}".format(args.executable, 
                            m, n, r, k, args.iterations), shell=True, stdout=timings).wait()
     subprocess.Popen("octave {0} {1} {2} {3}".format(args.octavescript, n, k, octarg), shell=True).wait()
-    subprocess.Popen("rm {0}".format(octarg), shell=True).wait()  
-      
-    
+    os.unlink(octarg)
+
 def get_params(line):
   l = line.split()
   d = dict(zip(l[::2], l[1::2]))
