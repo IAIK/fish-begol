@@ -501,7 +501,7 @@ __attribute__((target("avx2"))) static inline int mzd_equal_avx(mzd_t const* fir
 
     do {
       const unsigned int notequal =
-          _mm256_movemask_epi8(_mm256_cmpeq_epi16(*mfirstptr++, *msecondptr++)) - 0xffff;
+          _mm256_movemask_epi8(_mm256_cmpeq_epi8(*mfirstptr++, *msecondptr++)) - 0xffffffff;
       if (notequal) {
         return notequal;
       }
