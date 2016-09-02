@@ -634,6 +634,7 @@ static inline and_ptr select_and(lowmc_t* lowmc) {
     return &mpc_and;
   }
 #else
+  (void) lowmc;
   return &mpc_and;
 #endif
 }
@@ -648,6 +649,7 @@ static inline and_ptr select_and_verify(lowmc_t* lowmc) {
     return &mpc_and_verify;
   }
 #else
+  (void) lowmc;
   return &mpc_and_verify;
 #endif
 }
