@@ -504,11 +504,45 @@ static inline int mzd_equal_sse(mzd_t const *first, mzd_t const *second) {
 
   return 0;
 }
+
+__attribute__((target("avx2")))
+static inline int mzd_equal_avx(mzd_t const *first, mzd_t const *second) {
+  unsigned int width = first->width;
+  word const* firstptr = first->rows[0];
+  word const* secondptr = second->rows[0];
+
+  if (width * sizeof(word) * 8 >= 256) {
+    __m256i const* mfirstptr = __builtin_assume_aligned(firstptr, 32);
+    __m256i const* msecondptr = __builtin_assume_aligned(secondptr, 32);
+
+    do {
+      const unsigned int same = _mm256_movemask_epi8(_mm256_cmpeq_epi16(*mfirstptr++, *msecondptr++));
+      if (same != 0xffff) {
+        return 1;
+      }
+
+      width -= sizeof(__m256i) / sizeof(word);
+    } while (width * sizeof(word) * 8 >= 256);
+
+    firstptr = (word*) mfirstptr;
+    secondptr = (word*) msecondptr;
+  }
+
+  while (width--) {
+    if (*firstptr++ != *secondptr++) {
+      return 1;
+    }
+  }
+
+  return 0;
+}
 #endif
 
 int mzd_equal(mzd_t const *first, mzd_t const* second) {
 #ifdef WITH_OPT
-  if (__builtin_cpu_supports("sse2")) {
+  if (__builtin_cpu_supports("avx2") && first->ncols >= 256) {
+    return mzd_equal_sse(first, second);
+  } else if (__builtin_cpu_supports("sse2")) {
     return mzd_equal_sse(first, second);
   }
 #endif
