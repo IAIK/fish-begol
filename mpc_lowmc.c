@@ -498,13 +498,10 @@ static mzd_t** _mpc_lowmc_call(lowmc_t* lowmc, lowmc_key_t* lowmc_key, mzd_t* p,
 static mzd_t** _mpc_lowmc_call_bitsliced(lowmc_t* lowmc, lowmc_key_t* lowmc_key, mzd_t* p,
                                          view_t* views, mzd_t*** rvec, unsigned sc, unsigned ch,
                                          and_ptr andPtr, int* status, bool update_view) {
-  unsigned int vcnt = 0;
-
   if (update_view) {
-    for (unsigned i = 0; i < sc; i++)
-      mzd_copy(views[vcnt].s[i], lowmc_key->shared[i]);
+    mpc_copy(views[0].s, lowmc_key->shared, sc);
   }
-  vcnt++;
+  unsigned int vcnt = 1;
 
   mzd_t** x = mpc_init_empty_share_vector(lowmc->n, sc);
   mzd_t** y = mpc_init_empty_share_vector(lowmc->n, sc);
@@ -563,12 +560,10 @@ static mzd_t** _mpc_lowmc_call_bitsliced_shared_p(lowmc_t* lowmc, lowmc_key_t* l
                                                   view_t* views, mzd_t*** rvec, unsigned sc,
                                                   unsigned ch, and_ptr andPtr, int* status,
                                                   bool update_view) {
-  unsigned int vcnt = 0;
   if (update_view) {
-    for (unsigned i = 0; i < sc; i++)
-      mzd_copy(views[vcnt].s[i], lowmc_key->shared[i]);
+    mpc_copy(views[0].s, lowmc_key->shared, sc);
   }
-  vcnt++;
+  unsigned int vcnt = 1;
 
   mzd_t** x = mpc_init_empty_share_vector(lowmc->n, sc);
   mzd_t** y = mpc_init_empty_share_vector(lowmc->n, sc);
@@ -630,13 +625,12 @@ static inline and_ptr select_and(lowmc_t* lowmc) {
     return &mpc_and_sse;
   } else if (__builtin_cpu_supports("avx2") && lowmc->n == 256) {
     return &mpc_and_avx;
-  } else {
-    return &mpc_and;
   }
 #else
   (void) lowmc;
-  return &mpc_and;
 #endif
+
+  return &mpc_and;
 }
 
 static inline and_ptr select_and_verify(lowmc_t* lowmc) {
@@ -645,13 +639,12 @@ static inline and_ptr select_and_verify(lowmc_t* lowmc) {
     return &mpc_and_verify_sse;
   } else if (__builtin_cpu_supports("avx2") && lowmc->n == 256) {
     return &mpc_and_verify_avx;
-  } else {
-    return &mpc_and_verify;
   }
 #else
   (void) lowmc;
-  return &mpc_and_verify;
 #endif
+
+  return &mpc_and_verify;
 }
 
 mzd_t** mpc_lowmc_call(lowmc_t* lowmc, lowmc_key_t* lowmc_key, mzd_t* p, view_t* views,
