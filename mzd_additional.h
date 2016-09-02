@@ -22,10 +22,6 @@ mzd_t *mzd_and(mzd_t *res, mzd_t const *first, mzd_t const *second);
 
 mzd_t *mzd_xor(mzd_t *res, mzd_t const *first, mzd_t const *second);
 
-void mzd_shift_right_inplace(mzd_t *val, unsigned int count);
-
-void mzd_shift_left_inplace(mzd_t *val, unsigned int count);
-
 /**
  * Compare two vectors for equality. Note that this version is optimized for
  * vectors with a multiple of sizeof(word) * 8 columns.

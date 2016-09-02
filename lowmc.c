@@ -16,8 +16,8 @@ static void sbox_layer_bitsliced(mzd_t* out, mzd_t* in, rci_t m, mask_t* mask) {
   mzd_t* x1m = mzd_and(0, mask->x1, in);
   mzd_t* x2m = mzd_and(0, mask->x2, in);
 
-  mzd_shift_left_inplace(x0m, 2);
-  mzd_shift_left_inplace(x1m, 1);
+  mzd_shift_left(x0m, x0m, 2);
+  mzd_shift_left(x1m, x1m, 1);
 
   mzd_t* t0 = mzd_and(0, x1m, x2m);
   mzd_t* t1 = mzd_and(0, x0m, x2m);
@@ -32,8 +32,8 @@ static void sbox_layer_bitsliced(mzd_t* out, mzd_t* in, rci_t m, mask_t* mask) {
   mzd_xor(t2, t2, x1m);
   mzd_xor(t2, t2, x2m);
 
-  mzd_shift_right_inplace(t0, 2);
-  mzd_shift_right_inplace(t1, 1);
+  mzd_shift_right(t0, t0, 2);
+  mzd_shift_right(t1, t1, 1);
 
   mzd_xor(out, out, t2);
   mzd_xor(out, out, t0);
