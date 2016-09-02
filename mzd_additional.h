@@ -14,9 +14,9 @@ void mzd_randomize_ssl(mzd_t* val);
 
 mzd_t **mzd_init_random_vectors_from_seed(unsigned char key[16], rci_t n, unsigned count);
 
-void mzd_shift_right(mzd_t* res, mzd_t *val, unsigned count);
+void mzd_shift_right(mzd_t* res, mzd_t const *val, unsigned count);
 
-void mzd_shift_left(mzd_t* res, mzd_t *val, unsigned count);
+void mzd_shift_left(mzd_t* res, mzd_t const *val, unsigned count);
 
 mzd_t *mzd_and(mzd_t *res, mzd_t const *first, mzd_t const *second);
 

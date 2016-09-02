@@ -40,7 +40,7 @@ mzd_t** mzd_init_random_vectors_from_seed(unsigned char key[16], rci_t n, unsign
   return vectors;
 }
 
-void mzd_shift_right(mzd_t* res, mzd_t* val, unsigned count) {
+void mzd_shift_right(mzd_t* res, mzd_t const* val, unsigned count) {
   if (!count) {
     mzd_copy(res, val);
     return;
@@ -49,13 +49,17 @@ void mzd_shift_right(mzd_t* res, mzd_t* val, unsigned count) {
   const unsigned int nwords     = val->width;
   const unsigned int left_count = 8 * sizeof(word) - count;
 
-  for (unsigned int i = 0; i < nwords - 1; ++i) {
-    res->rows[0][i] = (val->rows[0][i] >> count) | (val->rows[0][i + 1] << left_count);
+  word *resptr = res->rows[0];
+  word const *valptr = val->rows[0];
+
+  for (unsigned int i = 0; i < nwords - 1; ++i, ++resptr) {
+    const word tmp = *valptr >> count;
+    *resptr = tmp | (*++valptr << left_count);
   }
-  res->rows[0][nwords - 1] = val->rows[0][nwords - 1] >> count;
+  *resptr = *valptr >> count;
 }
 
-void mzd_shift_left(mzd_t* res, mzd_t* val, unsigned count) {
+void mzd_shift_left(mzd_t* res, mzd_t const* val, unsigned count) {
   if (!count) {
     mzd_copy(res, val);
     return;
@@ -64,10 +68,14 @@ void mzd_shift_left(mzd_t* res, mzd_t* val, unsigned count) {
   const unsigned int nwords      = val->width;
   const unsigned int right_count = 8 * sizeof(word) - count;
 
-  for (unsigned int i = nwords - 1; i > 0; --i) {
-    res->rows[0][i] = (val->rows[0][i] << count) | (val->rows[0][i - 1] >> right_count);
+  word *resptr = res->rows[0] + nwords - 1;
+  word const *valptr = val->rows[0] + nwords - 1;
+
+  for (unsigned int i = nwords - 1; i > 0; --i, --resptr) {
+    const word tmp = *valptr << count;
+    *resptr = tmp | (*--valptr >> right_count);
   }
-  res->rows[0][0] = val->rows[0][0] << count;
+  *resptr = *valptr << count;
 }
 
 #ifdef WITH_OPT
