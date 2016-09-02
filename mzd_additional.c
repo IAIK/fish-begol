@@ -484,9 +484,9 @@ static inline int mzd_equal_sse(mzd_t const *first, mzd_t const *second) {
     __m128i const* msecondptr = __builtin_assume_aligned(secondptr, 16);
 
     do {
-      const unsigned int same = _mm_movemask_epi8(_mm_cmpeq_epi8(*mfirstptr++, *msecondptr++)) - 0xffff;
-      if (same) {
-        return same;
+      const unsigned int notequal = _mm_movemask_epi8(_mm_cmpeq_epi8(*mfirstptr++, *msecondptr++)) - 0xffff;
+      if (notequal) {
+        return notequal;
       }
 
       width -= sizeof(__m128i) / sizeof(word);
@@ -516,9 +516,9 @@ static inline int mzd_equal_avx(mzd_t const *first, mzd_t const *second) {
     __m256i const* msecondptr = __builtin_assume_aligned(secondptr, 32);
 
     do {
-      const unsigned int same = _mm256_movemask_epi8(_mm256_cmpeq_epi16(*mfirstptr++, *msecondptr++)) - 0xffff;
-      if (same) {
-        return same;
+      const unsigned int notequal = _mm256_movemask_epi8(_mm256_cmpeq_epi16(*mfirstptr++, *msecondptr++)) - 0xffff;
+      if (notequal) {
+        return notequal;
       }
 
       width -= sizeof(__m256i) / sizeof(word);
