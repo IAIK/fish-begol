@@ -30,19 +30,39 @@ void H(unsigned char k[16], mzd_t* y[3], view_t* v, unsigned vidx, unsigned vcnt
   SHA256_Final(hash, &ctx);
 }
 
+void fis_H3_verify(unsigned char h[NUM_ROUNDS][2][SHA256_DIGEST_LENGTH], unsigned char hp[NUM_ROUNDS][SHA256_DIGEST_LENGTH], unsigned char ch_in[(NUM_ROUNDS + 3) / 4], char *m, unsigned m_len, int* ch) {
+  unsigned char tmp[NUM_ROUNDS][3][SHA256_DIGEST_LENGTH];
+  for(unsigned i = 0 ; i < NUM_ROUNDS ; i++) {
+    if(getChAt(ch_in, i) == 0) {
+      memcpy(tmp[i][0], h[i], 2 * SHA256_DIGEST_LENGTH);
+      memcpy(tmp[i][2], hp[i], SHA256_DIGEST_LENGTH);
+    } else if(getChAt(ch_in, i) == 1) {
+      memcpy(tmp[i][0], hp[i], SHA256_DIGEST_LENGTH);
+      memcpy(tmp[i][1], h[i], 2 * SHA256_DIGEST_LENGTH);
+    } else {
+      memcpy(tmp[i][0], h[i][1], SHA256_DIGEST_LENGTH);
+      memcpy(tmp[i][1], hp[i], SHA256_DIGEST_LENGTH);
+      memcpy(tmp[i][2], h[i][0], SHA256_DIGEST_LENGTH);
+    }
+  }
+  
+  fis_H3(tmp, m, m_len, ch);  
+
+}
+
 /**
  * Computes the challenge (similar as in
  * https://github.com/Sobuno/ZKBoo/blob/master/MPC_SHA256/shared.h)
  */
-void fis_H3(unsigned char c[NUM_ROUNDS][3][SHA256_DIGEST_LENGTH], char *m, unsigned m_len, int* ch) {
+void fis_H3(unsigned char h[NUM_ROUNDS][3][SHA256_DIGEST_LENGTH], char *m, unsigned m_len, int* ch) {
 
   unsigned char hash[SHA256_DIGEST_LENGTH];
   SHA256_CTX ctx;
   SHA256_Init(&ctx);
-  SHA256_Update(&ctx, c, 3 * SHA256_DIGEST_LENGTH * NUM_ROUNDS);
+  SHA256_Update(&ctx, h, 3 * SHA256_DIGEST_LENGTH * NUM_ROUNDS);
   SHA256_Update(&ctx, m, m_len);
   SHA256_Final(hash, &ctx);
-
+  
   // Pick bits from hash
   unsigned int i          = 0;
   unsigned int bitTracker = 0;
@@ -63,13 +83,45 @@ void fis_H3(unsigned char c[NUM_ROUNDS][3][SHA256_DIGEST_LENGTH], char *m, unsig
   }
 }
 
-void bg_H3(unsigned char c1[NUM_ROUNDS][3][SHA256_DIGEST_LENGTH],
-        unsigned char c2[NUM_ROUNDS][3][SHA256_DIGEST_LENGTH], int* ch) {
+void bg_H3_verify(unsigned char h1[NUM_ROUNDS][2][SHA256_DIGEST_LENGTH], 
+               unsigned char hp1[NUM_ROUNDS][SHA256_DIGEST_LENGTH], 
+               unsigned char h2[NUM_ROUNDS][2][SHA256_DIGEST_LENGTH], 
+               unsigned char hp2[NUM_ROUNDS][SHA256_DIGEST_LENGTH],
+               unsigned char ch_in[(NUM_ROUNDS + 3) / 4], int* ch) {
+  unsigned char tmp1[NUM_ROUNDS][3][SHA256_DIGEST_LENGTH];
+  unsigned char tmp2[NUM_ROUNDS][3][SHA256_DIGEST_LENGTH];
+  for(unsigned i = 0 ; i < NUM_ROUNDS ; i++) {
+    if(getChAt(ch_in, i) == 0) {
+      memcpy(tmp1[i][0], h1[i], 2 * SHA256_DIGEST_LENGTH);
+      memcpy(tmp1[i][2], hp1[i], SHA256_DIGEST_LENGTH);
+      memcpy(tmp2[i][0], h2[i], 2 * SHA256_DIGEST_LENGTH);
+      memcpy(tmp2[i][2], hp2[i], SHA256_DIGEST_LENGTH);
+    } else if(getChAt(ch_in, i) == 1) {
+      memcpy(tmp1[i][0], hp1[i], SHA256_DIGEST_LENGTH);
+      memcpy(tmp1[i][1], h1[i], 2 * SHA256_DIGEST_LENGTH);
+      memcpy(tmp2[i][0], hp2[i], SHA256_DIGEST_LENGTH);
+      memcpy(tmp2[i][1], h2[i], 2 * SHA256_DIGEST_LENGTH);
+    } else {
+      memcpy(tmp1[i][0], h1[i][1], SHA256_DIGEST_LENGTH);
+      memcpy(tmp1[i][1], hp1[i], SHA256_DIGEST_LENGTH);
+      memcpy(tmp1[i][2], h1[i][0], SHA256_DIGEST_LENGTH);
+      memcpy(tmp2[i][0], h2[i][1], SHA256_DIGEST_LENGTH);
+      memcpy(tmp2[i][1], hp2[i], SHA256_DIGEST_LENGTH);
+      memcpy(tmp2[i][2], h2[i][0], SHA256_DIGEST_LENGTH);
+    }
+  }
+  
+  bg_H3(tmp1, tmp2, ch);  
+
+}
+
+void bg_H3(unsigned char h1[NUM_ROUNDS][3][SHA256_DIGEST_LENGTH],
+        unsigned char h2[NUM_ROUNDS][3][SHA256_DIGEST_LENGTH], int* ch) {
   unsigned char hash[SHA256_DIGEST_LENGTH];
   SHA256_CTX ctx;
   SHA256_Init(&ctx);
-  SHA256_Update(&ctx, c1, 3 * SHA256_DIGEST_LENGTH * NUM_ROUNDS);
-  SHA256_Update(&ctx, c2, 3 * SHA256_DIGEST_LENGTH * NUM_ROUNDS);
+  SHA256_Update(&ctx, h1, 3 * SHA256_DIGEST_LENGTH * NUM_ROUNDS);
+  SHA256_Update(&ctx, h2, 3 * SHA256_DIGEST_LENGTH * NUM_ROUNDS);
   SHA256_Final(hash, &ctx);
 
   // Pick bits from hash

@@ -16,17 +16,24 @@ typedef int (*BIT_and_ptr)(BIT*, BIT*, BIT*, view_t*, int*, unsigned, unsigned);
 typedef int (*and_ptr)(mzd_t**, mzd_t**, mzd_t**, mzd_t**, view_t*, mzd_t*, unsigned, unsigned,
                        mzd_t**);
 
+unsigned char getChAt(unsigned char *ch, unsigned int i) {
+  int idx = i / 4;
+  int offset = (i % 4) * 2;
+ 
+  return (ch[idx] >> offset) & 3;
+}
+
 
 unsigned char* proof_to_char_array(lowmc_t *lowmc, proof_t *proof, unsigned *len) {
    unsigned first_view_bytes = lowmc->k / 8;
    unsigned full_mzd_size = lowmc->n / 8;
    unsigned single_mzd_bytes = ((3 * lowmc->m) + 7) / 8;
    unsigned mzd_bytes = 2 * (lowmc->r * single_mzd_bytes + first_view_bytes + full_mzd_size) + 3 * full_mzd_size;
-   *len = NUM_ROUNDS * (3 * SHA256_DIGEST_LENGTH + 40 + mzd_bytes);
+   *len = NUM_ROUNDS * (SHA256_DIGEST_LENGTH + 40 + mzd_bytes) + ((NUM_ROUNDS + 3) / 4);
    unsigned char* result = (unsigned char*)malloc(*len * sizeof(unsigned char));
    
    unsigned char* temp = result;
-   memcpy(temp, proof->hashes, NUM_ROUNDS * 3 * SHA256_DIGEST_LENGTH * sizeof(unsigned char)); temp += NUM_ROUNDS * 3 * SHA256_DIGEST_LENGTH;
+   memcpy(temp, proof->hashes, NUM_ROUNDS * SHA256_DIGEST_LENGTH * sizeof(unsigned char)); temp += NUM_ROUNDS * SHA256_DIGEST_LENGTH;
 
    for(unsigned i = 0; i < NUM_ROUNDS; i++) {
      memcpy(temp, proof->r[i][0], 4 * sizeof(unsigned char)); temp += 4;
@@ -34,7 +41,6 @@ unsigned char* proof_to_char_array(lowmc_t *lowmc, proof_t *proof, unsigned *len
      
      memcpy(temp, proof->keys[i][0], 16 * sizeof(unsigned char)); temp += 16;
      memcpy(temp, proof->keys[i][1], 16 * sizeof(unsigned char)); temp += 16;
-
 
      unsigned char *v0 = mzd_to_char_array(proof->views[i][0].s[0], first_view_bytes);
      unsigned char *v1 = mzd_to_char_array(proof->views[i][0].s[1], first_view_bytes);
@@ -77,6 +83,8 @@ unsigned char* proof_to_char_array(lowmc_t *lowmc, proof_t *proof, unsigned *len
     memcpy(temp, c2, full_mzd_size); temp += full_mzd_size;
     free(c2);  
    }
+  
+   memcpy(temp, proof->ch, (NUM_ROUNDS + 3) / 4);
    
    return result;
 }
@@ -89,7 +97,7 @@ proof_t *proof_from_char_array(lowmc_t *lowmc, proof_t *proof, unsigned char *da
   unsigned full_mzd_size = lowmc->n / 8;
   unsigned single_mzd_bytes = ((3 * lowmc->m) + 7) / 8;
   unsigned mzd_bytes = 2 * (lowmc->r * single_mzd_bytes + first_view_bytes + full_mzd_size) + 3 * full_mzd_size;
-  *len = NUM_ROUNDS * (3 * SHA256_DIGEST_LENGTH + 40 + mzd_bytes);
+  *len = NUM_ROUNDS * (SHA256_DIGEST_LENGTH + 40 + mzd_bytes) + ((NUM_ROUNDS + 3) / 4);
 
   unsigned char *temp = data;
 
@@ -97,14 +105,13 @@ proof_t *proof_from_char_array(lowmc_t *lowmc, proof_t *proof, unsigned char *da
 
   proof->r    = (unsigned char***)malloc(NUM_ROUNDS * sizeof(unsigned char**));
   proof->keys = (unsigned char***)malloc(NUM_ROUNDS * sizeof(unsigned char**));
-  memcpy(proof->hashes, temp, NUM_ROUNDS * 3 * SHA256_DIGEST_LENGTH * sizeof(unsigned char)); 
-  temp += NUM_ROUNDS * 3 * SHA256_DIGEST_LENGTH;
+  memcpy(proof->hashes, temp, NUM_ROUNDS * SHA256_DIGEST_LENGTH * sizeof(unsigned char)); 
+  temp += NUM_ROUNDS * SHA256_DIGEST_LENGTH;
 
   proof->y = (mzd_t***)malloc(NUM_ROUNDS * sizeof(mzd_t**));  
 
 #pragma omp parallel for
   for (unsigned int i = 0; i < NUM_ROUNDS; i++) {
-
     proof->r[i]    = (unsigned char**)malloc(2 * sizeof(unsigned char*));
     proof->r[i][0] = (unsigned char*)malloc(4 * sizeof(unsigned char));
     proof->r[i][1] = (unsigned char*)malloc(4 * sizeof(unsigned char));
@@ -135,6 +142,8 @@ proof_t *proof_from_char_array(lowmc_t *lowmc, proof_t *proof, unsigned char *da
     proof->y[i][1] = mzd_from_char_array(temp, full_mzd_size, lowmc->n); temp += full_mzd_size;
     proof->y[i][2] = mzd_from_char_array(temp, full_mzd_size, lowmc->n); temp += full_mzd_size;
   }
+   
+  memcpy(proof->ch, temp, (NUM_ROUNDS + 3) / 4);
 
   return proof;
 }
@@ -151,13 +160,15 @@ proof_t* create_proof(proof_t* proof, lowmc_t* lowmc,
 
   proof->r    = (unsigned char***)malloc(NUM_ROUNDS * sizeof(unsigned char**));
   proof->keys = (unsigned char***)malloc(NUM_ROUNDS * sizeof(unsigned char**));
-  memcpy(proof->hashes, hashes, NUM_ROUNDS * 3 * SHA256_DIGEST_LENGTH * sizeof(char));
+  //memcpy(proof->hashes, hashes, NUM_ROUNDS * 3 * SHA256_DIGEST_LENGTH * sizeof(char));
 
 #pragma omp parallel for
   for (unsigned int i = 0; i < NUM_ROUNDS; i++) {
     unsigned int a = ch[i];
     unsigned int b = (a + 1) % 3;
     unsigned int c = (a + 2) % 3;
+
+    memcpy(proof->hashes[i], hashes[i][c], SHA256_DIGEST_LENGTH * sizeof(char));
 
     proof->r[i]    = (unsigned char**)malloc(2 * sizeof(unsigned char*));
     proof->r[i][0] = (unsigned char*)malloc(4 * sizeof(unsigned char));
@@ -177,6 +188,15 @@ proof_t* create_proof(proof_t* proof, lowmc_t* lowmc,
       proof->views[i][j].s[0] = views[i][j].s[a];
       proof->views[i][j].s[1] = views[i][j].s[b];
       mzd_free(views[i][j].s[c]);
+    }
+
+    if((i % 4) == 0) {
+      int idx = i / 4;
+      proof->ch[idx] = 0;
+      proof->ch[idx] |= (ch[i] & 3);
+      proof->ch[idx] |= (ch[i + 1] & 3) << 2;
+      proof->ch[idx] |= (ch[i + 2] & 3) << 4;
+      proof->ch[idx] |= (ch[i + 3] & 3) << 6;
     }
   }
   proof->y = c_mpc;

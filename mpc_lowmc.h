@@ -16,8 +16,9 @@ typedef struct {
   view_t **views;
   unsigned char ***keys;
   unsigned char ***r;
-  unsigned char hashes[NUM_ROUNDS][3][SHA256_DIGEST_LENGTH];
+  unsigned char hashes[NUM_ROUNDS][SHA256_DIGEST_LENGTH];
   mzd_t ***y;
+  unsigned char ch[(NUM_ROUNDS + 3) / 4];
 } proof_t;
 
 typedef struct {
@@ -33,6 +34,8 @@ typedef struct {
   mzd_t **r1s;
   mzd_t **v;
 } sbox_vars_t;
+
+unsigned char getChAt(unsigned char *ch, unsigned int i);
 
 proof_t *proof_from_char_array(lowmc_t *lowmc, proof_t *proof, unsigned char *data, unsigned *len);
 

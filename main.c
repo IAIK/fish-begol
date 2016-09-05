@@ -140,6 +140,7 @@ static void bg_sign_verify(int args[5]) {
   free(timings_bg);
 }
 
+
 int main(int argc, char** argv) {
   init_EVP();
   openmp_thread_setup();

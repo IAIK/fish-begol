@@ -122,6 +122,7 @@ static proof_t* fis_prove(lowmc_t* lowmc, lowmc_key_t* lowmc_key, mzd_t* p, char
   int ch[NUM_ROUNDS];
   fis_H3(hashes, m, m_len, ch);
   timings[7] = (clock() - beginCh) * TIMING_SCALE;
+   
 #ifdef VERBOSE
   printf("Generating challenge          %6lu\n", timings[7]);
 #endif
@@ -144,35 +145,23 @@ static proof_t* fis_prove(lowmc_t* lowmc, lowmc_key_t* lowmc_key, mzd_t* p, char
   return proof;
 }
 
-static int fis_proof_verify(lowmc_t* lowmc, mzd_t* p, mzd_t* c, proof_t* prf, char *m, unsigned m_len, clock_t *timings) {
+static int fis_proof_verify(lowmc_t* lowmc, mzd_t* p, mzd_t* c, proof_t* prf, char *m, unsigned m_len, clock_t *timings) { 
 #ifdef VERBOSE
   printf("Verify:\n");
 #endif
-  clock_t beginCh = clock();
-  int ch[NUM_ROUNDS];
-  fis_H3(prf->hashes, m, m_len, ch);
-  timings[8] = (clock() - beginCh) * TIMING_SCALE;
-#ifdef VERBOSE
-  printf("Recomputing challenge         %6lu\n", timings[8]);
-#endif
-  
   clock_t beginHash = clock();
-  unsigned char hash[SHA256_DIGEST_LENGTH];
-  int hash_status = 0;
+  int ch[NUM_ROUNDS];
+  unsigned char hash[NUM_ROUNDS][2][SHA256_DIGEST_LENGTH];
 #pragma omp parallel for
   for (unsigned i = 0; i < NUM_ROUNDS; i++) {
-    H(prf->keys[i][0], prf->y[i], prf->views[i], 0, 2 + lowmc->r, prf->r[i][0], hash);
-    if (0 != memcmp(hash, prf->hashes[i][ch[i]], SHA256_DIGEST_LENGTH)) {
-      hash_status = -1;
-    }
-    H(prf->keys[i][1], prf->y[i], prf->views[i], 1, 2 + lowmc->r, prf->r[i][1], hash);
-    if (0 != memcmp(hash, prf->hashes[i][(ch[i] + 1) % 3], SHA256_DIGEST_LENGTH)) {
-      hash_status = -1;
-    }
+    H(prf->keys[i][0], prf->y[i], prf->views[i], 0, 2 + lowmc->r, prf->r[i][0], hash[i][0]);
+    H(prf->keys[i][1], prf->y[i], prf->views[i], 1, 2 + lowmc->r, prf->r[i][1], hash[i][1]);
   }
+  fis_H3_verify(hash, prf->hashes, prf->ch, m, m_len, ch);
+  
   timings[9] = (clock() - beginHash) * TIMING_SCALE;
 #ifdef VERBOSE
-  printf("Verifying hashes              %6lu\n", timings[9]);
+  printf("Recomputing challenge         %6lu\n", timings[9]);
 #endif
 
   clock_t beginRec       = clock();
@@ -196,7 +185,7 @@ static int fis_proof_verify(lowmc_t* lowmc, mzd_t* p, mzd_t* c, proof_t* prf, ch
       output_share_status = -1;
   timings[11] = (clock() - beginView) * TIMING_SCALE;
 #ifdef VERBOSE
-  printf("Reconstructing output views   %6lu\n", timings[11]);
+  printf("Comparing output views        %6lu\n", timings[11]);
 #endif
 
   clock_t beginViewVrfy = clock();
@@ -228,11 +217,6 @@ static int fis_proof_verify(lowmc_t* lowmc, mzd_t* p, mzd_t* c, proof_t* prf, ch
   printf("Verifying views               %6lu\n", timings[12]);
   printf("\n");
 
-  if (hash_status)
-    printf("[FAIL] Commitments did not open correctly\n");
-  else
-    printf("[ OK ] Commitments open correctly\n");
-
   if (output_share_status)
     printf("[FAIL] Output shares do not match\n");
   else
@@ -249,7 +233,7 @@ static int fis_proof_verify(lowmc_t* lowmc, mzd_t* p, mzd_t* c, proof_t* prf, ch
     printf("[ OK ] Proof matches reconstructed views.\n");
 #endif
 
-  return hash_status || output_share_status || reconstruct_status || view_verify_status;
+  return output_share_status || reconstruct_status || view_verify_status;
 }
 
 fis_signature_t *fis_sign(public_parameters_t* pp, fis_private_key_t* private_key, char *m, clock_t *timings) {
