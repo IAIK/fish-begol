@@ -17,8 +17,8 @@ typedef struct {
   unsigned char ***keys;
   unsigned char ***r;
   unsigned char hashes[NUM_ROUNDS][SHA256_DIGEST_LENGTH];
-  mzd_t ***y;
   unsigned char ch[(NUM_ROUNDS + 3) / 4];
+  mzd_t ***y;
 } proof_t;
 
 typedef struct {
