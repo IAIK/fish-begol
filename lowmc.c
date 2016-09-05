@@ -141,7 +141,7 @@ mzd_t* lowmc_call(lowmc_t* lowmc, lowmc_key_t* lowmc_key, mzd_t* p) {
   mzd_t* z = mzd_init(1, lowmc->n);
 
   mzd_copy(x, p);
-  mzd_addmul_v(x, lowmc_key->shared[0], lowmc->KMatrix[0]);
+  mzd_addmul(x, lowmc_key->shared[0], lowmc->KMatrix[0], 0);
 
   for (unsigned i = 0; i < lowmc->r; i++) {
     // sbox_layer(y, x, lowmc->m);
