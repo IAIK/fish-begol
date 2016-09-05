@@ -8,9 +8,9 @@
 
 unsigned char *bg_sig_to_char_array(public_parameters_t *pp, bg_signature_t *sig, unsigned *len) {
   unsigned len1 = 0;
-  unsigned char* p1 = proof_to_char_array(pp->lowmc, &sig->proof_s, &len1);
+  unsigned char* p1 = proof_to_char_array(pp->lowmc, &sig->proof_s, &len1, true);
   unsigned len2 = 0;
-  unsigned char* p2 = proof_to_char_array(pp->lowmc, &sig->proof_p, &len2);
+  unsigned char* p2 = proof_to_char_array(pp->lowmc, &sig->proof_p, &len2, false);
   unsigned char* c = mzd_to_char_array(sig->c, pp->lowmc->n / 8);
   
   *len = len1 + len2 + (pp->lowmc->n / 8);
@@ -31,8 +31,8 @@ unsigned char *bg_sig_to_char_array(public_parameters_t *pp, bg_signature_t *sig
 bg_signature_t *bg_sig_from_char_array(public_parameters_t *pp, unsigned char *data) {
   bg_signature_t *sig = (bg_signature_t*)malloc(sizeof(bg_signature_t));
   unsigned len = 0;
-  proof_from_char_array(pp->lowmc, &sig->proof_s, data, &len); data += len;
-  proof_from_char_array(pp->lowmc, &sig->proof_p, data, &len); data += len;
+  proof_from_char_array(pp->lowmc, &sig->proof_s, data, &len, true); data += len;
+  proof_from_char_array(pp->lowmc, &sig->proof_p, data, &len, false); data += len;
   sig->c = mzd_from_char_array(data, pp->lowmc->n / 8, pp->lowmc->n);
 
   return sig;
@@ -272,7 +272,7 @@ static int bg_proof_verify(public_parameters_t* pp, bg_public_key_t* pk, mzd_t* 
 
   bg_H3_verify(hash_p, proof_p->hashes, hash_s, proof_s->hashes, proof_s->ch, ch);
 
-  timings[9] = (clock() - beginHash) * TIMING_SCALE;
+  timings[8] = (clock() - beginHash) * TIMING_SCALE;
 #ifdef VERBOSE
   printf("Recomputing challenge         %6lu\n", timings[9]);
 #endif
@@ -290,7 +290,7 @@ static int bg_proof_verify(public_parameters_t* pp, bg_public_key_t* pk, mzd_t* 
       reconstruct_status = -1;
     mzd_free(c_mpcr);
   }
-  timings[10] = (clock() - beginRec) * TIMING_SCALE;
+  timings[9] = (clock() - beginRec) * TIMING_SCALE;
 #ifdef VERBOSE
   printf("Verifying output shares       %6lu\n", timings[10]);
 #endif
@@ -306,7 +306,7 @@ static int bg_proof_verify(public_parameters_t* pp, bg_public_key_t* pk, mzd_t* 
         mzd_equal(proof_s->y[i][(ch[i] + 1) % 3], proof_s->views[i][lowmc->r + 1].s[1]))
       output_share_status |= -1;
   }
-  timings[11] = (clock() - beginView) * TIMING_SCALE;
+  timings[10] = (clock() - beginView) * TIMING_SCALE;
 #ifdef VERBOSE
   printf("Comparing output views        %6lu\n", timings[11]);
 #endif
@@ -328,7 +328,7 @@ static int bg_proof_verify(public_parameters_t* pp, bg_public_key_t* pk, mzd_t* 
   for (unsigned int i = 0; i < NUM_ROUNDS; i++) {
     mzd_shared_clear(&shared_s[i]);
   }
-  timings[12] = (clock() - beginViewVrfy) * TIMING_SCALE;
+  timings[11] = (clock() - beginViewVrfy) * TIMING_SCALE;
 #ifdef VERBOSE
   printf("Verifying views               %6lu\n", timings[12]);
   printf("\n");

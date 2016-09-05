@@ -7,13 +7,13 @@
 #include <openssl/rand.h>
 
 unsigned char *fis_sig_to_char_array(public_parameters_t *pp, fis_signature_t *sig, unsigned *len) {
-  return proof_to_char_array(pp->lowmc, sig->proof, len);
+  return proof_to_char_array(pp->lowmc, sig->proof, len, true);
 }
 
 fis_signature_t *fis_sig_from_char_array(public_parameters_t *pp, unsigned char *data) {
   unsigned len = 0;
   fis_signature_t *sig = (fis_signature_t*)malloc(sizeof(fis_signature_t));
-  sig->proof = proof_from_char_array(pp->lowmc, 0, data, &len);
+  sig->proof = proof_from_char_array(pp->lowmc, 0, data, &len, true);
   return sig;
 }
 
@@ -159,7 +159,7 @@ static int fis_proof_verify(lowmc_t* lowmc, mzd_t* p, mzd_t* c, proof_t* prf, ch
   }
   fis_H3_verify(hash, prf->hashes, prf->ch, m, m_len, ch);
   
-  timings[9] = (clock() - beginHash) * TIMING_SCALE;
+  timings[8] = (clock() - beginHash) * TIMING_SCALE;
 #ifdef VERBOSE
   printf("Recomputing challenge         %6lu\n", timings[9]);
 #endif
@@ -172,7 +172,7 @@ static int fis_proof_verify(lowmc_t* lowmc, mzd_t* p, mzd_t* c, proof_t* prf, ch
       reconstruct_status = -1;
     mzd_free(c_mpcr);
   }
-  timings[10] = (clock() - beginRec) * TIMING_SCALE;
+  timings[9] = (clock() - beginRec) * TIMING_SCALE;
 #ifdef VERBOSE
   printf("Verifying output shares       %6lu\n", timings[10]);
 #endif
@@ -183,7 +183,7 @@ static int fis_proof_verify(lowmc_t* lowmc, mzd_t* p, mzd_t* c, proof_t* prf, ch
     if (mzd_cmp(prf->y[i][ch[i]], prf->views[i][lowmc->r + 1].s[0]) ||
         mzd_cmp(prf->y[i][(ch[i] + 1) % 3], prf->views[i][lowmc->r + 1].s[1]))
       output_share_status = -1;
-  timings[11] = (clock() - beginView) * TIMING_SCALE;
+  timings[10] = (clock() - beginView) * TIMING_SCALE;
 #ifdef VERBOSE
   printf("Comparing output views        %6lu\n", timings[11]);
 #endif
@@ -212,7 +212,7 @@ static int fis_proof_verify(lowmc_t* lowmc, mzd_t* p, mzd_t* c, proof_t* prf, ch
     mpc_free(rv[0], lowmc->r);
     mpc_free(rv[1], lowmc->r);
   }
-  timings[12] = (clock() - beginViewVrfy) * TIMING_SCALE;
+  timings[11] = (clock() - beginViewVrfy) * TIMING_SCALE;
 #ifdef VERBOSE
   printf("Verifying views               %6lu\n", timings[12]);
   printf("\n");

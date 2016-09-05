@@ -7,7 +7,7 @@
 #include "mpc_lowmc.h"
 
 #define TIMING_SCALE 1000000 / CLOCKS_PER_SEC;
-#define VERBOSE
+//#define VERBOSE
 
 typedef struct {
   // The LowMC instance.

@@ -24,12 +24,12 @@ unsigned char getChAt(unsigned char *ch, unsigned int i) {
 }
 
 
-unsigned char* proof_to_char_array(lowmc_t *lowmc, proof_t *proof, unsigned *len) {
+unsigned char* proof_to_char_array(lowmc_t *lowmc, proof_t *proof, unsigned *len, bool store_ch) {
    unsigned first_view_bytes = lowmc->k / 8;
    unsigned full_mzd_size = lowmc->n / 8;
    unsigned single_mzd_bytes = ((3 * lowmc->m) + 7) / 8;
    unsigned mzd_bytes = 2 * (lowmc->r * single_mzd_bytes + first_view_bytes + full_mzd_size) + 3 * full_mzd_size;
-   *len = NUM_ROUNDS * (SHA256_DIGEST_LENGTH + 40 + mzd_bytes) + ((NUM_ROUNDS + 3) / 4);
+   *len = NUM_ROUNDS * (SHA256_DIGEST_LENGTH + 40 + mzd_bytes) + (store_ch ? ((NUM_ROUNDS + 3) / 4) : 0);
    unsigned char* result = (unsigned char*)malloc(*len * sizeof(unsigned char));
    
    unsigned char* temp = result;
@@ -84,12 +84,13 @@ unsigned char* proof_to_char_array(lowmc_t *lowmc, proof_t *proof, unsigned *len
     free(c2);  
    }
   
-   memcpy(temp, proof->ch, (NUM_ROUNDS + 3) / 4);
+   if(store_ch)
+     memcpy(temp, proof->ch, (NUM_ROUNDS + 3) / 4);
    
    return result;
 }
 
-proof_t *proof_from_char_array(lowmc_t *lowmc, proof_t *proof, unsigned char *data, unsigned *len) {
+proof_t *proof_from_char_array(lowmc_t *lowmc, proof_t *proof, unsigned char *data, unsigned *len, bool contains_ch) {
   if(!proof)
     proof = (proof_t*)malloc(sizeof(proof_t));
   
@@ -97,7 +98,7 @@ proof_t *proof_from_char_array(lowmc_t *lowmc, proof_t *proof, unsigned char *da
   unsigned full_mzd_size = lowmc->n / 8;
   unsigned single_mzd_bytes = ((3 * lowmc->m) + 7) / 8;
   unsigned mzd_bytes = 2 * (lowmc->r * single_mzd_bytes + first_view_bytes + full_mzd_size) + 3 * full_mzd_size;
-  *len = NUM_ROUNDS * (SHA256_DIGEST_LENGTH + 40 + mzd_bytes) + ((NUM_ROUNDS + 3) / 4);
+  *len = NUM_ROUNDS * (SHA256_DIGEST_LENGTH + 40 + mzd_bytes) + (contains_ch ? ((NUM_ROUNDS + 3) / 4) : 0);
 
   unsigned char *temp = data;
 
@@ -143,7 +144,8 @@ proof_t *proof_from_char_array(lowmc_t *lowmc, proof_t *proof, unsigned char *da
     proof->y[i][2] = mzd_from_char_array(temp, full_mzd_size, lowmc->n); temp += full_mzd_size;
   }
    
-  memcpy(proof->ch, temp, (NUM_ROUNDS + 3) / 4);
+  if(contains_ch)
+    memcpy(proof->ch, temp, (NUM_ROUNDS + 3) / 4);
 
   return proof;
 }
