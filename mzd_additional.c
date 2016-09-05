@@ -314,6 +314,11 @@ void mzd_shared_clear(mzd_shared_t* shared_value) {
 }
 
 mzd_t* mzd_mul_v(mzd_t* c, mzd_t const* v, mzd_t const* At) {
+  if (At->ncols != v->ncols) {
+    // number of columns does not match
+    return NULL;
+  }
+
   if (!c) {
     c = mzd_init(1, v->ncols);
   } else {
@@ -426,7 +431,7 @@ __attribute__((target("avx2"))) static inline mzd_t* mzd_addmul_v_avx(mzd_t* c, 
 #endif
 
 mzd_t* mzd_addmul_v(mzd_t* c, mzd_t const* v, mzd_t const* At) {
-  if (At->ncols != c->ncols) {
+  if (At->ncols != c->ncols || At->ncols != v->ncols) {
     // number of columns does not match
     return NULL;
   }
