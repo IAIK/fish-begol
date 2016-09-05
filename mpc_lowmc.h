@@ -3,6 +3,7 @@
 
 #include <m4ri/m4ri.h>
 #include <openssl/sha.h>
+#include "stdbool.h"
 
 #include "lowmc_pars.h"
 
@@ -17,8 +18,8 @@ typedef struct {
   unsigned char ***keys;
   unsigned char ***r;
   unsigned char hashes[NUM_ROUNDS][SHA256_DIGEST_LENGTH];
-  mzd_t ***y;
   unsigned char ch[(NUM_ROUNDS + 3) / 4];
+  mzd_t ***y;
 } proof_t;
 
 typedef struct {
@@ -37,9 +38,9 @@ typedef struct {
 
 unsigned char getChAt(unsigned char *ch, unsigned int i);
 
-proof_t *proof_from_char_array(lowmc_t *lowmc, proof_t *proof, unsigned char *data, unsigned *len);
+proof_t *proof_from_char_array(lowmc_t *lowmc, proof_t *proof, unsigned char *data, unsigned *len, bool contains_ch);
 
-unsigned char *proof_to_char_array(lowmc_t *lowmc, proof_t *proof, unsigned *len); 
+unsigned char *proof_to_char_array(lowmc_t *lowmc, proof_t *proof, unsigned *len, bool store_ch); 
 
 proof_t *create_proof(proof_t* proof, lowmc_t* lowmc,
                       unsigned char hashes[NUM_ROUNDS][3][SHA256_DIGEST_LENGTH],

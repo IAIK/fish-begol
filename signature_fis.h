@@ -16,6 +16,8 @@ typedef struct {
   proof_t *proof;
 } fis_signature_t;
 
+unsigned fis_compute_sig_size(unsigned m, unsigned n, unsigned r, unsigned k);
+
 unsigned char *fis_sig_to_char_array(public_parameters_t *pp, fis_signature_t *sig, unsigned *len);
 
 fis_signature_t *fis_sig_from_char_array(public_parameters_t *pp, unsigned char *data);

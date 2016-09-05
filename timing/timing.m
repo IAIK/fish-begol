@@ -54,15 +54,14 @@ function create_plot(prefix, args, data)
   set(get(ax(1),'Ylabel'),'String','Time [ms]');
   set(get(ax(2),'Ylabel'),'String','Signature Size [kB]');
   legend(ax(1), "Instance Gen", "Sign", "Verify");
-  # set (gca, "position", [0.1 0.1 0.8 0.8]) 
   fixAxes
   print(fig, strcat(prefix, "-", args{1}, "-", args{2}, ".png"), "-dpng", "-loose");
 endfunction
 
 arg_list = argv();
 
-fiatshamir = zeros(nargin - 2, 14);
-bellargw   = zeros(nargin - 2, 14);
+fiatshamir = zeros(nargin - 2, 13);
+bellargw   = zeros(nargin - 2, 13);
 
 for i = 3:nargin
   data = csvread(arg_list{i}) / 1000;
@@ -78,10 +77,10 @@ fs_sum(:,1) = sum(fiatshamir(:,1:3), 2);
 bg_sum(:,1) = sum(bellargw(:,1:3), 2);
 fs_sum(:,2) = sum(fiatshamir(:,4:8), 2);
 bg_sum(:,2) = sum(bellargw(:,4:8), 2);
-fs_sum(:,3) = sum(fiatshamir(:,9:13), 2);
-bg_sum(:,3) = sum(bellargw(:,9:13), 2);
-fs_sum(:,4) = sum(fiatshamir(:,14), 2);
-bg_sum(:,4) = sum(bellargw(:,14), 2);
+fs_sum(:,3) = sum(fiatshamir(:,9:12), 2);
+bg_sum(:,3) = sum(bellargw(:,9:12), 2);
+fs_sum(:,4) = sum(fiatshamir(:,13), 2);
+bg_sum(:,4) = sum(bellargw(:,13), 2);
 
 
 create_plot("fis", arg_list, fs_sum);

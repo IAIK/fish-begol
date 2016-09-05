@@ -49,7 +49,7 @@ static void fis_sign_verify(int args[5]) {
 
   clock_t **timings_fis = (clock_t**)malloc(args[4] * sizeof(clock_t*));
   for(int i = 0 ; i < args[4] ; i++)
-    timings_fis[i] = (clock_t*)calloc(14, sizeof(clock_t));  
+    timings_fis[i] = (clock_t*)calloc(13, sizeof(clock_t));  
 
   for (int i = 0; i != args[4]; ++i) {
     public_parameters_t pp;
@@ -66,7 +66,7 @@ static void fis_sign_verify(int args[5]) {
 
     unsigned len = 0;
     unsigned char *data = fis_sig_to_char_array(&pp, sig, &len);
-    timings_fis[i][13] = len;
+    timings_fis[i][12] = fis_compute_sig_size(pp.lowmc->m, pp.lowmc->n, pp.lowmc->r, pp.lowmc->k);
     fis_free_signature(&pp, sig);
     sig = fis_sig_from_char_array(&pp, data);
     free(data);
@@ -83,7 +83,7 @@ static void fis_sign_verify(int args[5]) {
   }
 
 #ifndef VERBOSE
-  print_timings(timings_fis, args[4], 14);
+  print_timings(timings_fis, args[4], 13);
 #endif
 
   for(int i = 0; i < args[4] ; i++) 
@@ -98,7 +98,7 @@ static void bg_sign_verify(int args[5]) {
   
   clock_t **timings_bg = (clock_t**)malloc(args[4] * sizeof(clock_t*));
   for(int i = 0 ; i < args[4] ; i++)
-    timings_bg[i] = (clock_t*)calloc(14, sizeof(clock_t));  
+    timings_bg[i] = (clock_t*)calloc(13, sizeof(clock_t));  
 
   for (int i = 0; i != args[4]; ++i) {
     public_parameters_t pp;
@@ -114,7 +114,7 @@ static void bg_sign_verify(int args[5]) {
 
     unsigned len = 0;
     unsigned char *data = bg_sig_to_char_array(&pp, signature, &len);
-    timings_bg[i][13] = len;
+    timings_bg[i][12] = bg_compute_sig_size(pp.lowmc->m, pp.lowmc->n, pp.lowmc->r, pp.lowmc->k);
     bg_free_signature(&pp, signature);
     signature = bg_sig_from_char_array(&pp, data);
     free(data);
@@ -132,7 +132,7 @@ static void bg_sign_verify(int args[5]) {
   }
 
 #ifndef VERBOSE
-  print_timings(timings_bg, args[4], 14);
+  print_timings(timings_bg, args[4], 13);
 #endif
 
   for(int i = 0; i < args[4] ; i++) 
