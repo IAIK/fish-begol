@@ -50,8 +50,7 @@ mzd_t* mzd_sample_lmatrix(rci_t n) {
 }
 
 mzd_t* mzd_sample_kmatrix(rci_t n, rci_t k) {
-  rci_t r = (n < k) ? n : k;
-  return mzd_sample_matrix_word(n, k, r, true);
+  return mzd_sample_matrix_word(n, k, MIN(n, k), true);
 }
 
 lowmc_t* lowmc_init(size_t m, size_t n, size_t r, size_t k) {
