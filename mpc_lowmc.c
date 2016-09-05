@@ -561,7 +561,7 @@ static mzd_t** _mpc_lowmc_call_bitsliced(lowmc_t* lowmc, lowmc_key_t* lowmc_key,
       return 0;
     }
 
-    mpc_const_mat_mul(x, lowmc->LMatrix[i], y, sc);
+    mpc_const_matt_mul(x, lowmc->LMatrix[i], y, sc);
     mpc_const_add(x, x, lowmc->Constants[i], sc, ch);
     mpc_const_mat_mul(t, lowmc->KMatrix[i + 1], lowmc_key->shared, sc);
     mpc_add(x, x, t, sc);
@@ -624,7 +624,7 @@ static mzd_t** _mpc_lowmc_call_bitsliced_shared_p(lowmc_t* lowmc, lowmc_key_t* l
       return 0;
     }
 
-    mpc_const_mat_mul(x, lowmc->LMatrix[i], y, sc);
+    mpc_const_matt_mul(x, lowmc->LMatrix[i], y, sc);
     mpc_const_add(x, x, lowmc->Constants[i], sc, ch);
     mpc_const_mat_mul(t, lowmc->KMatrix[i + 1], lowmc_key->shared, sc);
     mpc_add(x, x, t, sc);

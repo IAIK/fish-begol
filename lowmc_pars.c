@@ -73,7 +73,7 @@ lowmc_t* lowmc_init(size_t m, size_t n, size_t r, size_t k) {
   lowmc->KMatrix = calloc(sizeof(mzd_t*), r + 1);
   for (unsigned i = 0; i < r + 1; i++) {
     // Instead of transposing switch dimesnsions.
-    lowmc->KMatrix[i] = mzd_sample_kmatrix(n, k);
+    lowmc->KMatrix[i] = mzd_sample_kmatrix(k, n);
   }
 
   prepare_masks(&lowmc->mask, n, m);
