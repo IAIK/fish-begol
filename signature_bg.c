@@ -284,7 +284,7 @@ static int bg_proof_verify(public_parameters_t* pp, bg_public_key_t* pk, mzd_t* 
 
   timings[8] = (clock() - beginHash) * TIMING_SCALE;
 #ifdef VERBOSE
-  printf("Recomputing challenge         %6lu\n", timings[9]);
+  printf("Recomputing challenge         %6lu\n", timings[8]);
 #endif
 
   clock_t beginRec       = clock();
@@ -302,7 +302,7 @@ static int bg_proof_verify(public_parameters_t* pp, bg_public_key_t* pk, mzd_t* 
   }
   timings[9] = (clock() - beginRec) * TIMING_SCALE;
 #ifdef VERBOSE
-  printf("Verifying output shares       %6lu\n", timings[10]);
+  printf("Verifying output shares       %6lu\n", timings[9]);
 #endif
 
   clock_t beginView       = clock();
@@ -318,7 +318,7 @@ static int bg_proof_verify(public_parameters_t* pp, bg_public_key_t* pk, mzd_t* 
   }
   timings[10] = (clock() - beginView) * TIMING_SCALE;
 #ifdef VERBOSE
-  printf("Comparing output views        %6lu\n", timings[11]);
+  printf("Comparing output views        %6lu\n", timings[10]);
 #endif
 
   clock_t beginViewVrfy  = clock();
@@ -340,7 +340,7 @@ static int bg_proof_verify(public_parameters_t* pp, bg_public_key_t* pk, mzd_t* 
   }
   timings[11] = (clock() - beginViewVrfy) * TIMING_SCALE;
 #ifdef VERBOSE
-  printf("Verifying views               %6lu\n", timings[12]);
+  printf("Verifying views               %6lu\n", timings[11]);
   printf("\n");
 
   if (output_share_status)

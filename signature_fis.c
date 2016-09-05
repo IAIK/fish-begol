@@ -171,7 +171,7 @@ static int fis_proof_verify(lowmc_t* lowmc, mzd_t* p, mzd_t* c, proof_t* prf, ch
   
   timings[8] = (clock() - beginHash) * TIMING_SCALE;
 #ifdef VERBOSE
-  printf("Recomputing challenge         %6lu\n", timings[9]);
+  printf("Recomputing challenge         %6lu\n", timings[8]);
 #endif
 
   clock_t beginRec       = clock();
@@ -184,7 +184,7 @@ static int fis_proof_verify(lowmc_t* lowmc, mzd_t* p, mzd_t* c, proof_t* prf, ch
   }
   timings[9] = (clock() - beginRec) * TIMING_SCALE;
 #ifdef VERBOSE
-  printf("Verifying output shares       %6lu\n", timings[10]);
+  printf("Verifying output shares       %6lu\n", timings[9]);
 #endif
 
   clock_t beginView       = clock();
@@ -195,7 +195,7 @@ static int fis_proof_verify(lowmc_t* lowmc, mzd_t* p, mzd_t* c, proof_t* prf, ch
       output_share_status = -1;
   timings[10] = (clock() - beginView) * TIMING_SCALE;
 #ifdef VERBOSE
-  printf("Comparing output views        %6lu\n", timings[11]);
+  printf("Comparing output views        %6lu\n", timings[10]);
 #endif
 
   clock_t beginViewVrfy = clock();
@@ -224,7 +224,7 @@ static int fis_proof_verify(lowmc_t* lowmc, mzd_t* p, mzd_t* c, proof_t* prf, ch
   }
   timings[11] = (clock() - beginViewVrfy) * TIMING_SCALE;
 #ifdef VERBOSE
-  printf("Verifying views               %6lu\n", timings[12]);
+  printf("Verifying views               %6lu\n", timings[11]);
   printf("\n");
 
   if (output_share_status)
