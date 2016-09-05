@@ -489,6 +489,38 @@ __attribute__((target("sse2"))) static inline int mzd_equal_sse(mzd_t const* fir
   return 0;
 }
 
+__attribute__((target("sse4.1"))) static inline int mzd_equal_sse41(mzd_t const* first,
+                                                                    mzd_t const* second) {
+  unsigned int width    = first->width;
+  word const* firstptr  = first->rows[0];
+  word const* secondptr = second->rows[0];
+
+  if (width >= sse_bound) {
+    __m128i const* mfirstptr  = __builtin_assume_aligned(firstptr, 16);
+    __m128i const* msecondptr = __builtin_assume_aligned(secondptr, 16);
+
+    do {
+      __m128i tmp = _mm_xor_si128(*mfirstptr++, *msecondptr++);
+      if (!_mm_testz_si128(tmp, tmp)) {
+        return 1;
+      }
+
+      width -= sizeof(__m128i) / sizeof(word);
+    } while (width >= sse_bound);
+
+    firstptr  = (word*)mfirstptr;
+    secondptr = (word*)msecondptr;
+  }
+
+  while (width--) {
+    if (*firstptr++ != *secondptr++) {
+      return 1;
+    }
+  }
+
+  return 0;
+}
+
 __attribute__((target("avx2"))) static inline int mzd_equal_avx(mzd_t const* first,
                                                                 mzd_t const* second) {
   unsigned int width    = first->width;
@@ -500,10 +532,9 @@ __attribute__((target("avx2"))) static inline int mzd_equal_avx(mzd_t const* fir
     __m256i const* msecondptr = __builtin_assume_aligned(secondptr, 32);
 
     do {
-      const unsigned int notequal =
-          _mm256_movemask_epi8(_mm256_cmpeq_epi8(*mfirstptr++, *msecondptr++)) - 0xffffffff;
-      if (notequal) {
-        return notequal;
+      __m256i tmp = _mm256_xor_si256(*mfirstptr++, *msecondptr++);
+      if (!_mm256_testz_si256(tmp, tmp)) {
+        return 1;
       }
 
       width -= sizeof(__m256i) / sizeof(word);
@@ -531,6 +562,8 @@ int mzd_equal(mzd_t const* first, mzd_t const* second) {
 #ifdef WITH_OPT
   if (__builtin_cpu_supports("avx2") && first->ncols >= 256) {
     return mzd_equal_avx(first, second);
+  } else if (__builtin_cpu_supports("sse4.1")) {
+    return mzd_equal_sse41(first, second);
   } else if (__builtin_cpu_supports("sse2")) {
     return mzd_equal_sse(first, second);
   }
