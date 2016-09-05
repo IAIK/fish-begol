@@ -200,24 +200,6 @@ static bg_signature_t* bg_prove(public_parameters_t* pp, bg_private_key_t* priva
   return signature;
 }
 
-static int verify_hashes(lowmc_t* lowmc, proof_t* proof, int ch[NUM_ROUNDS]) {
-  int hash_status = 0;
-#pragma omp parallel for reduction(| : hash_status)
-  for (unsigned i = 0; i < NUM_ROUNDS; ++i) {
-    unsigned char hash[SHA256_DIGEST_LENGTH];
-    H(proof->keys[i][0], proof->y[i], proof->views[i], 0, 2 + lowmc->r, proof->r[i][0], hash);
-    if (0 != memcmp(hash, proof->hashes[i][ch[i]], SHA256_DIGEST_LENGTH)) {
-      hash_status |= -1;
-    }
-    H(proof->keys[i][1], proof->y[i], proof->views[i], 1, 2 + lowmc->r, proof->r[i][1], hash);
-    if (0 != memcmp(hash, proof->hashes[i][(ch[i] + 1) % 3], SHA256_DIGEST_LENGTH)) {
-      hash_status |= -1;
-    }
-  }
-
-  return hash_status;
-}
-
 typedef int (*verify_ptr)(lowmc_t* lowmc, mzd_t* p, mzd_shared_t* shared_p, view_t* views,
                           mzd_t** rv[2], int ch);
 
@@ -264,6 +246,8 @@ static int verify_views(lowmc_t* lowmc, mzd_t* p, mzd_shared_t shared_p[NUM_ROUN
   return view_verify_status;
 }
 
+
+
 static int bg_proof_verify(public_parameters_t* pp, bg_public_key_t* pk, mzd_t* p, 
                   bg_signature_t* signature, clock_t *timings) {
   lowmc_t* lowmc   = pp->lowmc;
@@ -272,26 +256,25 @@ static int bg_proof_verify(public_parameters_t* pp, bg_public_key_t* pk, mzd_t* 
 #ifdef VERBOSE
   printf("Verify:\n");
 #endif
-  clock_t beginCh = clock();
-  int ch[NUM_ROUNDS];
-  bg_H3(proof_p->hashes, proof_s->hashes, ch);
-  timings[8] = (clock() - beginCh) * TIMING_SCALE;
-#ifdef VERBOSE
-  printf("Recomputing challenge         %6lu\n", timings[8]);
-#endif
 
   clock_t beginHash = clock();
-  int hash_status   = 0;
-  if (0 != verify_hashes(lowmc, proof_p, ch)) {
-    hash_status = -1;
+  int ch[NUM_ROUNDS]; 
+  unsigned char hash_p[NUM_ROUNDS][2][SHA256_DIGEST_LENGTH];
+  unsigned char hash_s[NUM_ROUNDS][2][SHA256_DIGEST_LENGTH];
+ 
+  for(unsigned i = 0 ; i < NUM_ROUNDS ; i++) {
+    H(proof_p->keys[i][0], proof_p->y[i], proof_p->views[i], 0, 2 + lowmc->r, proof_p->r[i][0], hash_p[i][0]);
+    H(proof_p->keys[i][1], proof_p->y[i], proof_p->views[i], 1, 2 + lowmc->r, proof_p->r[i][1], hash_p[i][1]);
+
+    H(proof_s->keys[i][0], proof_s->y[i], proof_s->views[i], 0, 2 + lowmc->r, proof_s->r[i][0], hash_s[i][0]);
+    H(proof_s->keys[i][1], proof_s->y[i], proof_s->views[i], 1, 2 + lowmc->r, proof_s->r[i][1], hash_s[i][1]);
   }
-  if (0 != verify_hashes(lowmc, proof_s, ch)) {
-    hash_status = -1;
-  }
+
+  bg_H3_verify(hash_p, proof_p->hashes, hash_s, proof_s->hashes, proof_s->ch, ch);
 
   timings[9] = (clock() - beginHash) * TIMING_SCALE;
 #ifdef VERBOSE
-  printf("Verifying hashes              %6lu\n", timings[9]);
+  printf("Recomputing challenge         %6lu\n", timings[9]);
 #endif
 
   clock_t beginRec       = clock();
@@ -325,7 +308,7 @@ static int bg_proof_verify(public_parameters_t* pp, bg_public_key_t* pk, mzd_t* 
   }
   timings[11] = (clock() - beginView) * TIMING_SCALE;
 #ifdef VERBOSE
-  printf("Reconstructing output views   %6lu\n", timings[11]);
+  printf("Comparing output views        %6lu\n", timings[11]);
 #endif
 
   clock_t beginViewVrfy  = clock();
@@ -350,11 +333,6 @@ static int bg_proof_verify(public_parameters_t* pp, bg_public_key_t* pk, mzd_t* 
   printf("Verifying views               %6lu\n", timings[12]);
   printf("\n");
 
-  if (hash_status)
-    printf("[FAIL] Commitments did not open correctly\n");
-  else
-    printf("[ OK ] Commitments open correctly\n");
-
   if (output_share_status)
     printf("[FAIL] Output shares do not match\n");
   else
@@ -371,7 +349,7 @@ static int bg_proof_verify(public_parameters_t* pp, bg_public_key_t* pk, mzd_t* 
     printf("[ OK ] Proof matches reconstructed views.\n");
 #endif
 
-  return hash_status || output_share_status || reconstruct_status || view_verify_status;
+  return output_share_status || reconstruct_status || view_verify_status;
 }
 
 bg_signature_t *bg_sign(public_parameters_t* pp, bg_private_key_t* private_key, mzd_t *m, clock_t *timings) {
