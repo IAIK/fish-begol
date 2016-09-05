@@ -6,6 +6,16 @@
 
 #include <openssl/rand.h>
 
+unsigned bg_compute_sig_size(unsigned m, unsigned n, unsigned r, unsigned k) {
+  unsigned first_view_size = k;
+  unsigned full_view_size  = n;
+  unsigned int_view_size   = 3 * m;
+  unsigned views           = 2 * (r * int_view_size + first_view_size + 
+                             full_view_size) + 3 * full_view_size;
+  return (2 * NUM_ROUNDS * (8 * SHA256_DIGEST_LENGTH + 8 * 40 + views) + 
+         full_view_size + ((NUM_ROUNDS + 3) / 4) + 7) / 8; 
+}
+
 unsigned char *bg_sig_to_char_array(public_parameters_t *pp, bg_signature_t *sig, unsigned *len) {
   unsigned len1 = 0;
   unsigned char* p1 = proof_to_char_array(pp->lowmc, &sig->proof_s, &len1, true);

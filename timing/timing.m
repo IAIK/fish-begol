@@ -54,7 +54,6 @@ function create_plot(prefix, args, data)
   set(get(ax(1),'Ylabel'),'String','Time [ms]');
   set(get(ax(2),'Ylabel'),'String','Signature Size [kB]');
   legend(ax(1), "Instance Gen", "Sign", "Verify");
-  # set (gca, "position", [0.1 0.1 0.8 0.8]) 
   fixAxes
   print(fig, strcat(prefix, "-", args{1}, "-", args{2}, ".png"), "-dpng", "-loose");
 endfunction

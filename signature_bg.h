@@ -19,6 +19,8 @@ typedef struct {
   mzd_t *c;
 } bg_signature_t;
 
+unsigned bg_compute_sig_size(unsigned m, unsigned n, unsigned r, unsigned k);
+
 unsigned char *bg_sig_to_char_array(public_parameters_t *pp, bg_signature_t *sig, unsigned *len);
 
 bg_signature_t *bg_sig_from_char_array(public_parameters_t *pp, unsigned char *data);

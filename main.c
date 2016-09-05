@@ -66,7 +66,7 @@ static void fis_sign_verify(int args[5]) {
 
     unsigned len = 0;
     unsigned char *data = fis_sig_to_char_array(&pp, sig, &len);
-    timings_fis[i][12] = len;
+    timings_fis[i][12] = fis_compute_sig_size(pp.lowmc->m, pp.lowmc->n, pp.lowmc->r, pp.lowmc->k);
     fis_free_signature(&pp, sig);
     sig = fis_sig_from_char_array(&pp, data);
     free(data);
@@ -114,7 +114,7 @@ static void bg_sign_verify(int args[5]) {
 
     unsigned len = 0;
     unsigned char *data = bg_sig_to_char_array(&pp, signature, &len);
-    timings_bg[i][12] = len;
+    timings_bg[i][12] = bg_compute_sig_size(pp.lowmc->m, pp.lowmc->n, pp.lowmc->r, pp.lowmc->k);
     bg_free_signature(&pp, signature);
     signature = bg_sig_from_char_array(&pp, data);
     free(data);
