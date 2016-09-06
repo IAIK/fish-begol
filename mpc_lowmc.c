@@ -488,11 +488,12 @@ static mzd_t** _mpc_lowmc_call(mpc_lowmc_t* lowmc, mpc_lowmc_key_t* lowmc_key, m
   mzd_t** y = mpc_init_empty_share_vector(lowmc->n, sc);
   mzd_t** z = mpc_init_empty_share_vector(lowmc->n, sc);
 
-  mpc_const_mat_mul(x, lowmc->KMatrix[0], lowmc_key->shared, sc);
+  mpc_const_mat_mul(x, lowmc->k0_matrix, lowmc_key->shared, sc);
   mpc_const_add(x, x, p, sc, ch);
 
   mzd_t* r[3];
-  for (unsigned i = 0; i < lowmc->r; i++) {
+  lowmc_round_t* round = lowmc->rounds;
+  for (unsigned i = 0; i < lowmc->r; ++i, ++round) {
     for (unsigned j = 0; j < sc; j++) {
       r[j] = rvec[j][i];
     }
@@ -500,10 +501,10 @@ static mzd_t** _mpc_lowmc_call(mpc_lowmc_t* lowmc, mpc_lowmc_key_t* lowmc_key, m
       *status = -1;
       return 0;
     }
-    mpc_const_mat_mul(z, lowmc->LMatrix[i], y, sc);
-    mpc_const_add(z, z, lowmc->Constants[i], sc, ch);
+    mpc_const_mat_mul(z, round->l_matrix, y, sc);
+    mpc_const_add(z, z, round->constant, sc, ch);
     mzd_t** t = mpc_init_empty_share_vector(lowmc->n, sc);
-    mpc_const_mat_mul(t, lowmc->KMatrix[i + 1], lowmc_key->shared, sc);
+    mpc_const_mat_mul(t, round->k_matrix, lowmc_key->shared, sc);
     mpc_add(z, z, t, sc);
     mpc_free(t, sc);
     mpc_copy(x, z, sc);
@@ -529,13 +530,14 @@ static mzd_t** _mpc_lowmc_call_bitsliced(mpc_lowmc_t* lowmc, mpc_lowmc_key_t* lo
   mzd_t** y = mpc_init_empty_share_vector(lowmc->n, sc);
   mzd_t** t = mpc_init_empty_share_vector(lowmc->n, sc);
 
-  mpc_const_mat_mul(x, lowmc->KMatrix[0], lowmc_key->shared, sc);
+  mpc_const_mat_mul(x, lowmc->k0_matrix, lowmc_key->shared, sc);
   mpc_const_add(x, x, p, sc, ch);
 
   sbox_vars_t* vars = sbox_vars_init(0, lowmc->n, sc);
 
+  lowmc_round_t* round = lowmc->rounds;
   mzd_t* r[3];
-  for (unsigned i = 0; i < lowmc->r; ++i, ++vcnt) {
+  for (unsigned i = 0; i < lowmc->r; ++i, ++vcnt, ++round) {
     for (unsigned j = 0; j < sc; j++) {
       r[j] = rvec[j][i];
     }
@@ -561,9 +563,9 @@ static mzd_t** _mpc_lowmc_call_bitsliced(mpc_lowmc_t* lowmc, mpc_lowmc_key_t* lo
       return 0;
     }
 
-    mpc_const_mat_mul(x, lowmc->LMatrix[i], y, sc);
-    mpc_const_add(x, x, lowmc->Constants[i], sc, ch);
-    mpc_const_mat_mul(t, lowmc->KMatrix[i + 1], lowmc_key->shared, sc);
+    mpc_const_mat_mul(x, round->l_matrix, y, sc);
+    mpc_const_add(x, x, round->constant, sc, ch);
+    mpc_const_mat_mul(t, round->k_matrix, lowmc_key->shared, sc);
     mpc_add(x, x, t, sc);
   }
 
@@ -591,14 +593,15 @@ static mzd_t** _mpc_lowmc_call_bitsliced_shared_p(mpc_lowmc_t* lowmc, mpc_lowmc_
   mzd_t** y = mpc_init_empty_share_vector(lowmc->n, sc);
   mzd_t** t = mpc_init_empty_share_vector(lowmc->n, sc);
 
-  mpc_const_mat_mul(x, lowmc->KMatrix[0], lowmc_key->shared, sc);
+  mpc_const_mat_mul(x, lowmc->k0_matrix, lowmc_key->shared, sc);
   mpc_copy(t, p, sc);
   mpc_add(x, x, t, sc);
 
   sbox_vars_t* vars = sbox_vars_init(0, lowmc->n, sc);
 
   mzd_t* r[3];
-  for (unsigned i = 0; i < lowmc->r; ++i, ++vcnt) {
+  lowmc_round_t* round = lowmc->rounds;
+  for (unsigned i = 0; i < lowmc->r; ++i, ++vcnt, ++round) {
     for (unsigned j = 0; j < sc; j++) {
       r[j] = rvec[j][i];
     }
@@ -624,9 +627,9 @@ static mzd_t** _mpc_lowmc_call_bitsliced_shared_p(mpc_lowmc_t* lowmc, mpc_lowmc_
       return 0;
     }
 
-    mpc_const_mat_mul(x, lowmc->LMatrix[i], y, sc);
-    mpc_const_add(x, x, lowmc->Constants[i], sc, ch);
-    mpc_const_mat_mul(t, lowmc->KMatrix[i + 1], lowmc_key->shared, sc);
+    mpc_const_mat_mul(x, round->l_matrix, y, sc);
+    mpc_const_add(x, x, round->constant, sc, ch);
+    mpc_const_mat_mul(t, round->k_matrix, lowmc_key->shared, sc);
     mpc_add(x, x, t, sc);
   }
 

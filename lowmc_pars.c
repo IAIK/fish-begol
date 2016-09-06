@@ -60,21 +60,13 @@ lowmc_t* lowmc_init(size_t m, size_t n, size_t r, size_t k) {
   lowmc->r       = r;
   lowmc->k       = k;
 
-  lowmc->LMatrix = calloc(sizeof(mzd_t*), r);
-  for (unsigned i = 0; i < r; i++) {
-    // We do not need to transpose here, since it is an nxn matrix.
-    lowmc->LMatrix[i] = mzd_sample_lmatrix(n);
-  }
+  lowmc->k0_matrix = mzd_sample_kmatrix(k, n);
 
-  lowmc->Constants = calloc(sizeof(mzd_t*), r);
-  for (unsigned i = 0; i < r; i++) {
-    lowmc->Constants[i] = mzd_init_random_vector(n);
-  }
-
-  lowmc->KMatrix = calloc(sizeof(mzd_t*), r + 1);
-  for (unsigned i = 0; i < r + 1; i++) {
-    // Instead of transposing switch dimesnsions.
-    lowmc->KMatrix[i] = mzd_sample_kmatrix(k, n);
+  lowmc->rounds = calloc(sizeof(lowmc_round_t), r);
+  for (unsigned int i = 0; i < r; ++i) {
+    lowmc->rounds[i].l_matrix = mzd_sample_lmatrix(n);
+    lowmc->rounds[i].k_matrix = mzd_sample_kmatrix(k, n);
+    lowmc->rounds[i].constant = mzd_init_random_vector(n);
   }
 
   prepare_masks(&lowmc->mask, n, m);
@@ -87,15 +79,13 @@ lowmc_key_t* lowmc_keygen(lowmc_t* lowmc) {
 }
 
 void lowmc_free(lowmc_t* lowmc) {
-  for (unsigned i = 0; i < lowmc->r; i++) {
-    mzd_free(lowmc->Constants[i]);
-    mzd_free(lowmc->KMatrix[i]);
-    mzd_free(lowmc->LMatrix[i]);
+  for (unsigned i = 0; i < lowmc->r; ++i) {
+    mzd_free(lowmc->rounds[i].constant);
+    mzd_free(lowmc->rounds[i].k_matrix);
+    mzd_free(lowmc->rounds[i].l_matrix);
   }
-  mzd_free(lowmc->KMatrix[lowmc->r]);
-  free(lowmc->Constants);
-  free(lowmc->LMatrix);
-  free(lowmc->KMatrix);
+  mzd_free(lowmc->k0_matrix);
+  free(lowmc->rounds);
 
   mzd_free(lowmc->mask.x0);
   mzd_free(lowmc->mask.x1);
