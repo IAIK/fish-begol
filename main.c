@@ -138,6 +138,7 @@ static void bg_sign_verify(int args[5]) {
 
 
 int main(int argc, char** argv) {
+  init_rand_bytes();
   init_EVP();
   openmp_thread_setup();
  
@@ -149,5 +150,7 @@ int main(int argc, char** argv) {
 
   openmp_thread_cleanup();
   cleanup_EVP();
+  deinit_rand_bytes();
+
   return 0;
 }

@@ -3,8 +3,7 @@
 #include "hashing_util.h"
 #include "mpc.h"
 #include "mpc_lowmc.h"
-
-#include <openssl/rand.h>
+#include "randomness.h"
 
 unsigned fis_compute_sig_size(unsigned m, unsigned n, unsigned r, unsigned k) {
   unsigned first_view_size = k;
@@ -64,16 +63,16 @@ static proof_t* fis_prove(mpc_lowmc_t* lowmc, lowmc_key_t* lowmc_key, mzd_t* p, 
 
   // Generating keys
   clock_t beginRand = clock();
-  if (RAND_bytes((unsigned char*)keys, sizeof(keys)) != 1) {
+  if (rand_bytes((unsigned char*)keys, sizeof(keys)) != 1) {
 #ifdef VERBOSE
-    printf("RAND_bytes failed crypto, aborting\n");
+    printf("rand_bytes failed crypto, aborting\n");
 #endif
     return 0;
   }
 
-  if (RAND_bytes((unsigned char*)r, sizeof(r)) != 1) {
+  if (rand_bytes((unsigned char*)r, sizeof(r)) != 1) {
 #ifdef VERBOSE
-    printf("RAND_bytes failed crypto, aborting\n");
+    printf("rand_bytes failed crypto, aborting\n");
 #endif
     return 0;
   }

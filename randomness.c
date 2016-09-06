@@ -79,3 +79,12 @@ void aes_prng_get_randomness(aes_prng_t* aes_prng, unsigned char* dst, unsigned 
       handleErrors();
   }
 }
+
+void init_rand_bytes(void) {}
+
+int rand_bytes(unsigned char* dst, size_t len) {
+  return RAND_bytes(dst, len);
+}
+
+void deinit_rand_bytes(void) {}
+

@@ -8,13 +8,11 @@ static const unsigned int sse_bound  = 128 / (8 * sizeof(word));
 static const unsigned int avx_bound  = 256 / (8 * sizeof(word));
 #endif
 
-#include <openssl/rand.h>
-
 void mzd_randomize_ssl(mzd_t* val) {
   // similar to mzd_randomize but using RAND_Bytes instead
   const word mask_end = val->high_bitmask;
   for (rci_t i = 0; i < val->nrows; ++i) {
-    RAND_bytes((unsigned char*)val->rows[i], val->width * sizeof(word));
+    rand_bytes((unsigned char*)val->rows[i], val->width * sizeof(word));
     val->rows[i][val->width - 1] &= mask_end;
   }
 }

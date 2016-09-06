@@ -3,8 +3,7 @@
 #include "hashing_util.h"
 #include "mpc.h"
 #include "io.h"
-
-#include <openssl/rand.h>
+#include "randomness.h"
 
 unsigned bg_compute_sig_size(unsigned m, unsigned n, unsigned r, unsigned k) {
   unsigned first_view_size = k;
@@ -98,12 +97,12 @@ static bg_signature_t* bg_prove(public_parameters_t* pp, bg_private_key_t* priva
 
   // Generating keys
   clock_t beginRand = clock();
-  if (RAND_bytes((unsigned char*)keys_p, sizeof(keys_p)) != 1 ||
-      RAND_bytes((unsigned char*)r_p, sizeof(r_p)) != 1 ||
-      RAND_bytes((unsigned char*)keys_s, sizeof(keys_s)) != 1 ||
-      RAND_bytes((unsigned char*)r_s, sizeof(r_s)) != 1) {
+  if (rand_bytes((unsigned char*)keys_p, sizeof(keys_p)) != 1 ||
+      rand_bytes((unsigned char*)r_p, sizeof(r_p)) != 1 ||
+      rand_bytes((unsigned char*)keys_s, sizeof(keys_s)) != 1 ||
+      rand_bytes((unsigned char*)r_s, sizeof(r_s)) != 1) {
 #ifdef VERBOSE
-    printf("RAND_bytes failed crypto, aborting\n");
+    printf("rand_bytes failed crypto, aborting\n");
 #endif
     return NULL;
   }
