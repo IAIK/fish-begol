@@ -314,13 +314,13 @@ void mzd_shared_clear(mzd_shared_t* shared_value) {
 }
 
 mzd_t* mzd_mul_v(mzd_t* c, mzd_t const* v, mzd_t const* At) {
-  if (At->ncols != v->ncols) {
+  if (At->nrows != v->ncols) {
     // number of columns does not match
     return NULL;
   }
 
   if (!c) {
-    c = mzd_init(1, v->ncols);
+    c = mzd_init(1, At->ncols);
   } else {
     mzd_row_clear_offset(c, 0, 0);
   }
@@ -330,131 +330,103 @@ mzd_t* mzd_mul_v(mzd_t* c, mzd_t const* v, mzd_t const* At) {
 
 #ifdef WITH_OPT
 __attribute__((target("sse2"))) static inline mzd_t* mzd_addmul_v_sse(mzd_t* c, mzd_t const* v,
-                                                                      mzd_t const* At) {
-  unsigned int width = At->width;
-  const word mask    = At->high_bitmask;
-  word* cptr         = c->rows[0];
-  word const* vptr   = v->rows[0];
-  word const* Atptr  = At->rows[0];
+                                                                      mzd_t const* A) {
+  const unsigned int len   = A->width * sizeof(word) / sizeof(__m128i);
+  word* cptr               = c->rows[0];
+  word const* vptr         = v->rows[0];
+  const unsigned int width = v->width;
+  const unsigned int rowstride = A->rowstride;
 
-  if (width >= sse_bound) {
-    __m128i* mcptr               = __builtin_assume_aligned(cptr, 16);
-    __m128i const* mvptr         = __builtin_assume_aligned(vptr, 16);
-    __m128i const* mAtptr        = __builtin_assume_aligned(Atptr, 16);
-    const unsigned int rowstride = At->rowstride * sizeof(word) / sizeof(__m128i);
+  for (unsigned int w = 0; w < width; ++w, ++vptr) {
+    word idx = *vptr;
+    word const* Aptr = A->rows[w * sizeof(word) * 8];
 
-    do {
-      __m128i const* Atmp = mAtptr;
-      __m128i mc          = *mcptr;
-      const __m128i mv    = *mvptr;
-      for (rci_t r = 0; r < At->nrows; ++r, Atmp += rowstride) {
-        __m128i tmp = _mm_and_si128(*Atmp, mv);
-        mc          = _mm_xor_si128(mc, tmp);
+    while (idx) {
+      if (idx & 0x1) {
+        __m128i* mcptr = __builtin_assume_aligned(cptr, 16);
+        __m128i* mAptr = __builtin_assume_aligned(Aptr, 16);
+
+        for (unsigned int i = len; i; --i, ++mcptr, ++mAptr) {
+          *mcptr = _mm_xor_si128(*mcptr, *mAptr);
+        }
       }
-      *mcptr = mc;
 
-      width -= sizeof(__m128i) / sizeof(word);
-      ++mcptr;
-      ++mvptr;
-      ++mAtptr;
-    } while (width >= sse_bound);
-
-    cptr  = (word*)mcptr;
-    vptr  = (word*)mvptr;
-    Atptr = (word*)mAtptr;
-  }
-
-  while (width--) {
-    word const* Atmp = Atptr;
-    for (rci_t r = 0; r < At->nrows; ++r, Atmp += At->rowstride) {
-      *cptr ^= *Atmp & *vptr;
+      Aptr += rowstride;
+      idx >>= 1;
     }
-
-    ++cptr;
-    ++vptr;
-    ++Atptr;
   }
 
-  *(--cptr) &= mask;
   return c;
 }
 
 __attribute__((target("avx2"))) static inline mzd_t* mzd_addmul_v_avx(mzd_t* c, mzd_t const* v,
-                                                                      mzd_t const* At) {
-  unsigned int width = At->width;
-  const word mask    = At->high_bitmask;
-  word* cptr         = c->rows[0];
-  word const* vptr   = v->rows[0];
-  word const* Atptr  = At->rows[0];
+                                                                      mzd_t const* A) {
+  const unsigned int len   = A->width * sizeof(word) / sizeof(__m256i);
+  word* cptr               = c->rows[0];
+  word const* vptr         = v->rows[0];
+  const unsigned int width = v->width;
+  const unsigned int rowstride = A->rowstride;
 
-  if (width >= avx_bound) {
-    __m256i* mcptr               = __builtin_assume_aligned(cptr, 32);
-    __m256i const* mvptr         = __builtin_assume_aligned(vptr, 32);
-    __m256i const* mAtptr        = __builtin_assume_aligned(Atptr, 32);
-    const unsigned int rowstride = At->rowstride * sizeof(word) / sizeof(__m256i);
+  for (unsigned int w = 0; w < width; ++w, ++vptr) {
+    word idx = *vptr;
+    word const* Aptr = A->rows[w * sizeof(word) * 8];
 
-    do {
-      __m256i const* Atmp = mAtptr;
-      __m256i mc          = *mcptr;
-      const __m256i mv    = *mvptr;
-      for (rci_t r = 0; r < At->nrows; ++r, Atmp += rowstride) {
-        __m256i tmp = _mm256_and_si256(*Atmp, mv);
-        mc          = _mm256_xor_si256(mc, tmp);
+    while (idx) {
+      if (idx & 0x1) {
+        __m256i* mcptr = __builtin_assume_aligned(cptr, 32);
+        __m256i* mAptr = __builtin_assume_aligned(Aptr, 32);
+
+        for (unsigned int i = len; i; --i, ++mcptr, ++mAptr) {
+          *mcptr  = _mm256_xor_si256(*mcptr, *mAptr);
+        }
       }
-      *mcptr = mc;
 
-      width -= sizeof(__m256i) / sizeof(word);
-      ++mcptr;
-      ++mvptr;
-      ++mAtptr;
-    } while (width >= avx_bound);
-
-    cptr  = (word*)mcptr;
-    vptr  = (word*)mvptr;
-    Atptr = (word*)mAtptr;
-  }
-
-  while (width--) {
-    word const* Atmp = Atptr;
-    for (rci_t r = 0; r < At->nrows; ++r, Atmp += At->rowstride) {
-      *cptr ^= *Atmp & *vptr;
+      Aptr += rowstride;
+      idx >>= 1;
     }
-
-    ++cptr;
-    ++vptr;
-    ++Atptr;
   }
 
-  *(--cptr) &= mask;
   return c;
 }
 #endif
 
 mzd_t* mzd_addmul_v(mzd_t* c, mzd_t const* v, mzd_t const* At) {
-  if (At->ncols != c->ncols || At->ncols != v->ncols) {
+  if (At->ncols != c->ncols || At->nrows != v->ncols) {
     // number of columns does not match
     return NULL;
   }
 
+
 #ifdef WITH_OPT
-  if (__builtin_cpu_supports("avx2") && At->ncols >= 256) {
+  if (__builtin_cpu_supports("avx2") && At->ncols % 256 == 0) {
     return mzd_addmul_v_avx(c, v, At);
-  } else if (__builtin_cpu_supports("sse2")) {
+  }
+  else if (__builtin_cpu_supports("sse2") && At->ncols % 128 == 0) {
     return mzd_addmul_v_sse(c, v, At);
   }
 #endif
 
-  const unsigned int len = At->width;
-  const word mask        = At->high_bitmask;
-  word* cptr             = c->rows[0];
-  word const* vptr       = v->rows[0];
+  const unsigned int len   = At->width;
+  const word mask          = At->high_bitmask;
+  word* cptr               = c->rows[0];
+  word const* vptr         = v->rows[0];
+  const unsigned int width = v->width;
 
-  for (rci_t r = 0; r < At->nrows; ++r) {
-    word* Atptr = At->rows[r];
-    for (unsigned int i = 0; i < len - 1; ++i) {
-      cptr[i] ^= Atptr[i] & vptr[i];
+  for (unsigned int w = 0; w < width; ++w, ++vptr) {
+    word idx = *vptr;
+
+    word const* Atptr = At->rows[w * sizeof(word) * 8];
+    while (idx) {
+      if (idx & 0x1) {
+        for (unsigned int i = 0; i < len - 1; ++i) {
+          cptr[i] ^= Atptr[i];
+        }
+        cptr[len - 1] = (cptr[len - 1] ^ Atptr[len - 1]) & mask;
+      }
+
+      Atptr += At->rowstride;
+      idx >>= 1;
     }
-    cptr[len - 1] = (cptr[len - 1] ^ (Atptr[len - 1] & vptr[len - 1])) & mask;
   }
 
   return c;
@@ -575,4 +547,24 @@ int mzd_equal(mzd_t const* first, mzd_t const* second) {
 #endif
 
   return mzd_cmp(first, second);
+}
+
+/**
+ * Compress matrix row-wise.
+ */
+mzd_t* mzd_xor_rows(mzd_t const* m) {
+  if (m->nrows == 1) {
+    return mzd_copy(NULL, m);
+  }
+
+  mzd_t* r = mzd_init(1, m->ncols);
+  memcpy(r->rows[0], m->rows[0], m->width * sizeof(word));
+  for (rci_t row = 1; row < m->nrows; ++row) {
+    for (rci_t col = 0; col < m->width; ++col) {
+      r->rows[0][col] ^= m->rows[row][col];
+    }
+    r->rows[0][m->width - 1] &= m->high_bitmask;
+  }
+
+  return r;
 }

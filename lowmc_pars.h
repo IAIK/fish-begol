@@ -4,7 +4,7 @@
 #include <m4ri/m4ri.h>
 #include "mzd_additional.h"
 
-typedef mzd_shared_t lowmc_key_t;
+typedef mzd_t lowmc_key_t;
 
 typedef struct {
   mzd_t *x0;

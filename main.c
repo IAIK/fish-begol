@@ -59,9 +59,6 @@ static void fis_sign_verify(int args[5]) {
     create_instance(&pp, timings_fis[i], args[0], args[1], args[2], args[3]);
     fis_create_key(&pp, &private_key, &public_key, timings_fis[i]);
 
-    lowmc_key_t key = { 0, NULL };
-    mzd_shared_copy(&key, private_key.k);
-
     fis_signature_t* sig = fis_sign(&pp, &private_key, m, timings_fis[i]);
 
     unsigned len = 0;
@@ -76,7 +73,6 @@ static void fis_sign_verify(int args[5]) {
     }
 
     fis_free_signature(&pp, sig);
-    mzd_shared_clear(&key);
 
     destroy_instance(&pp);
     fis_destroy_key(&private_key, &public_key);
@@ -124,7 +120,7 @@ static void bg_sign_verify(int args[5]) {
     }
 
     bg_free_signature(&pp, signature);
- 
+
     mzd_free(m);
 
     destroy_instance(&pp);

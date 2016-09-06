@@ -35,14 +35,19 @@ mzd_t *mzd_xor(mzd_t *res, mzd_t const *first, mzd_t const *second);
 int mzd_equal(mzd_t const *first, mzd_t const* second);
 
 /**
- * Compute v * A where A is given pre-transposed.
+ * Compute v * A optimized for v being a vector.
  */
 mzd_t *mzd_mul_v(mzd_t *c, mzd_t const *v, mzd_t const *At);
 
 /**
- * Compute c + v * A where A is given pre-transposed.
+ * Compute c + v * A optimized for c and v being vectors.
  */
 mzd_t *mzd_addmul_v(mzd_t *c, mzd_t const *v, mzd_t const *At);
+
+/**
+ * Compress matrix row-wise.
+ */
+mzd_t* mzd_xor_rows(const mzd_t* m);
 
 
 typedef struct {

@@ -50,12 +50,12 @@ void fis_create_key(public_parameters_t* pp, fis_private_key_t* private_key,
 void fis_destroy_key(fis_private_key_t* private_key, fis_public_key_t* public_key) {
   lowmc_key_free(private_key->k);
   private_key->k = NULL;
- 
+
   mzd_free(public_key->pk);
   public_key->pk = NULL;
 }
 
-static proof_t* fis_prove(lowmc_t* lowmc, lowmc_key_t* lowmc_key, mzd_t* p, char *m, unsigned m_len, clock_t *timings) {
+static proof_t* fis_prove(mpc_lowmc_t* lowmc, lowmc_key_t* lowmc_key, mzd_t* p, char *m, unsigned m_len, clock_t *timings) {
 #ifdef VERBOSE
   printf("Prove:\n");
 #endif
@@ -96,8 +96,8 @@ static proof_t* fis_prove(lowmc_t* lowmc, lowmc_key_t* lowmc_key, mzd_t* p, char
   
   mzd_shared_t s[NUM_ROUNDS];
   for(int i = 0 ; i < NUM_ROUNDS ; i++) {
-    mzd_shared_init(&s[i], lowmc_key->shared[0]);
-    lowmc_secret_share(lowmc, &s[i]);
+    mzd_shared_init(&s[i], lowmc_key);
+    mzd_shared_share(&s[i]);
   }
   timings[4] = (clock() - beginShare) * TIMING_SCALE;
   
@@ -155,7 +155,7 @@ static proof_t* fis_prove(lowmc_t* lowmc, lowmc_key_t* lowmc_key, mzd_t* p, char
   return proof;
 }
 
-static int fis_proof_verify(lowmc_t* lowmc, mzd_t* p, mzd_t* c, proof_t* prf, char *m, unsigned m_len, clock_t *timings) { 
+static int fis_proof_verify(mpc_lowmc_t* lowmc, mzd_t* p, mzd_t* c, proof_t* prf, char *m, unsigned m_len, clock_t *timings) {
 #ifdef VERBOSE
   printf("Verify:\n");
 #endif

@@ -62,7 +62,7 @@ void bg_create_key(public_parameters_t* pp, bg_private_key_t* private_key,
   private_key->s = lowmc_key_s;
 
   clock_t beginPubkey = clock();
-  public_key->pk      = lowmc_call(pp->lowmc, lowmc_key_k, lowmc_key_s->shared[0]);
+  public_key->pk      = lowmc_call(pp->lowmc, lowmc_key_k, lowmc_key_s);
   timings[2]          = (clock() - beginPubkey) * TIMING_SCALE;
 #ifdef VERBOSE
   printf("Public key computation        %6lu\n", timings[2]);
@@ -129,17 +129,17 @@ static bg_signature_t* bg_prove(public_parameters_t* pp, bg_private_key_t* priva
   init_view(lowmc, views_p);
   init_view(lowmc, views_s);
 
-  lowmc_key_t lowmc_key_k[NUM_ROUNDS] = {{0, NULL}};
-  lowmc_key_t lowmc_key_s[NUM_ROUNDS] = {{0, NULL}};
+  mpc_lowmc_key_t lowmc_key_k[NUM_ROUNDS] = {{0, NULL}};
+  mpc_lowmc_key_t lowmc_key_s[NUM_ROUNDS] = {{0, NULL}};
 
   bg_signature_t* signature = calloc(1, sizeof(bg_signature_t));
   #pragma omp parallel for
   for (unsigned i = 0; i < NUM_ROUNDS; ++i) {
-    mzd_shared_init(&lowmc_key_s[i], private_key->s->shared[0]);
-    lowmc_secret_share(lowmc, &lowmc_key_s[i]);
+    mzd_shared_init(&lowmc_key_s[i], private_key->s);
+    mzd_shared_share(&lowmc_key_s[i]);
 
-    mzd_shared_init(&lowmc_key_k[i], private_key->k->shared[0]);
-    lowmc_secret_share(lowmc, &lowmc_key_k[i]);
+    mzd_shared_init(&lowmc_key_k[i], private_key->k);
+    mzd_shared_share(&lowmc_key_k[i]);
   }
 
   timings[4] = (clock() - beginShare) * TIMING_SCALE;
@@ -210,22 +210,22 @@ static bg_signature_t* bg_prove(public_parameters_t* pp, bg_private_key_t* priva
   return signature;
 }
 
-typedef int (*verify_ptr)(lowmc_t* lowmc, mzd_t* p, mzd_shared_t* shared_p, view_t* views,
+typedef int (*verify_ptr)(mpc_lowmc_t* lowmc, mzd_t* p, mzd_shared_t* shared_p, view_t* views,
                           mzd_t** rv[2], int ch);
 
-static int verify_with_p(lowmc_t* lowmc, mzd_t* p, mzd_shared_t* shared_p, view_t* views,
+static int verify_with_p(mpc_lowmc_t* lowmc, mzd_t* p, mzd_shared_t* shared_p, view_t* views,
                          mzd_t** rv[2], int ch) {
   (void)shared_p;
   return mpc_lowmc_verify(lowmc, p, views, rv, ch);
 }
 
-static int verify_with_shared_p(lowmc_t* lowmc, mzd_t* p, mzd_shared_t* shared_p, view_t* views,
+static int verify_with_shared_p(mpc_lowmc_t* lowmc, mzd_t* p, mzd_shared_t* shared_p, view_t* views,
                                 mzd_t** rv[2], int ch) {
   (void)p;
   return mpc_lowmc_verify_shared_p(lowmc, shared_p, views, rv, ch);
 }
 
-static int verify_views(lowmc_t* lowmc, mzd_t* p, mzd_shared_t shared_p[NUM_ROUNDS], proof_t* proof,
+static int verify_views(mpc_lowmc_t* lowmc, mzd_t* p, mzd_shared_t shared_p[NUM_ROUNDS], proof_t* proof,
                         verify_ptr verify, int ch[NUM_ROUNDS]) {
   int view_verify_status = 0;
 
@@ -260,7 +260,7 @@ static int verify_views(lowmc_t* lowmc, mzd_t* p, mzd_shared_t shared_p[NUM_ROUN
 
 static int bg_proof_verify(public_parameters_t* pp, bg_public_key_t* pk, mzd_t* p, 
                   bg_signature_t* signature, clock_t *timings) {
-  lowmc_t* lowmc   = pp->lowmc;
+  lowmc_t* lowmc         = pp->lowmc;
   proof_t* proof_p = &signature->proof_p;
   proof_t* proof_s = &signature->proof_s;
 #ifdef VERBOSE
@@ -271,7 +271,7 @@ static int bg_proof_verify(public_parameters_t* pp, bg_public_key_t* pk, mzd_t* 
   int ch[NUM_ROUNDS]; 
   unsigned char hash_p[NUM_ROUNDS][2][SHA256_DIGEST_LENGTH];
   unsigned char hash_s[NUM_ROUNDS][2][SHA256_DIGEST_LENGTH];
- 
+
   for(unsigned i = 0 ; i < NUM_ROUNDS ; i++) {
     H(proof_p->keys[i][0], proof_p->y[i], proof_p->views[i], 0, 2 + lowmc->r, proof_p->r[i][0], hash_p[i][0]);
     H(proof_p->keys[i][1], proof_p->y[i], proof_p->views[i], 1, 2 + lowmc->r, proof_p->r[i][1], hash_p[i][1]);
@@ -291,13 +291,15 @@ static int bg_proof_verify(public_parameters_t* pp, bg_public_key_t* pk, mzd_t* 
   int reconstruct_status = 0;
   for (unsigned int i = 0; i < NUM_ROUNDS; i++) {
     mzd_t* c_mpcr = mpc_reconstruct_from_share(proof_p->y[i]);
-    if (mzd_equal(signature->c, c_mpcr) != 0)
+    if (mzd_equal(signature->c, c_mpcr) != 0) {
       reconstruct_status = -1;
+    }
     mzd_free(c_mpcr);
 
     c_mpcr = mpc_reconstruct_from_share(proof_s->y[i]);
-    if (mzd_equal(pk->pk, c_mpcr) != 0)
+    if (mzd_equal(pk->pk, c_mpcr) != 0) {
       reconstruct_status = -1;
+    }
     mzd_free(c_mpcr);
   }
   timings[9] = (clock() - beginRec) * TIMING_SCALE;

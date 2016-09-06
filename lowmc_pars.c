@@ -70,6 +70,7 @@ lowmc_t* lowmc_init(size_t m, size_t n, size_t r, size_t k) {
   for (unsigned i = 0; i < r; i++) {
     lowmc->Constants[i] = mzd_init_random_vector(n);
   }
+
   lowmc->KMatrix = calloc(sizeof(mzd_t*), r + 1);
   for (unsigned i = 0; i < r + 1; i++) {
     // Instead of transposing switch dimesnsions.
@@ -82,13 +83,7 @@ lowmc_t* lowmc_init(size_t m, size_t n, size_t r, size_t k) {
 }
 
 lowmc_key_t* lowmc_keygen(lowmc_t* lowmc) {
-  lowmc_key_t* lowmc_key = malloc(sizeof(lowmc_key_t));
-
-  mzd_t* key = mzd_init_random_vector(lowmc->k);
-  mzd_shared_init(lowmc_key, key);
-  mzd_free(key);
-
-  return lowmc_key;
+  return mzd_init_random_vector(lowmc->k);
 }
 
 void lowmc_free(lowmc_t* lowmc) {
@@ -111,10 +106,5 @@ void lowmc_free(lowmc_t* lowmc) {
 }
 
 void lowmc_key_free(lowmc_key_t* lowmc_key) {
-  mzd_shared_clear(lowmc_key);
-  free(lowmc_key);
-}
-
-void lowmc_secret_share(lowmc_t* lowmc, lowmc_key_t* lowmc_key) {
-  mzd_shared_share(lowmc_key);
+  mzd_free(lowmc_key);
 }

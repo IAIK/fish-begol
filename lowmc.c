@@ -2,7 +2,9 @@
 #include "lowmc_pars.h"
 #include "mzd_additional.h"
 
+#ifdef WITH_OPT
 #include "avx.h"
+#endif
 
 static void sbox_layer_bitsliced(mzd_t* out, mzd_t* in, rci_t m, mask_t* mask) {
   if (in->ncols - 3 * m < 2) {
@@ -47,6 +49,7 @@ static void sbox_layer_bitsliced(mzd_t* out, mzd_t* in, rci_t m, mask_t* mask) {
   mzd_free(x0m);
 }
 
+#ifdef WITH_OPT
 __attribute__((target("sse2"))) static void sbox_layer_sse(mzd_t* out, mzd_t* in, mask_t* mask) {
   __m128i min = _mm_load_si128((__m128i*)in->rows[0]);
 
@@ -116,8 +119,9 @@ __attribute__((target("avx2"))) static void sbox_layer_avx(mzd_t* out, mzd_t* in
   mout = _mm256_xor_si256(mout, t0);
   _mm256_store_si256((__m256i*)out->rows[0], mout);
 }
+#endif
 
-void sbox_layer(mzd_t* out, mzd_t* in, rci_t m) {
+static void sbox_layer(mzd_t* out, mzd_t* in, rci_t m) {
   mzd_copy(out, in);
   for (rci_t n = out->ncols - 3 * m; n < out->ncols; n += 3) {
     word x0 = mzd_read_bit(in, 0, n + 0);
@@ -141,10 +145,11 @@ mzd_t* lowmc_call(lowmc_t* lowmc, lowmc_key_t* lowmc_key, mzd_t* p) {
   mzd_t* z = mzd_init(1, lowmc->n);
 
   mzd_copy(x, p);
-  mzd_addmul(x, lowmc_key->shared[0], lowmc->KMatrix[0], 0);
+  mzd_addmul(x, lowmc_key, lowmc->KMatrix[0], 0);
 
   for (unsigned i = 0; i < lowmc->r; i++) {
     // sbox_layer(y, x, lowmc->m);
+#ifdef WITH_OPT
     if (__builtin_cpu_supports("sse2") && y->ncols == 128) {
       sbox_layer_sse(y, x, &lowmc->mask);
     } else if (__builtin_cpu_supports("avx2") && y->ncols == 256) {
@@ -152,9 +157,13 @@ mzd_t* lowmc_call(lowmc_t* lowmc, lowmc_key_t* lowmc_key, mzd_t* p) {
     } else {
       sbox_layer_bitsliced(y, x, lowmc->m, &lowmc->mask);
     }
-    mzd_mul_v(z, y, lowmc->LMatrix[i]);
+#else
+    sbox_layer_bitsliced(y, x, lowmc->m, &lowmc->mask);
+#endif
+
+    mzd_mul(z, y, lowmc->LMatrix[i], 0);
     mzd_xor(z, z, lowmc->Constants[i]);
-    mzd_addmul(z, lowmc_key->shared[0], lowmc->KMatrix[i + 1], 0);
+    mzd_addmul(z, lowmc_key, lowmc->KMatrix[i + 1], 0);
     mzd_copy(x, z);
   }
 
