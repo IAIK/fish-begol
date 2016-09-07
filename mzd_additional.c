@@ -334,23 +334,100 @@ __attribute__((target("sse2"))) static inline mzd_t* mzd_addmul_v_sse(mzd_t* c, 
   word const* vptr         = v->rows[0];
   const unsigned int width = v->width;
   const unsigned int rowstride = A->rowstride;
+  const unsigned int mrowstride = rowstride * sizeof(word) / sizeof(__m128i);
+
+  __m128i* mcptr = __builtin_assume_aligned(cptr, 16);
 
   for (unsigned int w = 0; w < width; ++w, ++vptr) {
     word idx = *vptr;
     word const* Aptr = A->rows[w * sizeof(word) * 8];
+    __m128i* mAptr = __builtin_assume_aligned(Aptr, 16);
 
     while (idx) {
-      if (idx & 0x1) {
-        __m128i* mcptr = __builtin_assume_aligned(cptr, 16);
-        __m128i* mAptr = __builtin_assume_aligned(Aptr, 16);
+      switch (idx & 0x0F) {
+        case 0x00:
+          break;
 
-        for (unsigned int i = len; i; --i, ++mcptr, ++mAptr) {
-          *mcptr = _mm_xor_si128(*mcptr, *mAptr);
-        }
+        case 0x01:
+          mm128_xor_region(mcptr, mAptr, len);
+          break;
+
+        case 0x02:
+          mm128_xor_region(mcptr, mAptr + mrowstride, len);
+          break;
+
+        case 0x03:
+          mm128_xor_region(mcptr, mAptr, len);
+          mm128_xor_region(mcptr, mAptr + mrowstride, len);
+          break;
+
+        case 0x04:
+          mm128_xor_region(mcptr, mAptr + 2 * mrowstride, len);
+          break;
+
+        case 0x05:
+          mm128_xor_region(mcptr, mAptr, len);
+          mm128_xor_region(mcptr, mAptr + 2 * mrowstride, len);
+          break;
+
+        case 0x06:
+          mm128_xor_region(mcptr, mAptr + mrowstride, len);
+          mm128_xor_region(mcptr, mAptr + 2 * mrowstride, len);
+          break;
+
+        case 0x07:
+          mm128_xor_region(mcptr, mAptr, len);
+          mm128_xor_region(mcptr, mAptr + mrowstride, len);
+          mm128_xor_region(mcptr, mAptr + 2 * mrowstride, len);
+          break;
+
+        case 0x08:
+          mm128_xor_region(mcptr, mAptr + 3 * mrowstride, len);
+          break;
+
+        case 0x09:
+          mm128_xor_region(mcptr, mAptr, len);
+          mm128_xor_region(mcptr, mAptr + 3 * mrowstride, len);
+          break;
+
+        case 0x0a:
+          mm128_xor_region(mcptr, mAptr + mrowstride, len);
+          mm128_xor_region(mcptr, mAptr + 3 * mrowstride, len);
+          break;
+
+        case 0x0b:
+          mm128_xor_region(mcptr, mAptr, len);
+          mm128_xor_region(mcptr, mAptr + mrowstride, len);
+          mm128_xor_region(mcptr, mAptr + 3 * mrowstride, len);
+          break;
+
+        case 0x0c:
+          mm128_xor_region(mcptr, mAptr + 2 * mrowstride, len);
+          mm128_xor_region(mcptr, mAptr + 3 * mrowstride, len);
+          break;
+
+        case 0x0d:
+          mm128_xor_region(mcptr, mAptr, len);
+          mm128_xor_region(mcptr, mAptr + 2 * mrowstride, len);
+          mm128_xor_region(mcptr, mAptr + 3 * mrowstride, len);
+          break;
+
+        case 0x0e:
+          mm128_xor_region(mcptr, mAptr + mrowstride, len);
+          mm128_xor_region(mcptr, mAptr + 2 * mrowstride, len);
+          mm128_xor_region(mcptr, mAptr + 3 * mrowstride, len);
+          break;
+
+        case 0x0f:
+          mm128_xor_region(mcptr, mAptr, len);
+          mm128_xor_region(mcptr, mAptr + mrowstride, len);
+          mm128_xor_region(mcptr, mAptr + 2 * mrowstride, len);
+          mm128_xor_region(mcptr, mAptr + 3 * mrowstride, len);
+          break;
       }
 
-      Aptr += rowstride;
-      idx >>= 1;
+      mAptr += 4 * mrowstride;
+      idx >>= 4;
     }
   }
 
@@ -364,23 +441,100 @@ __attribute__((target("avx2"))) static inline mzd_t* mzd_addmul_v_avx(mzd_t* c, 
   word const* vptr         = v->rows[0];
   const unsigned int width = v->width;
   const unsigned int rowstride = A->rowstride;
+  const unsigned int mrowstride = rowstride * sizeof(word) / sizeof(__m256i);
+
+  __m256i* mcptr = __builtin_assume_aligned(cptr, 32);
 
   for (unsigned int w = 0; w < width; ++w, ++vptr) {
     word idx = *vptr;
     word const* Aptr = A->rows[w * sizeof(word) * 8];
+    __m256i* mAptr = __builtin_assume_aligned(Aptr, 32);
 
     while (idx) {
-      if (idx & 0x1) {
-        __m256i* mcptr = __builtin_assume_aligned(cptr, 32);
-        __m256i* mAptr = __builtin_assume_aligned(Aptr, 32);
+      switch (idx & 0x0F) {
+        case 0x00:
+          break;
 
-        for (unsigned int i = len; i; --i, ++mcptr, ++mAptr) {
-          *mcptr  = _mm256_xor_si256(*mcptr, *mAptr);
-        }
+        case 0x01:
+          mm256_xor_region(mcptr, mAptr, len);
+          break;
+
+        case 0x02:
+          mm256_xor_region(mcptr, mAptr + mrowstride, len);
+          break;
+
+        case 0x03:
+          mm256_xor_region(mcptr, mAptr, len);
+          mm256_xor_region(mcptr, mAptr + mrowstride, len);
+          break;
+
+        case 0x04:
+          mm256_xor_region(mcptr, mAptr + 2 * mrowstride, len);
+          break;
+
+        case 0x05:
+          mm256_xor_region(mcptr, mAptr, len);
+          mm256_xor_region(mcptr, mAptr + 2 * mrowstride, len);
+          break;
+
+        case 0x06:
+          mm256_xor_region(mcptr, mAptr + mrowstride, len);
+          mm256_xor_region(mcptr, mAptr + 2 * mrowstride, len);
+          break;
+
+        case 0x07:
+          mm256_xor_region(mcptr, mAptr, len);
+          mm256_xor_region(mcptr, mAptr + mrowstride, len);
+          mm256_xor_region(mcptr, mAptr + 2 * mrowstride, len);
+          break;
+
+        case 0x08:
+          mm256_xor_region(mcptr, mAptr + 3 * mrowstride, len);
+          break;
+
+        case 0x09:
+          mm256_xor_region(mcptr, mAptr, len);
+          mm256_xor_region(mcptr, mAptr + 3 * mrowstride, len);
+          break;
+
+        case 0x0a:
+          mm256_xor_region(mcptr, mAptr + mrowstride, len);
+          mm256_xor_region(mcptr, mAptr + 3 * mrowstride, len);
+          break;
+
+        case 0x0b:
+          mm256_xor_region(mcptr, mAptr, len);
+          mm256_xor_region(mcptr, mAptr + mrowstride, len);
+          mm256_xor_region(mcptr, mAptr + 3 * mrowstride, len);
+          break;
+
+        case 0x0c:
+          mm256_xor_region(mcptr, mAptr + 2 * mrowstride, len);
+          mm256_xor_region(mcptr, mAptr + 3 * mrowstride, len);
+          break;
+
+        case 0x0d:
+          mm256_xor_region(mcptr, mAptr, len);
+          mm256_xor_region(mcptr, mAptr + 2 * mrowstride, len);
+          mm256_xor_region(mcptr, mAptr + 3 * mrowstride, len);
+          break;
+
+        case 0x0e:
+          mm256_xor_region(mcptr, mAptr + mrowstride, len);
+          mm256_xor_region(mcptr, mAptr + 2 * mrowstride, len);
+          mm256_xor_region(mcptr, mAptr + 3 * mrowstride, len);
+          break;
+
+        case 0x0f:
+          mm256_xor_region(mcptr, mAptr, len);
+          mm256_xor_region(mcptr, mAptr + mrowstride, len);
+          mm256_xor_region(mcptr, mAptr + 2 * mrowstride, len);
+          mm256_xor_region(mcptr, mAptr + 3 * mrowstride, len);
+          break;
       }
 
-      Aptr += rowstride;
-      idx >>= 1;
+      mAptr += 4 * mrowstride;
+      idx >>= 4;
     }
   }
 
