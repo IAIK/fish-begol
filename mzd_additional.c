@@ -24,6 +24,13 @@ mzd_t* mzd_init_random_vector(rci_t n) {
   return A;
 }
 
+static mzd_t* mzd_init_random_vector_prng(rci_t n, aes_prng_t* aes_prng) {
+  mzd_t* v = mzd_init(1, n);
+  aes_prng_get_randomness(aes_prng, (unsigned char*)v->rows[0], n / 8);
+  v->rows[0][v->width - 1] &= v->high_bitmask;
+  return v;
+}
+
 mzd_t** mzd_init_random_vectors_from_seed(unsigned char key[16], rci_t n, unsigned int count) {
   if (n % (8 * sizeof(word)) != 0)
     return NULL;
@@ -32,9 +39,7 @@ mzd_t** mzd_init_random_vectors_from_seed(unsigned char key[16], rci_t n, unsign
 
   mzd_t** vectors = calloc(count, sizeof(mzd_t*));
   for (unsigned int v = 0; v < count; ++v) {
-    vectors[v] = mzd_init(1, n);
-    aes_prng_get_randomness(aes_prng, (unsigned char*)vectors[v]->rows[0], n / 8);
-    vectors[v]->rows[0][vectors[v]->width - 1] &= vectors[v]->high_bitmask;
+    vectors[v] = mzd_init_random_vector_prng(n, aes_prng);
   }
 
   aes_prng_free(aes_prng);
@@ -301,6 +306,23 @@ void mzd_shared_share(mzd_shared_t* shared_value) {
   mzd_xor(shared_value->shared[0], shared_value->shared[0], shared_value->shared[1]);
   mzd_xor(shared_value->shared[0], shared_value->shared[0], shared_value->shared[2]);
 }
+
+void mzd_shared_share_prng(mzd_shared_t* shared_value, aes_prng_t* aes_prng) {
+  mzd_t** tmp = realloc(shared_value->shared, 3 * sizeof(mzd_t*));
+  if (!tmp) {
+    return;
+  }
+
+  shared_value->shared      = tmp;
+  shared_value->share_count = 3;
+
+  shared_value->shared[1] = mzd_init_random_vector_prng(shared_value->shared[0]->ncols, aes_prng);
+  shared_value->shared[2] = mzd_init_random_vector_prng(shared_value->shared[0]->ncols, aes_prng);
+
+  mzd_xor(shared_value->shared[0], shared_value->shared[0], shared_value->shared[1]);
+  mzd_xor(shared_value->shared[0], shared_value->shared[0], shared_value->shared[2]);
+}
+
 
 void mzd_shared_clear(mzd_shared_t* shared_value) {
   for (unsigned int i = 0; i < shared_value->share_count; ++i) {

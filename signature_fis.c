@@ -63,10 +63,11 @@ static proof_t* fis_prove(mpc_lowmc_t* lowmc, lowmc_key_t* lowmc_key, mzd_t* p, 
 
   unsigned char r[NUM_ROUNDS][3][4];
   unsigned char keys[NUM_ROUNDS][3][16];
+  unsigned char secret_sharing_key[16];
 
   // Generating keys
   START_TIMING;
-  if (rand_bytes((unsigned char*)keys, sizeof(keys)) != 1 || rand_bytes((unsigned char*)r, sizeof(r)) != 1) {
+  if (rand_bytes((unsigned char*)keys, sizeof(keys)) != 1 || rand_bytes((unsigned char*)r, sizeof(r)) != 1 || rand_bytes(secret_sharing_key, sizeof(secret_sharing_key)) != 1) {
 #ifdef VERBOSE
     printf("rand_bytes failed crypto, aborting\n");
 #endif
@@ -86,11 +87,13 @@ static proof_t* fis_prove(mpc_lowmc_t* lowmc, lowmc_key_t* lowmc_key, mzd_t* p, 
   view_t *views[NUM_ROUNDS];
   init_view(lowmc, views);
 
+  aes_prng_t* aes_prng = aes_prng_init(secret_sharing_key);
   mzd_shared_t s[NUM_ROUNDS];
   for(int i = 0 ; i < NUM_ROUNDS ; i++) {
     mzd_shared_init(&s[i], lowmc_key);
-    mzd_shared_share(&s[i]);
+    mzd_shared_share_prng(&s[i], aes_prng);
   }
+  aes_prng_free(aes_prng);
   END_TIMING(timing_and_size.sign.secret_sharing);
 
   START_TIMING;

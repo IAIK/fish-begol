@@ -1,6 +1,7 @@
 #ifndef MZD_ADDITIONAL_H
 #define MZD_ADDITIONAL_H
 
+#include "randomness.h"
 #include <m4ri/m4ri.h>
 
 /**
@@ -54,6 +55,7 @@ void mzd_shared_init(mzd_shared_t* shared_value, mzd_t* value);
 void mzd_shared_copy(mzd_shared_t* dst, mzd_shared_t* src);
 void mzd_shared_from_shares(mzd_shared_t* shared_value, mzd_t** shares, unsigned int share_count);
 void mzd_shared_share(mzd_shared_t* shared_value);
+void mzd_shared_share_prng(mzd_shared_t* shared_value, aes_prng_t* aes_prng);
 void mzd_shared_clear(mzd_shared_t* shared_value);
 
 

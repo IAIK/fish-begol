@@ -98,13 +98,15 @@ static bg_signature_t* bg_prove(public_parameters_t* pp, bg_private_key_t* priva
   unsigned char keys_p[NUM_ROUNDS][3][16];
   unsigned char r_s[NUM_ROUNDS][3][4];
   unsigned char keys_s[NUM_ROUNDS][3][16];
+  unsigned char secret_sharing_key[16];
 
   // Generating keys
   START_TIMING;
   if (rand_bytes((unsigned char*)keys_p, sizeof(keys_p)) != 1 ||
       rand_bytes((unsigned char*)r_p, sizeof(r_p)) != 1 ||
       rand_bytes((unsigned char*)keys_s, sizeof(keys_s)) != 1 ||
-      rand_bytes((unsigned char*)r_s, sizeof(r_s)) != 1) {
+      rand_bytes((unsigned char*)r_s, sizeof(r_s)) != 1 ||
+      rand_bytes(secret_sharing_key, sizeof(secret_sharing_key)) != 1) {
 #ifdef VERBOSE
     printf("rand_bytes failed crypto, aborting\n");
 #endif
@@ -123,6 +125,8 @@ static bg_signature_t* bg_prove(public_parameters_t* pp, bg_private_key_t* priva
   END_TIMING(timing_and_size.sign.rand);
 
   START_TIMING;
+  bg_signature_t* signature = calloc(1, sizeof(bg_signature_t));
+
   view_t* views_p[NUM_ROUNDS];
   view_t* views_s[NUM_ROUNDS];
 
@@ -132,16 +136,16 @@ static bg_signature_t* bg_prove(public_parameters_t* pp, bg_private_key_t* priva
   mpc_lowmc_key_t lowmc_key_k[NUM_ROUNDS] = {{0, NULL}};
   mpc_lowmc_key_t lowmc_key_s[NUM_ROUNDS] = {{0, NULL}};
 
-  bg_signature_t* signature = calloc(1, sizeof(bg_signature_t));
+  aes_prng_t* aes_prng = aes_prng_init(secret_sharing_key);
   #pragma omp parallel for
   for (unsigned i = 0; i < NUM_ROUNDS; ++i) {
     mzd_shared_init(&lowmc_key_s[i], private_key->s);
-    mzd_shared_share(&lowmc_key_s[i]);
+    mzd_shared_share_prng(&lowmc_key_s[i], aes_prng);
 
     mzd_shared_init(&lowmc_key_k[i], private_key->k);
-    mzd_shared_share(&lowmc_key_k[i]);
+    mzd_shared_share_prng(&lowmc_key_k[i], aes_prng);
   }
-
+  aes_prng_free(aes_prng);
   END_TIMING(timing_and_size.sign.secret_sharing);
 
   START_TIMING;
