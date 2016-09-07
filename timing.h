@@ -2,6 +2,7 @@
 #define TIMING_H
 
 #include <stdint.h>
+#include <time.h>
 
 typedef union {
   struct {
@@ -23,11 +24,16 @@ extern timing_and_size_t timing_and_size;
 
 #ifdef WITH_DETAILED_TIMING
 
+#define gettime gettime_clock
 #define TIME_FUNCTION uint64_t start_time
 #define START_TIMING start_time = gettime()
 #define END_TIMING(dst) dst = gettime() - start_time
 
-uint64_t gettime();
+#define TIMING_SCALE (1000000 / CLOCKS_PER_SEC);
+
+static inline uint64_t gettime_clock() {
+  return clock() * TIMING_SCALE;
+}
 
 #else
 
