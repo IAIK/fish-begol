@@ -26,15 +26,12 @@ mzd_t* mzd_init_random_vector(rci_t n) {
 
 static mzd_t* mzd_init_random_vector_prng(rci_t n, aes_prng_t* aes_prng) {
   mzd_t* v = mzd_init(1, n);
-  aes_prng_get_randomness(aes_prng, (unsigned char*)v->rows[0], n / 8);
+  aes_prng_get_randomness(aes_prng, (unsigned char*)v->rows[0], v->width * sizeof(word));
   v->rows[0][v->width - 1] &= v->high_bitmask;
   return v;
 }
 
 mzd_t** mzd_init_random_vectors_from_seed(unsigned char key[16], rci_t n, unsigned int count) {
-  if (n % (8 * sizeof(word)) != 0)
-    return NULL;
-
   aes_prng_t* aes_prng = aes_prng_init(key);
 
   mzd_t** vectors = calloc(count, sizeof(mzd_t*));
