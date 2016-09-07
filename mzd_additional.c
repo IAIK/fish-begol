@@ -542,24 +542,24 @@ __attribute__((target("avx2"))) static inline mzd_t* mzd_addmul_v_avx(mzd_t* c, 
 }
 #endif
 
-mzd_t* mzd_addmul_v(mzd_t* c, mzd_t const* v, mzd_t const* At) {
-  if (At->ncols != c->ncols || At->nrows != v->ncols) {
+mzd_t* mzd_addmul_v(mzd_t* c, mzd_t const* v, mzd_t const* A) {
+  if (A->ncols != c->ncols || A->nrows != v->ncols) {
     // number of columns does not match
     return NULL;
   }
 
 
 #ifdef WITH_OPT
-  if (__builtin_cpu_supports("avx2") && At->ncols % 256 == 0) {
-    return mzd_addmul_v_avx(c, v, At);
+  if (__builtin_cpu_supports("avx2") && A->ncols % 256 == 0) {
+    return mzd_addmul_v_avx(c, v, A);
   }
-  else if (__builtin_cpu_supports("sse2") && At->ncols % 128 == 0) {
-    return mzd_addmul_v_sse(c, v, At);
+  else if (__builtin_cpu_supports("sse2") && A->ncols % 128 == 0) {
+    return mzd_addmul_v_sse(c, v, A);
   }
 #endif
 
-  const unsigned int len   = At->width;
-  const word mask          = At->high_bitmask;
+  const unsigned int len   = A->width;
+  const word mask          = A->high_bitmask;
   word* cptr               = c->rows[0];
   word const* vptr         = v->rows[0];
   const unsigned int width = v->width;
@@ -567,16 +567,16 @@ mzd_t* mzd_addmul_v(mzd_t* c, mzd_t const* v, mzd_t const* At) {
   for (unsigned int w = 0; w < width; ++w, ++vptr) {
     word idx = *vptr;
 
-    word const* Atptr = At->rows[w * sizeof(word) * 8];
+    word const* Aptr = A->rows[w * sizeof(word) * 8];
     while (idx) {
       if (idx & 0x1) {
         for (unsigned int i = 0; i < len - 1; ++i) {
-          cptr[i] ^= Atptr[i];
+          cptr[i] ^= Aptr[i];
         }
-        cptr[len - 1] = (cptr[len - 1] ^ Atptr[len - 1]) & mask;
+        cptr[len - 1] = (cptr[len - 1] ^ Aptr[len - 1]) & mask;
       }
 
-      Atptr += At->rowstride;
+      Aptr += A->rowstride;
       idx >>= 1;
     }
   }
@@ -699,24 +699,4 @@ int mzd_equal(mzd_t const* first, mzd_t const* second) {
 #endif
 
   return mzd_cmp(first, second);
-}
-
-/**
- * Compress matrix row-wise.
- */
-mzd_t* mzd_xor_rows(mzd_t const* m) {
-  if (m->nrows == 1) {
-    return mzd_copy(NULL, m);
-  }
-
-  mzd_t* r = mzd_init(1, m->ncols);
-  memcpy(r->rows[0], m->rows[0], m->width * sizeof(word));
-  for (rci_t row = 1; row < m->nrows; ++row) {
-    for (rci_t col = 0; col < m->width; ++col) {
-      r->rows[0][col] ^= m->rows[row][col];
-    }
-    r->rows[0][m->width - 1] &= m->high_bitmask;
-  }
-
-  return r;
 }

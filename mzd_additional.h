@@ -44,11 +44,6 @@ mzd_t *mzd_mul_v(mzd_t *c, mzd_t const *v, mzd_t const *At);
  */
 mzd_t *mzd_addmul_v(mzd_t *c, mzd_t const *v, mzd_t const *At);
 
-/**
- * Compress matrix row-wise.
- */
-mzd_t* mzd_xor_rows(const mzd_t* m);
-
 
 typedef struct {
   unsigned int share_count;
