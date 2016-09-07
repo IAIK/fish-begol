@@ -4,6 +4,7 @@
 #include "mpc.h"
 #include "io.h"
 #include "randomness.h"
+#include "timing.h"
 
 unsigned bg_compute_sig_size(unsigned m, unsigned n, unsigned r, unsigned k) {
   unsigned first_view_size = k;
@@ -48,23 +49,27 @@ bg_signature_t *bg_sig_from_char_array(public_parameters_t *pp, unsigned char *d
 }
 
 void bg_create_key(public_parameters_t* pp, bg_private_key_t* private_key,
-                          bg_public_key_t* public_key, clock_t* timings) {
-  clock_t beginKeygen      = clock();
+                          bg_public_key_t* public_key) {
+  TIME_FUNCTION;
+
+  START_TIMING;
   lowmc_key_t* lowmc_key_k = lowmc_keygen(pp->lowmc);
   lowmc_key_t* lowmc_key_s = lowmc_keygen(pp->lowmc);
-  timings[1]               = (clock() - beginKeygen) * TIMING_SCALE;
-#ifdef VERBOSE
-  printf("LowMC key generation          %6lu\n", timings[1]);
-#endif
 
   private_key->k = lowmc_key_k;
   private_key->s = lowmc_key_s;
+  END_TIMING(timing_and_size.gen.keygen);
 
-  clock_t beginPubkey = clock();
+  START_TIMING;
   public_key->pk      = lowmc_call(pp->lowmc, lowmc_key_k, lowmc_key_s);
-  timings[2]          = (clock() - beginPubkey) * TIMING_SCALE;
+
+  END_TIMING(timing_and_size.gen.pubkey);
+
 #ifdef VERBOSE
-  printf("Public key computation        %6lu\n", timings[2]);
+  printf("Setup:\n");
+  printf("LowMC setup                   %6lu\n", timing_and_size.gen.lowmc_init);
+  printf("LowMC key generation          %6lu\n", timing_and_size.gen.keygen);
+  printf("Public key computation        %6lu\n\n", timing_and_size.gen.pubkey);
 #endif
 }
 
@@ -85,18 +90,17 @@ void bg_free_signature(public_parameters_t* pp, bg_signature_t* signature) {
   free(signature);
 }
 
-static bg_signature_t* bg_prove(public_parameters_t* pp, bg_private_key_t* private_key, mzd_t* p, clock_t *timings) {
+static bg_signature_t* bg_prove(public_parameters_t* pp, bg_private_key_t* private_key, mzd_t* p) {
+  TIME_FUNCTION;
   lowmc_t* lowmc         = pp->lowmc;
-#ifdef VERBOSE
-  printf("Prove:\n");
-#endif
+
   unsigned char r_p[NUM_ROUNDS][3][4];
   unsigned char keys_p[NUM_ROUNDS][3][16];
   unsigned char r_s[NUM_ROUNDS][3][4];
   unsigned char keys_s[NUM_ROUNDS][3][16];
 
   // Generating keys
-  clock_t beginRand = clock();
+  START_TIMING;
   if (rand_bytes((unsigned char*)keys_p, sizeof(keys_p)) != 1 ||
       rand_bytes((unsigned char*)r_p, sizeof(r_p)) != 1 ||
       rand_bytes((unsigned char*)keys_s, sizeof(keys_s)) != 1 ||
@@ -116,12 +120,9 @@ static bg_signature_t* bg_prove(public_parameters_t* pp, bg_private_key_t* priva
       rvec_s[i][j] = mzd_init_random_vectors_from_seed(keys_s[i][j], lowmc->n, lowmc->r);
     }
   }
-  timings[3] = (clock() - beginRand) * TIMING_SCALE;
-#ifdef VERBOSE
-  printf("MPC randomess generation      %6lu\n", timings[3]);
-#endif
+  END_TIMING(timing_and_size.sign.rand);
 
-  clock_t beginShare = clock();
+  START_TIMING;
   view_t* views_p[NUM_ROUNDS];
   view_t* views_s[NUM_ROUNDS];
 
@@ -141,12 +142,9 @@ static bg_signature_t* bg_prove(public_parameters_t* pp, bg_private_key_t* priva
     mzd_shared_share(&lowmc_key_k[i]);
   }
 
-  timings[4] = (clock() - beginShare) * TIMING_SCALE;
-#ifdef VERBOSE
-  printf("MPC secret sharing            %6lu\n", timings[4]);
-#endif
+  END_TIMING(timing_and_size.sign.secret_sharing);
 
-  clock_t beginLowmc = clock();
+  START_TIMING;
   mzd_t*** c_mpc_p   = calloc(NUM_ROUNDS, sizeof(mzd_t**));
   mzd_t*** c_mpc_s   = calloc(NUM_ROUNDS, sizeof(mzd_t**));
 #pragma omp parallel for
@@ -158,12 +156,9 @@ static bg_signature_t* bg_prove(public_parameters_t* pp, bg_private_key_t* priva
     mzd_shared_clear(&lowmc_key_k[i]);
   }
   signature->c = mpc_reconstruct_from_share(c_mpc_p[0]);
-  timings[5] = (clock() - beginLowmc) * TIMING_SCALE;
-#ifdef VERBOSE
-  printf("MPC LowMC encryption          %6lu\n", timings[5]);
-#endif
+  END_TIMING(timing_and_size.sign.lowmc_enc);
 
-  clock_t beginHash = clock();
+  START_TIMING;
   unsigned char hashes_p[NUM_ROUNDS][3][SHA256_DIGEST_LENGTH];
   unsigned char hashes_s[NUM_ROUNDS][3][SHA256_DIGEST_LENGTH];
 #pragma omp parallel for
@@ -173,18 +168,12 @@ static bg_signature_t* bg_prove(public_parameters_t* pp, bg_private_key_t* priva
       H(keys_s[i][j], c_mpc_s[i], views_s[i], j, 2 + lowmc->r, r_s[i][j], hashes_s[i][j]);
     }
   }
-  timings[6] = (clock() - beginHash) * TIMING_SCALE;
-#ifdef VERBOSE
-  printf("Hashing views                 %6lu\n", timings[6]);
-#endif
+  END_TIMING(timing_and_size.sign.views);
 
-  clock_t beginCh = clock();
+  START_TIMING;
   int ch[NUM_ROUNDS];
   bg_H3(hashes_p, hashes_s, ch);
-  timings[7] = (clock() - beginCh) * TIMING_SCALE;
-#ifdef VERBOSE
-  printf("Generating challenge          %6lu\n", timings[7]);
-#endif
+  END_TIMING(timing_and_size.sign.challenge);
 
   create_proof(&signature->proof_p, lowmc, hashes_p, ch, r_p, keys_p, c_mpc_p, views_p);
   create_proof(&signature->proof_s, lowmc, hashes_s, ch, r_s, keys_s, c_mpc_s, views_s);
@@ -204,6 +193,12 @@ static bg_signature_t* bg_prove(public_parameters_t* pp, bg_private_key_t* priva
   }
 
 #ifdef VERBOSE
+  printf("Prove:\n");
+  printf("MPC randomess generation      %6lu\n", timing_and_size.sign.rand);
+  printf("MPC secret sharing            %6lu\n", timing_and_size.sign.secret_sharing);
+  printf("MPC LowMC encryption          %6lu\n", timing_and_size.sign.lowmc_enc);
+  printf("Hashing views                 %6lu\n", timing_and_size.sign.views);
+  printf("Generating challenge          %6lu\n", timing_and_size.sign.challenge);
   printf("\n");
 #endif
   return signature;
@@ -255,18 +250,15 @@ static int verify_views(mpc_lowmc_t* lowmc, mzd_t* p, mzd_shared_t shared_p[NUM_
   return view_verify_status;
 }
 
+static int bg_proof_verify(public_parameters_t* pp, bg_public_key_t* pk, mzd_t* p,
+                           bg_signature_t* signature) {
+  TIME_FUNCTION;
 
-
-static int bg_proof_verify(public_parameters_t* pp, bg_public_key_t* pk, mzd_t* p, 
-                  bg_signature_t* signature, clock_t *timings) {
   lowmc_t* lowmc         = pp->lowmc;
   proof_t* proof_p = &signature->proof_p;
   proof_t* proof_s = &signature->proof_s;
-#ifdef VERBOSE
-  printf("Verify:\n");
-#endif
 
-  clock_t beginHash = clock();
+  START_TIMING;
   int ch[NUM_ROUNDS]; 
   unsigned char hash_p[NUM_ROUNDS][2][SHA256_DIGEST_LENGTH];
   unsigned char hash_s[NUM_ROUNDS][2][SHA256_DIGEST_LENGTH];
@@ -281,12 +273,9 @@ static int bg_proof_verify(public_parameters_t* pp, bg_public_key_t* pk, mzd_t* 
 
   bg_H3_verify(hash_p, proof_p->hashes, hash_s, proof_s->hashes, proof_s->ch, ch);
 
-  timings[8] = (clock() - beginHash) * TIMING_SCALE;
-#ifdef VERBOSE
-  printf("Recomputing challenge         %6lu\n", timings[8]);
-#endif
+  END_TIMING(timing_and_size.verify.challenge);
 
-  clock_t beginRec       = clock();
+  START_TIMING;
   int reconstruct_status = 0;
   for (unsigned int i = 0; i < NUM_ROUNDS; i++) {
     mzd_t* c_mpcr = mpc_reconstruct_from_share(proof_p->y[i]);
@@ -301,12 +290,9 @@ static int bg_proof_verify(public_parameters_t* pp, bg_public_key_t* pk, mzd_t* 
     }
     mzd_free(c_mpcr);
   }
-  timings[9] = (clock() - beginRec) * TIMING_SCALE;
-#ifdef VERBOSE
-  printf("Verifying output shares       %6lu\n", timings[9]);
-#endif
+  END_TIMING(timing_and_size.verify.output_shares);
 
-  clock_t beginView       = clock();
+  START_TIMING;
   int output_share_status = 0;
 #pragma omp parallel for reduction(| : output_share_status)
   for (unsigned int i = 0; i < NUM_ROUNDS; i++) {
@@ -317,12 +303,9 @@ static int bg_proof_verify(public_parameters_t* pp, bg_public_key_t* pk, mzd_t* 
         mzd_equal(proof_s->y[i][(ch[i] + 1) % 3], proof_s->views[i][lowmc->r + 1].s[1]))
       output_share_status |= -1;
   }
-  timings[10] = (clock() - beginView) * TIMING_SCALE;
-#ifdef VERBOSE
-  printf("Comparing output views        %6lu\n", timings[10]);
-#endif
+  END_TIMING(timing_and_size.verify.output_views);
 
-  clock_t beginViewVrfy  = clock();
+  START_TIMING;
   mzd_shared_t shared_s[NUM_ROUNDS] = { {0, NULL} };
   for (unsigned int i = 0; i < NUM_ROUNDS; i++) {
     mzd_shared_from_shares(&shared_s[i], proof_p->views[i][0].s, 2);
@@ -339,9 +322,14 @@ static int bg_proof_verify(public_parameters_t* pp, bg_public_key_t* pk, mzd_t* 
   for (unsigned int i = 0; i < NUM_ROUNDS; i++) {
     mzd_shared_clear(&shared_s[i]);
   }
-  timings[11] = (clock() - beginViewVrfy) * TIMING_SCALE;
+  END_TIMING(timing_and_size.verify.verify);
+
 #ifdef VERBOSE
-  printf("Verifying views               %6lu\n", timings[11]);
+  printf("Verify:\n");
+  printf("Recomputing challenge         %6lu\n", timing_and_size.verify.challenge);
+  printf("Verifying output shares       %6lu\n", timing_and_size.verify.output_shares);
+  printf("Comparing output views        %6lu\n", timing_and_size.verify.output_views);
+  printf("Verifying views               %6lu\n", timing_and_size.verify.verify);
   printf("\n");
 
   if (output_share_status)
@@ -363,11 +351,11 @@ static int bg_proof_verify(public_parameters_t* pp, bg_public_key_t* pk, mzd_t* 
   return output_share_status || reconstruct_status || view_verify_status;
 }
 
-bg_signature_t *bg_sign(public_parameters_t* pp, bg_private_key_t* private_key, mzd_t *m, clock_t *timings) {
-  return bg_prove(pp, private_key, m, timings);
+bg_signature_t *bg_sign(public_parameters_t* pp, bg_private_key_t* private_key, mzd_t *m) {
+  return bg_prove(pp, private_key, m);
 }
 
-int bg_verify(public_parameters_t* pp, bg_public_key_t *public_key, mzd_t *m, bg_signature_t *sig, clock_t *timings) {
-  return bg_proof_verify(pp, public_key, m, sig, timings);
+int bg_verify(public_parameters_t* pp, bg_public_key_t *public_key, mzd_t *m, bg_signature_t *sig) {
+  return bg_proof_verify(pp, public_key, m, sig);
 }
 

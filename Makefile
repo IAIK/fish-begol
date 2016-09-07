@@ -1,6 +1,7 @@
 CC=gcc
 
 CFLAGS+=-DWITH_OPT
+CFLAGS+=-DWITH_DETAILED_TIMING
 CFLAGS+=-std=c11
 CFLAGS+=-Wall
 LDLIBS+=-lm4ri -lcrypto

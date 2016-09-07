@@ -1,18 +1,13 @@
 #include "signature_common.h"
 #include "lowmc_pars.h"
+#include "timing.h"
 
-void create_instance(public_parameters_t* pp, clock_t* timings, 
-                            int m, int n, int r, int k) {
-#ifdef VERBOSE
-  printf("Setup:\n");
-#endif
+void create_instance(public_parameters_t* pp, int m, int n, int r, int k) {
+  TIME_FUNCTION;
 
-  clock_t beginSetup = clock();
+  START_TIMING;
   pp->lowmc    = lowmc_init(m, n, r, k);
-  timings[0]         = (clock() - beginSetup) * TIMING_SCALE;
-#ifdef VERBOSE
-  printf("LowMC setup                   %6lu\n", timings[0]);
-#endif
+  END_TIMING(timing_and_size.gen.lowmc_init);
 }
 
 void destroy_instance(public_parameters_t* pp) {

@@ -4,6 +4,7 @@
 #include "mpc.h"
 #include "mpc_lowmc.h"
 #include "randomness.h"
+#include "timing.h"
 
 unsigned fis_compute_sig_size(unsigned m, unsigned n, unsigned r, unsigned k) {
   unsigned first_view_size = k;
@@ -28,21 +29,24 @@ fis_signature_t *fis_sig_from_char_array(public_parameters_t *pp, unsigned char 
 
 
 void fis_create_key(public_parameters_t* pp, fis_private_key_t* private_key,
-                           fis_public_key_t* public_key, clock_t* timings) {
-  clock_t beginKeygen      = clock();
+                           fis_public_key_t* public_key) {
+  TIME_FUNCTION;
+
+  START_TIMING;
   private_key->k           = lowmc_keygen(pp->lowmc);
-  timings[1]               = (clock() - beginKeygen) * TIMING_SCALE;
-#ifdef VERBOSE
-  printf("LowMC key generation          %6lu\n", timings[1]);
-#endif
-  
-  clock_t beginPubkey = clock();
+  END_TIMING(timing_and_size.gen.keygen);
+
+  START_TIMING;
   mzd_t *p            = mzd_init(1, pp->lowmc->n);
   public_key->pk      = lowmc_call(pp->lowmc, private_key->k, p);
   mzd_free(p);
-  timings[2]          = (clock() - beginPubkey) * TIMING_SCALE;
+  END_TIMING(timing_and_size.gen.pubkey);
+
 #ifdef VERBOSE
-  printf("Public key computation        %6lu\n", timings[2]);
+  printf("Setup:\n");
+  printf("LowMC setup                   %6lu\n", timing_and_size.gen.lowmc_init);
+  printf("LowMC key generation          %6lu\n", timing_and_size.gen.keygen);
+  printf("Public key computation        %6lu\n\n", timing_and_size.gen.pubkey);
 #endif
 }
 
@@ -54,23 +58,15 @@ void fis_destroy_key(fis_private_key_t* private_key, fis_public_key_t* public_ke
   public_key->pk = NULL;
 }
 
-static proof_t* fis_prove(mpc_lowmc_t* lowmc, lowmc_key_t* lowmc_key, mzd_t* p, char *m, unsigned m_len, clock_t *timings) {
-#ifdef VERBOSE
-  printf("Prove:\n");
-#endif
+static proof_t* fis_prove(mpc_lowmc_t* lowmc, lowmc_key_t* lowmc_key, mzd_t* p, char *m, unsigned m_len) {
+  TIME_FUNCTION;
+
   unsigned char r[NUM_ROUNDS][3][4];
   unsigned char keys[NUM_ROUNDS][3][16];
 
   // Generating keys
-  clock_t beginRand = clock();
-  if (rand_bytes((unsigned char*)keys, sizeof(keys)) != 1) {
-#ifdef VERBOSE
-    printf("rand_bytes failed crypto, aborting\n");
-#endif
-    return 0;
-  }
-
-  if (rand_bytes((unsigned char*)r, sizeof(r)) != 1) {
+  START_TIMING;
+  if (rand_bytes((unsigned char*)keys, sizeof(keys)) != 1 || rand_bytes((unsigned char*)r, sizeof(r)) != 1) {
 #ifdef VERBOSE
     printf("rand_bytes failed crypto, aborting\n");
 #endif
@@ -84,37 +80,27 @@ static proof_t* fis_prove(mpc_lowmc_t* lowmc, lowmc_key_t* lowmc_key, mzd_t* p, 
     rvec[i][1] = mzd_init_random_vectors_from_seed(keys[i][1], lowmc->n, lowmc->r);
     rvec[i][2] = mzd_init_random_vectors_from_seed(keys[i][2], lowmc->n, lowmc->r);
   }
-  timings[3] = (clock() - beginRand) * TIMING_SCALE;
-#ifdef VERBOSE
-  printf("MPC randomess generation      %6lu\n", timings[3]);
-#endif
+  END_TIMING(timing_and_size.sign.rand);
 
-  clock_t beginShare = clock();
+  START_TIMING;
   view_t *views[NUM_ROUNDS];
   init_view(lowmc, views);
-  
+
   mzd_shared_t s[NUM_ROUNDS];
   for(int i = 0 ; i < NUM_ROUNDS ; i++) {
     mzd_shared_init(&s[i], lowmc_key);
     mzd_shared_share(&s[i]);
   }
-  timings[4] = (clock() - beginShare) * TIMING_SCALE;
-  
-#ifdef VERBOSE
-  printf("MPC secret sharing            %6lu\n", timings[4]);
-#endif
+  END_TIMING(timing_and_size.sign.secret_sharing);
 
-  clock_t beginLowmc = clock();
+  START_TIMING;
   mzd_t*** c_mpc     = (mzd_t***)malloc(NUM_ROUNDS * sizeof(mzd_t**));
 #pragma omp parallel for
   for (unsigned i    = 0; i < NUM_ROUNDS; i++)
     c_mpc[i]         = mpc_lowmc_call(lowmc, &s[i], p, views[i], rvec[i]);
-  timings[5] = (clock() - beginLowmc) * TIMING_SCALE;
-#ifdef VERBOSE
-  printf("MPC LowMC encryption          %6lu\n", timings[5]);
-#endif
+  END_TIMING(timing_and_size.sign.lowmc_enc);
 
-  clock_t beginHash = clock();
+  START_TIMING;
   unsigned char hashes[NUM_ROUNDS][3][SHA256_DIGEST_LENGTH];
 #pragma omp parallel for
   for (unsigned i = 0; i < NUM_ROUNDS; i++) {
@@ -122,19 +108,12 @@ static proof_t* fis_prove(mpc_lowmc_t* lowmc, lowmc_key_t* lowmc_key, mzd_t* p, 
     H(keys[i][1], c_mpc[i], views[i], 1, 2 + lowmc->r, r[i][1], hashes[i][1]);
     H(keys[i][2], c_mpc[i], views[i], 2, 2 + lowmc->r, r[i][2], hashes[i][2]);
   }
-  timings[6] = (clock() - beginHash) * TIMING_SCALE;
-#ifdef VERBOSE
-  printf("Hashing views                 %6lu\n", timings[6]);
-#endif
+  END_TIMING(timing_and_size.sign.views);
 
-  clock_t beginCh = clock();
+  START_TIMING;
   int ch[NUM_ROUNDS];
   fis_H3(hashes, m, m_len, ch);
-  timings[7] = (clock() - beginCh) * TIMING_SCALE;
-   
-#ifdef VERBOSE
-  printf("Generating challenge          %6lu\n", timings[7]);
-#endif
+  END_TIMING(timing_and_size.sign.challenge);
 
   proof_t* proof = create_proof(0, lowmc, hashes, ch, r, keys, c_mpc, views);
 
@@ -149,16 +128,22 @@ static proof_t* fis_prove(mpc_lowmc_t* lowmc, lowmc_key_t* lowmc_key, mzd_t* p, 
   }
 
 #ifdef VERBOSE
+  printf("Prove:\n");
+  printf("MPC randomess generation      %6lu\n", timing_and_size.sign.rand);
+  printf("MPC secret sharing            %6lu\n", timing_and_size.sign.secret_sharing);
+  printf("MPC LowMC encryption          %6lu\n", timing_and_size.sign.lowmc_enc);
+  printf("Hashing views                 %6lu\n", timing_and_size.sign.views);
+  printf("Generating challenge          %6lu\n", timing_and_size.sign.challenge);
   printf("\n");
 #endif
+
   return proof;
 }
 
-static int fis_proof_verify(mpc_lowmc_t* lowmc, mzd_t* p, mzd_t* c, proof_t* prf, char *m, unsigned m_len, clock_t *timings) {
-#ifdef VERBOSE
-  printf("Verify:\n");
-#endif
-  clock_t beginHash = clock();
+static int fis_proof_verify(mpc_lowmc_t* lowmc, mzd_t* p, mzd_t* c, proof_t* prf, char *m, unsigned m_len) {
+  TIME_FUNCTION;
+
+  START_TIMING;
   int ch[NUM_ROUNDS];
   unsigned char hash[NUM_ROUNDS][2][SHA256_DIGEST_LENGTH];
 #pragma omp parallel for
@@ -167,13 +152,9 @@ static int fis_proof_verify(mpc_lowmc_t* lowmc, mzd_t* p, mzd_t* c, proof_t* prf
     H(prf->keys[i][1], prf->y[i], prf->views[i], 1, 2 + lowmc->r, prf->r[i][1], hash[i][1]);
   }
   fis_H3_verify(hash, prf->hashes, prf->ch, m, m_len, ch);
-  
-  timings[8] = (clock() - beginHash) * TIMING_SCALE;
-#ifdef VERBOSE
-  printf("Recomputing challenge         %6lu\n", timings[8]);
-#endif
+  END_TIMING(timing_and_size.verify.challenge);
 
-  clock_t beginRec       = clock();
+  START_TIMING;
   int reconstruct_status = 0;
   for (int i = 0; i < NUM_ROUNDS; i++) {
     mzd_t* c_mpcr = mpc_reconstruct_from_share(prf->y[0]);
@@ -181,23 +162,17 @@ static int fis_proof_verify(mpc_lowmc_t* lowmc, mzd_t* p, mzd_t* c, proof_t* prf
       reconstruct_status = -1;
     mzd_free(c_mpcr);
   }
-  timings[9] = (clock() - beginRec) * TIMING_SCALE;
-#ifdef VERBOSE
-  printf("Verifying output shares       %6lu\n", timings[9]);
-#endif
+  END_TIMING(timing_and_size.verify.output_shares);
 
-  clock_t beginView       = clock();
+  START_TIMING;
   int output_share_status = 0;
   for (int i = 0; i < NUM_ROUNDS; i++)
     if (mzd_cmp(prf->y[i][ch[i]], prf->views[i][lowmc->r + 1].s[0]) ||
         mzd_cmp(prf->y[i][(ch[i] + 1) % 3], prf->views[i][lowmc->r + 1].s[1]))
       output_share_status = -1;
-  timings[10] = (clock() - beginView) * TIMING_SCALE;
-#ifdef VERBOSE
-  printf("Comparing output views        %6lu\n", timings[10]);
-#endif
+  END_TIMING(timing_and_size.verify.output_views);
 
-  clock_t beginViewVrfy = clock();
+  START_TIMING;
   mzd_t** rv[2];
   int view_verify_status = 0;
   for (int i = 0; i < NUM_ROUNDS; i++) {
@@ -221,9 +196,14 @@ static int fis_proof_verify(mpc_lowmc_t* lowmc, mzd_t* p, mzd_t* c, proof_t* prf
     mpc_free(rv[0], lowmc->r);
     mpc_free(rv[1], lowmc->r);
   }
-  timings[11] = (clock() - beginViewVrfy) * TIMING_SCALE;
+  END_TIMING(timing_and_size.verify.verify);
+
 #ifdef VERBOSE
-  printf("Verifying views               %6lu\n", timings[11]);
+  printf("Verify:\n");
+  printf("Recomputing challenge         %6lu\n", timing_and_size.verify.challenge);
+  printf("Verifying output shares       %6lu\n", timing_and_size.verify.output_shares);
+  printf("Comparing output views        %6lu\n", timing_and_size.verify.output_views);
+  printf("Verifying views               %6lu\n", timing_and_size.verify.verify);
   printf("\n");
 
   if (output_share_status)
@@ -245,17 +225,17 @@ static int fis_proof_verify(mpc_lowmc_t* lowmc, mzd_t* p, mzd_t* c, proof_t* prf
   return output_share_status || reconstruct_status || view_verify_status;
 }
 
-fis_signature_t *fis_sign(public_parameters_t* pp, fis_private_key_t* private_key, char *m, clock_t *timings) {
+fis_signature_t *fis_sign(public_parameters_t* pp, fis_private_key_t* private_key, char *m) {
   fis_signature_t *sig = (fis_signature_t*)malloc(sizeof(fis_signature_t));
   mzd_t *p = mzd_init(1, pp->lowmc->n);
-  sig->proof = fis_prove(pp->lowmc, private_key->k, p, m, strlen(m), timings);
+  sig->proof = fis_prove(pp->lowmc, private_key->k, p, m, strlen(m));
   mzd_free(p);
   return sig;
 }
 
-int fis_verify(public_parameters_t* pp, fis_public_key_t *public_key, char *m, fis_signature_t *sig, clock_t *timings) {
+int fis_verify(public_parameters_t* pp, fis_public_key_t *public_key, char *m, fis_signature_t *sig) {
   mzd_t *p = mzd_init(1, pp->lowmc->n);
-  int res = fis_proof_verify(pp->lowmc, p, public_key->pk, sig->proof, m, strlen(m), timings);
+  int res = fis_proof_verify(pp->lowmc, p, public_key->pk, sig->proof, m, strlen(m));
   mzd_free(p);
   return res;
 }
