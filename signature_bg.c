@@ -346,6 +346,7 @@ static int bg_proof_verify(public_parameters_t* pp, bg_public_key_t* pk, mzd_t* 
     printf("[FAIL] Proof does not match reconstructed views.\n");
   else
     printf("[ OK ] Proof matches reconstructed views.\n");
+  printf("\n");
 #endif
 
   return output_share_status || reconstruct_status || view_verify_status;

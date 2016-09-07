@@ -220,6 +220,7 @@ static int fis_proof_verify(mpc_lowmc_t* lowmc, mzd_t* p, mzd_t* c, proof_t* prf
     printf("[FAIL] Proof does not match reconstructed views.\n");
   else
     printf("[ OK ] Proof matches reconstructed views.\n");
+  printf("\n");
 #endif
 
   return output_share_status || reconstruct_status || view_verify_status;
