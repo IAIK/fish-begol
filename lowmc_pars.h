@@ -36,19 +36,6 @@ typedef struct {
 } lowmc_t;
 
 /**
- * Samples the L matrix for the LowMC instance
- *
- * \param n the blocksize
- */
-mzd_t* mzd_sample_lmatrix(rci_t n);
-
-/**
- * Samples the K matrix for the LowMC instance
- * \param n the blocksize
- */
-mzd_t* mzd_sample_kmatrix(rci_t n, rci_t k);
-
-/**
  * Generates a new LowMC instance (also including a key)
  *
  * \param m the number of sboxes

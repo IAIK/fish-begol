@@ -45,11 +45,20 @@ static mzd_t* mzd_sample_matrix_word(rci_t n, rci_t k, rci_t rank, bool with_xor
   return B;
 };
 
-mzd_t* mzd_sample_lmatrix(rci_t n) {
+/**
+ * Samples the L matrix for the LowMC instance
+ *
+ * \param n the blocksize
+ */
+static mzd_t* mzd_sample_lmatrix(rci_t n) {
   return mzd_sample_matrix_word(n, n, n, false);
 }
 
-mzd_t* mzd_sample_kmatrix(rci_t n, rci_t k) {
+/**
+ * Samples the K matrix for the LowMC instance
+ * \param n the blocksize
+ */
+static mzd_t* mzd_sample_kmatrix(rci_t n, rci_t k) {
   return mzd_sample_matrix_word(n, k, MIN(n, k), true);
 }
 
