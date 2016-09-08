@@ -4,8 +4,8 @@
 #ifdef WITH_OPT
 #include "avx.h"
 
-static const unsigned int sse_bound  = 128 / (8 * sizeof(word));
-static const unsigned int avx_bound  = 256 / (8 * sizeof(word));
+static const unsigned int sse_bound = 128 / (8 * sizeof(word));
+static const unsigned int avx_bound = 256 / (8 * sizeof(word));
 #endif
 
 void mzd_randomize_ssl(mzd_t* val) {
@@ -14,6 +14,23 @@ void mzd_randomize_ssl(mzd_t* val) {
   for (rci_t i = 0; i < val->nrows; ++i) {
     rand_bytes((unsigned char*)val->rows[i], val->width * sizeof(word));
     val->rows[i][val->width - 1] &= mask_end;
+  }
+}
+
+void mzd_randomize_upper_triangular(mzd_t* val) {
+  const word mask_end = val->high_bitmask;
+  for (rci_t i = 0; i < val->nrows; ++i) {
+    const unsigned int offset = i / (sizeof(word) * 8);
+    const unsigned int bit    = i % (sizeof(word) * 8);
+    word* row                 = val->rows[i];
+
+    rand_bytes((unsigned char*)(row + offset), (val->width - offset) * sizeof(word));
+    row[val->width - 1] &= mask_end;
+
+    row[offset] |= 1 << bit;
+    if (bit) {
+      row[offset] &= ~((1 << bit) - 1);
+    }
   }
 }
 
@@ -319,7 +336,6 @@ void mzd_shared_share_prng(mzd_shared_t* shared_value, aes_prng_t* aes_prng) {
   mzd_xor(shared_value->shared[0], shared_value->shared[0], shared_value->shared[1]);
   mzd_xor(shared_value->shared[0], shared_value->shared[0], shared_value->shared[2]);
 }
-
 
 void mzd_shared_clear(mzd_shared_t* shared_value) {
   for (unsigned int i = 0; i < shared_value->share_count; ++i) {
