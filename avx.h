@@ -68,13 +68,19 @@ static inline __m128i FN_ATTRIBUTES_SSE2 mm128_shift_right(__m128i data, unsigne
   return _mm_or_si128(data, carry);
 }
 
-static inline void FN_ATTRIBUTES_SSE2 mm128_xor_region(__m128i* dst, __m128i const* src, unsigned int count) {
+/**
+ * \brief xor multiple 128 bit values.
+ */
+static inline void FN_ATTRIBUTES_SSE2 mm128_xor_region(__m128i* restrict dst, __m128i const* restrict src, unsigned int count) {
   for (unsigned int i = count; i; --i, ++dst, ++src) {
     *dst = _mm_xor_si128(*dst, *src);
   }
 }
 
-static inline void FN_ATTRIBUTES_AVX2 mm256_xor_region(__m256i* dst, __m256i const* src, unsigned int count) {
+/**
+ * \brief xor multiple 128 bit values.
+ */
+static inline void FN_ATTRIBUTES_AVX2 mm256_xor_region(__m256i* restrict dst, __m256i const* restrict src, unsigned int count) {
   for (unsigned int i = count; i; --i, ++dst, ++src) {
     *dst = _mm256_xor_si256(*dst, *src);
   }
