@@ -27,9 +27,9 @@ void mzd_randomize_upper_triangular(mzd_t* val) {
     rand_bytes((unsigned char*)(row + offset), (val->width - offset) * sizeof(word));
     row[val->width - 1] &= mask_end;
 
-    row[offset] |= 1 << bit;
+    row[offset] |= ((word)1) << bit;
     if (bit) {
-      row[offset] &= ~((1 << bit) - 1);
+      row[offset] &= ~((((word) 1) << bit) - 1);
     }
   }
 }
