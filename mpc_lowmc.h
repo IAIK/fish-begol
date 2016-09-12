@@ -40,8 +40,6 @@ typedef struct {
   mzd_t **v;
 } sbox_vars_t;
 
-unsigned char getChAt(unsigned char *ch, unsigned int i);
-
 proof_t *proof_from_char_array(mpc_lowmc_t *lowmc, proof_t *proof, unsigned char *data, unsigned *len, bool contains_ch);
 
 unsigned char *proof_to_char_array(mpc_lowmc_t *lowmc, proof_t *proof, unsigned *len, bool store_ch); 
