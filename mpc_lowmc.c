@@ -299,35 +299,24 @@ _mpc_sbox_layer_bitsliced_sse(mzd_t** out, mzd_t** in, rci_t m, view_t* view, mz
 
   __m128i mmask = _mm_load_si128((__m128i*)mask->mask->rows[0]);
   for (unsigned int m = 0; m < sc; ++m) {
-    // mpc_xor(vars->r2m, vars->r2m, vars->x0s, sc);
     __m128i x0s = _mm_load_si128((__m128i*)vars->x0s[m]->rows[0]);
     __m128i r2m = _mm_load_si128((__m128i*)vars->r2m[m]->rows[0]);
     r2m         = _mm_xor_si128(r2m, x0s);
 
-    // mpc_xor(vars->x0s, vars->x0s, vars->x1s, sc);
     __m128i x1s = _mm_load_si128((__m128i*)vars->x1s[m]->rows[0]);
     x0s         = _mm_xor_si128(x0s, x1s);
-    // mpc_xor(vars->r1m, vars->r1m, vars->x0s, sc);
     __m128i r1m = _mm_xor_si128(x0s, _mm_load_si128((__m128i*)vars->r1m[m]->rows[0]));
 
-    // mpc_and_const(out, in, mask->mask, sc);
     __m128i mout = _mm_and_si128(mmask, _mm_load_si128((__m128i*)in[m]->rows[0]));
 
-    // mpc_xor(vars->r0m, vars->r0m, vars->x0s, sc);
     __m128i r0m = _mm_xor_si128(x0s, _mm_load_si128((__m128i*)vars->r0m[m]->rows[0]));
-    // mpc_xor(vars->r0m, vars->r0m, vars->x2m, sc);
     r0m = _mm_xor_si128(r0m, _mm_load_si128((__m128i*)vars->x2m[m]->rows[0]));
-    // mpc_xor(out, out, vars->r0m, sc);
     mout = _mm_xor_si128(mout, r0m);
 
-    // mpc_shift_right(vars->x0s, vars->r2m, 2, sc);
     x0s = mm128_shift_right(r2m, 2);
-    // mpc_xor(out, out, vars->x0s, sc);
     mout = _mm_xor_si128(mout, x0s);
 
-    // mpc_shift_right(vars->x1s, vars->r1m, 1, sc);
     x1s = mm128_shift_right(r1m, 1);
-    // mpc_xor(out, out, vars->x1s, sc);
     mout = _mm_xor_si128(mout, x1s);
 
     _mm_store_si128((__m128i*)out[m]->rows[0], mout);
@@ -382,35 +371,24 @@ _mpc_sbox_layer_bitsliced_avx(mzd_t** out, mzd_t** in, rci_t m, view_t* view, mz
 
   __m256i mmask = _mm256_load_si256((__m256i*)mask->mask->rows[0]);
   for (unsigned int m = 0; m < sc; ++m) {
-    // mpc_xor(vars->r2m, vars->r2m, vars->x0s, sc);
     __m256i x0s = _mm256_load_si256((__m256i*)vars->x0s[m]->rows[0]);
     __m256i r2m = _mm256_load_si256((__m256i*)vars->r2m[m]->rows[0]);
     r2m         = _mm256_xor_si256(r2m, x0s);
 
-    // mpc_xor(vars->x0s, vars->x0s, vars->x1s, sc);
     __m256i x1s = _mm256_load_si256((__m256i*)vars->x1s[m]->rows[0]);
     x0s         = _mm256_xor_si256(x0s, x1s);
-    // mpc_xor(vars->r1m, vars->r1m, vars->x0s, sc);
     __m256i r1m = _mm256_xor_si256(x0s, _mm256_load_si256((__m256i*)vars->r1m[m]->rows[0]));
 
-    // mpc_and_const(out, in, mask->mask, sc);
     __m256i mout = _mm256_and_si256(mmask, _mm256_load_si256((__m256i*)in[m]->rows[0]));
 
-    // mpc_xor(vars->r0m, vars->r0m, vars->x0s, sc);
     __m256i r0m = _mm256_xor_si256(x0s, _mm256_load_si256((__m256i*)vars->r0m[m]->rows[0]));
-    // mpc_xor(vars->r0m, vars->r0m, vars->x2m, sc);
     r0m = _mm256_xor_si256(r0m, _mm256_load_si256((__m256i*)vars->x2m[m]->rows[0]));
-    // mpc_xor(out, out, vars->r0m, sc);
     mout = _mm256_xor_si256(mout, r0m);
 
-    // mpc_shift_right(vars->x0s, vars->r2m, 2, sc);
     x0s = mm256_shift_right(r2m, 2);
-    // mpc_xor(out, out, vars->x0s, sc);
     mout = _mm256_xor_si256(mout, x0s);
 
-    // mpc_shift_right(vars->x1s, vars->r1m, 1, sc);
     x1s = mm256_shift_right(r1m, 1);
-    // mpc_xor(out, out, vars->x1s, sc);
     mout = _mm256_xor_si256(mout, x1s);
 
     _mm256_store_si256((__m256i*)out[m]->rows[0], mout);

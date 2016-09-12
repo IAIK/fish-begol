@@ -7,6 +7,7 @@
 static const unsigned int sse_bound = 128 / (8 * sizeof(word));
 static const unsigned int avx_bound = 256 / (8 * sizeof(word));
 #endif
+static const unsigned int word_size_bits = 8 * sizeof(word);
 
 void mzd_randomize_ssl(mzd_t* val) {
   // similar to mzd_randomize but using RAND_Bytes instead
@@ -20,8 +21,8 @@ void mzd_randomize_ssl(mzd_t* val) {
 void mzd_randomize_upper_triangular(mzd_t* val) {
   const word mask_end = val->high_bitmask;
   for (rci_t i = 0; i < val->nrows; ++i) {
-    const unsigned int offset = i / (sizeof(word) * 8);
-    const unsigned int bit    = i % (sizeof(word) * 8);
+    const unsigned int offset = i / word_size_bits;
+    const unsigned int bit    = i % word_size_bits;
     word* row                 = val->rows[i];
 
     rand_bytes((unsigned char*)(row + offset), (val->width - offset) * sizeof(word));
@@ -102,7 +103,6 @@ void mzd_shift_left(mzd_t* res, mzd_t const* val, unsigned count) {
 __attribute__((target("sse2"))) static inline mzd_t* mzd_and_sse(mzd_t* res, mzd_t const* first,
                                                                  mzd_t const* second) {
   unsigned int width    = first->width;
-  const word mask       = first->high_bitmask;
   word* resptr          = res->rows[0];
   word const* firstptr  = first->rows[0];
   word const* secondptr = second->rows[0];
@@ -125,7 +125,6 @@ __attribute__((target("sse2"))) static inline mzd_t* mzd_and_sse(mzd_t* res, mzd
   while (width--) {
     *resptr++ = *firstptr++ & *secondptr++;
   }
-  *(--resptr) &= mask;
 
   return res;
 }
@@ -133,7 +132,6 @@ __attribute__((target("sse2"))) static inline mzd_t* mzd_and_sse(mzd_t* res, mzd
 __attribute__((target("avx2"))) static inline mzd_t* mzd_and_avx(mzd_t* res, mzd_t const* first,
                                                                  mzd_t const* second) {
   unsigned int width    = first->width;
-  const word mask       = first->high_bitmask;
   word* resptr          = res->rows[0];
   word const* firstptr  = first->rows[0];
   word const* secondptr = second->rows[0];
@@ -156,7 +154,6 @@ __attribute__((target("avx2"))) static inline mzd_t* mzd_and_avx(mzd_t* res, mzd
   while (width--) {
     *resptr++ = *firstptr++ & *secondptr++;
   }
-  *(--resptr) &= mask;
 
   return res;
 }
@@ -168,9 +165,9 @@ mzd_t* mzd_and(mzd_t* res, mzd_t const* first, mzd_t const* second) {
   }
 
 #ifdef WITH_OPT
-  if (__builtin_cpu_supports("avx2") && first->ncols >= 256) {
+  if (__builtin_cpu_supports("avx2") && first->ncols >= 256 && first->ncols % word_size_bits == 0) {
     return mzd_and_avx(res, first, second);
-  } else if (__builtin_cpu_supports("sse2")) {
+  } else if (__builtin_cpu_supports("sse2") && first->ncols % word_size_bits == 0) {
     return mzd_and_sse(res, first, second);
   }
 #endif
@@ -193,7 +190,6 @@ mzd_t* mzd_and(mzd_t* res, mzd_t const* first, mzd_t const* second) {
 __attribute__((target("sse2"))) static inline mzd_t* mzd_xor_sse(mzd_t* res, mzd_t const* first,
                                                                  mzd_t const* second) {
   unsigned int width    = first->width;
-  const word mask       = first->high_bitmask;
   word* resptr          = res->rows[0];
   word const* firstptr  = first->rows[0];
   word const* secondptr = second->rows[0];
@@ -217,14 +213,12 @@ __attribute__((target("sse2"))) static inline mzd_t* mzd_xor_sse(mzd_t* res, mzd
     *resptr++ = *firstptr++ ^ *secondptr++;
   }
 
-  *(--resptr) &= mask;
   return res;
 }
 
 __attribute__((target("avx2"))) static inline mzd_t* mzd_xor_avx(mzd_t* res, mzd_t const* first,
                                                                  mzd_t const* second) {
   unsigned int width    = first->width;
-  const word mask       = first->high_bitmask;
   word* resptr          = res->rows[0];
   word const* firstptr  = first->rows[0];
   word const* secondptr = second->rows[0];
@@ -247,7 +241,6 @@ __attribute__((target("avx2"))) static inline mzd_t* mzd_xor_avx(mzd_t* res, mzd
   while (width--) {
     *resptr++ = *firstptr++ ^ *secondptr++;
   }
-  *(--resptr) &= mask;
 
   return res;
 }
@@ -259,9 +252,9 @@ mzd_t* mzd_xor(mzd_t* res, mzd_t const* first, mzd_t const* second) {
   }
 
 #ifdef WITH_OPT
-  if (__builtin_cpu_supports("avx2") && first->ncols >= 256) {
+  if (__builtin_cpu_supports("avx2") && first->ncols >= 256 && first->ncols % word_size_bits == 0) {
     return mzd_xor_avx(res, first, second);
-  } else if (__builtin_cpu_supports("sse2")) {
+  } else if (__builtin_cpu_supports("sse2") && first->ncols % word_size_bits == 0) {
     return mzd_xor_sse(res, first, second);
   }
 #endif
