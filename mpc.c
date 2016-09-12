@@ -110,23 +110,22 @@ int mpc_and(mzd_t** res, mzd_t** first, mzd_t** second, mzd_t** r, view_t* view,
   (void)mask;
 
   mzd_t* b = NULL;
-  mzd_t* c = NULL;
 
   for (unsigned m = 0; m < 3; ++m) {
     unsigned j = (m + 1) % 3;
     res[m]     = mzd_and(res[m], first[m], second[m]);
 
     b = mzd_and(b, first[j], second[m]);
-    c = mzd_and(c, first[m], second[j]);
-
     mzd_xor(res[m], res[m], b);
-    mzd_xor(res[m], res[m], c);
+
+    b = mzd_and(b, first[m], second[j]);
+    mzd_xor(res[m], res[m], b);
+
     mzd_xor(res[m], res[m], r[m]);
     mzd_xor(res[m], res[m], r[j]);
   }
 
   mzd_free(b);
-  mzd_free(c);
 
   mpc_shift_right(buffer, res, viewshift, 3);
   mpc_xor(view->s, view->s, buffer, 3);
@@ -222,23 +221,22 @@ __attribute__((target("avx2"))) int mpc_and_verify_avx(mzd_t** res, mzd_t** firs
 int mpc_and_verify(mzd_t** res, mzd_t** first, mzd_t** second, mzd_t** r, view_t* view, mzd_t* mask,
                    unsigned viewshift, mzd_t** buffer) {
   mzd_t* b = NULL;
-  mzd_t* c = NULL;
 
   for (unsigned m = 0; m < 1; m++) {
     unsigned j = m + 1;
     res[m]     = mzd_and(res[m], first[m], second[m]);
 
     b = mzd_and(b, first[j], second[m]);
-    c = mzd_and(c, first[m], second[j]);
-
     mzd_xor(res[m], res[m], b);
-    mzd_xor(res[m], res[m], c);
+
+    b = mzd_and(b, first[m], second[j]);
+    mzd_xor(res[m], res[m], b);
+
     mzd_xor(res[m], res[m], r[m]);
     mzd_xor(res[m], res[m], r[j]);
   }
 
   mzd_free(b);
-  mzd_free(c);
 
   for (unsigned m = 0; m < 1; m++) {
     mzd_shift_left(buffer[m], view->s[m], viewshift);
