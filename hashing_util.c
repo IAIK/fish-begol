@@ -12,8 +12,9 @@ static inline int getChAt(unsigned char *ch, unsigned int i) {
 
 static void hash_mzd(SHA256_CTX* ctx, mzd_t const* v) {
   const rci_t nrows = v->nrows;
+  const unsigned int width = sizeof(word) * v->width;
   for (rci_t m = 0; m < nrows; ++m) {
-    SHA256_Update(ctx, v->rows[m], sizeof(word) * v->width);
+    SHA256_Update(ctx, v->rows[m], width);
   }
 }
 
