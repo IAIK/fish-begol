@@ -4,6 +4,9 @@ CFLAGS+=-DWITH_OPT
 CFLAGS+=-DWITH_DETAILED_TIMING
 CFLAGS+=-std=c11
 CFLAGS+=-Wall
+CFLAGS+=-march=native
+CFLAGS+=-mtune=native
+CFLAGS+=-msse2avx
 LDLIBS+=-lm4ri -lcrypto
 
 all:
