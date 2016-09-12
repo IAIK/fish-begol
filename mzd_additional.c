@@ -165,9 +165,9 @@ mzd_t* mzd_and(mzd_t* res, mzd_t const* first, mzd_t const* second) {
   }
 
 #ifdef WITH_OPT
-  if (__builtin_cpu_supports("avx2") && first->ncols >= 256 && first->ncols % word_size_bits == 0) {
+  if (CPU_SUPPORTS_AVX2 && first->ncols >= 256 && first->ncols % word_size_bits == 0) {
     return mzd_and_avx(res, first, second);
-  } else if (__builtin_cpu_supports("sse2") && first->ncols % word_size_bits == 0) {
+  } else if (CPU_SUPPORTS_SSE2 && first->ncols % word_size_bits == 0) {
     return mzd_and_sse(res, first, second);
   }
 #endif
@@ -252,9 +252,9 @@ mzd_t* mzd_xor(mzd_t* res, mzd_t const* first, mzd_t const* second) {
   }
 
 #ifdef WITH_OPT
-  if (__builtin_cpu_supports("avx2") && first->ncols >= 256 && first->ncols % word_size_bits == 0) {
+  if (CPU_SUPPORTS_AVX2 && first->ncols >= 256 && first->ncols % word_size_bits == 0) {
     return mzd_xor_avx(res, first, second);
-  } else if (__builtin_cpu_supports("sse2") && first->ncols % word_size_bits == 0) {
+  } else if (CPU_SUPPORTS_SSE2 && first->ncols % word_size_bits == 0) {
     return mzd_xor_sse(res, first, second);
   }
 #endif
@@ -577,9 +577,9 @@ mzd_t* mzd_addmul_v(mzd_t* c, mzd_t const* v, mzd_t const* A) {
   }
 
 #ifdef WITH_OPT
-  if (__builtin_cpu_supports("avx2") && A->ncols % 256 == 0) {
+  if (CPU_SUPPORTS_AVX2 && A->ncols % 256 == 0) {
     return mzd_addmul_v_avx(c, v, A);
-  } else if (__builtin_cpu_supports("sse2") && A->ncols % 128 == 0) {
+  } else if (CPU_SUPPORTS_SSE2 && A->ncols % 128 == 0) {
     return mzd_addmul_v_sse(c, v, A);
   }
 #endif
@@ -715,11 +715,11 @@ int mzd_equal(mzd_t const* first, mzd_t const* second) {
   }
 
 #ifdef WITH_OPT
-  if (__builtin_cpu_supports("avx2") && first->ncols >= 256) {
+  if (CPU_SUPPORTS_AVX2 && first->ncols >= 256) {
     return mzd_equal_avx(first, second);
-  } else if (__builtin_cpu_supports("sse4.1")) {
+  } else if (CPU_SUPPORTS_SSE4) {
     return mzd_equal_sse41(first, second);
-  } else if (__builtin_cpu_supports("sse2")) {
+  } else if (CPU_SUPPORTS_SSE2) {
     return mzd_equal_sse(first, second);
   }
 #endif

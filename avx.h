@@ -6,6 +6,16 @@
 #define FN_ATTRIBUTES_AVX2 __attribute__((__always_inline__, target("avx2")))
 #define FN_ATTRIBUTES_SSE2 __attribute__((__always_inline__, target("sse2")))
 
+#define CPU_SUPPORTS_AVX2 __builtin_cpu_supports("avx2")
+#define CPU_SUPPORTS_SSE4 __builtin_cpu_supports("sse4.1")
+
+#ifdef __x86_64__
+#define CPU_SUPPORTS_SSE2 1
+#else
+#define CPU_SUPPORTS_SSE2 __builtin_cpu_supports("sse2")
+#endif
+
+
 /**
  * \brief Perform a left shift on a 256 bit value.
  */

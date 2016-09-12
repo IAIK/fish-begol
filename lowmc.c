@@ -151,9 +151,9 @@ mzd_t* lowmc_call(lowmc_t* lowmc, lowmc_key_t* lowmc_key, mzd_t* p) {
   for (unsigned i = 0; i < lowmc->r; ++i, ++round) {
     // sbox_layer(y, x, lowmc->m);
 #ifdef WITH_OPT
-    if (__builtin_cpu_supports("sse2") && y->ncols == 128) {
+    if (CPU_SUPPORTS_SSE2 && y->ncols == 128) {
       sbox_layer_sse(y, x, &lowmc->mask);
-    } else if (__builtin_cpu_supports("avx2") && y->ncols == 256) {
+    } else if (CPU_SUPPORTS_AVX2 && y->ncols == 256) {
       sbox_layer_avx(y, x, &lowmc->mask);
     } else {
       sbox_layer_bitsliced(y, x, lowmc->m, &lowmc->mask);

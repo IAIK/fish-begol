@@ -522,10 +522,10 @@ static mzd_t** _mpc_lowmc_call_bitsliced(mpc_lowmc_t* lowmc, mpc_lowmc_key_t* lo
 
     int ret = 0;
 #ifdef WITH_OPT
-    if (__builtin_cpu_supports("sse2") && lowmc->n == 128) {
+    if (CPU_SUPPORTS_SSE2 && lowmc->n == 128) {
       ret = _mpc_sbox_layer_bitsliced_sse(y, x, lowmc->m, &views[vcnt], r, sc, andPtr, &lowmc->mask,
                                           vars);
-    } else if (__builtin_cpu_supports("avx2") && lowmc->n == 256) {
+    } else if (CPU_SUPPORTS_AVX2 && lowmc->n == 256) {
       ret = _mpc_sbox_layer_bitsliced_avx(y, x, lowmc->m, &views[vcnt], r, sc, andPtr, &lowmc->mask,
                                           vars);
     } else {
@@ -586,10 +586,10 @@ static mzd_t** _mpc_lowmc_call_bitsliced_shared_p(mpc_lowmc_t* lowmc, mpc_lowmc_
 
     int ret = 0;
 #ifdef WITH_OPT
-    if (__builtin_cpu_supports("sse2") && lowmc->n == 128) {
+    if (CPU_SUPPORTS_SSE2 && lowmc->n == 128) {
       ret = _mpc_sbox_layer_bitsliced_sse(y, x, lowmc->m, &views[vcnt], r, sc, andPtr, &lowmc->mask,
                                           vars);
-    } else if (__builtin_cpu_supports("avx2") && lowmc->n == 256) {
+    } else if (CPU_SUPPORTS_AVX2 && lowmc->n == 256) {
       ret = _mpc_sbox_layer_bitsliced_avx(y, x, lowmc->m, &views[vcnt], r, sc, andPtr, &lowmc->mask,
                                           vars);
     } else {
@@ -624,9 +624,9 @@ static mzd_t** _mpc_lowmc_call_bitsliced_shared_p(mpc_lowmc_t* lowmc, mpc_lowmc_
 
 static inline and_ptr select_and(mpc_lowmc_t* lowmc) {
 #ifdef WITH_OPT
-  if (__builtin_cpu_supports("sse2") && lowmc->n == 128) {
+  if (CPU_SUPPORTS_SSE2 && lowmc->n == 128) {
     return &mpc_and_sse;
-  } else if (__builtin_cpu_supports("avx2") && lowmc->n == 256) {
+  } else if (CPU_SUPPORTS_AVX2 && lowmc->n == 256) {
     return &mpc_and_avx;
   }
 #else
@@ -638,9 +638,9 @@ static inline and_ptr select_and(mpc_lowmc_t* lowmc) {
 
 static inline and_ptr select_and_verify(mpc_lowmc_t* lowmc) {
 #ifdef WITH_OPT
-  if (__builtin_cpu_supports("sse2") && lowmc->n == 128) {
+  if (CPU_SUPPORTS_SSE2 && lowmc->n == 128) {
     return &mpc_and_verify_sse;
-  } else if (__builtin_cpu_supports("avx2") && lowmc->n == 256) {
+  } else if (CPU_SUPPORTS_AVX2 && lowmc->n == 256) {
     return &mpc_and_verify_avx;
   }
 #else
