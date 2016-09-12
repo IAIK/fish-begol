@@ -2,9 +2,9 @@
 #include "mpc_lowmc.h"
 #include <m4ri/m4ri.h>
 
-static inline int getChAt(unsigned char *ch, unsigned int i) {
-  int idx = i / 4;
-  int offset = (i % 4) * 2;
+static inline unsigned int getChAt(unsigned char const *ch, unsigned int i) {
+  const int unsigned idx = i / 4;
+  const int unsigned offset = (i % 4) * 2;
 
   return (ch[idx] >> offset) & 3;
 }
@@ -116,11 +116,11 @@ static void bg_H3_compute(unsigned char hash[SHA256_DIGEST_LENGTH], int* ch) {
   }
 }
 
-void bg_H3_verify(unsigned char h1[NUM_ROUNDS][2][SHA256_DIGEST_LENGTH],
-                  unsigned char hp1[NUM_ROUNDS][SHA256_DIGEST_LENGTH],
-                  unsigned char h2[NUM_ROUNDS][2][SHA256_DIGEST_LENGTH],
-                  unsigned char hp2[NUM_ROUNDS][SHA256_DIGEST_LENGTH],
-                  unsigned char ch_in[(NUM_ROUNDS + 3) / 4], int* ch) {
+void bg_H3_verify(unsigned char const h1[NUM_ROUNDS][2][SHA256_DIGEST_LENGTH],
+                  unsigned char const hp1[NUM_ROUNDS][SHA256_DIGEST_LENGTH],
+                  unsigned char const h2[NUM_ROUNDS][2][SHA256_DIGEST_LENGTH],
+                  unsigned char const hp2[NUM_ROUNDS][SHA256_DIGEST_LENGTH],
+                  unsigned char const ch_in[(NUM_ROUNDS + 3) / 4], int* ch) {
 
   unsigned char hash[SHA256_DIGEST_LENGTH];
   SHA256_CTX ctx;

@@ -49,7 +49,7 @@ bg_signature_t *bg_sig_from_char_array(public_parameters_t *pp, unsigned char *d
 }
 
 void bg_create_key(public_parameters_t* pp, bg_private_key_t* private_key,
-                          bg_public_key_t* public_key) {
+                   bg_public_key_t* public_key) {
   TIME_FUNCTION;
 
   START_TIMING;
@@ -61,7 +61,7 @@ void bg_create_key(public_parameters_t* pp, bg_private_key_t* private_key,
   END_TIMING(timing_and_size->gen.keygen);
 
   START_TIMING;
-  public_key->pk      = lowmc_call(pp->lowmc, lowmc_key_k, lowmc_key_s);
+  public_key->pk = lowmc_call(pp->lowmc, lowmc_key_k, lowmc_key_s);
 
   END_TIMING(timing_and_size->gen.pubkey);
 }
@@ -85,7 +85,8 @@ void bg_free_signature(public_parameters_t* pp, bg_signature_t* signature) {
 
 static bg_signature_t* bg_prove(public_parameters_t* pp, bg_private_key_t* private_key, mzd_t* p) {
   TIME_FUNCTION;
-  lowmc_t* lowmc         = pp->lowmc;
+  lowmc_t* lowmc                = pp->lowmc;
+  const unsigned int view_count = lowmc->r + 2;
 
   unsigned char r_p[NUM_ROUNDS][3][4];
   unsigned char keys_p[NUM_ROUNDS][3][16];
@@ -142,12 +143,13 @@ static bg_signature_t* bg_prove(public_parameters_t* pp, bg_private_key_t* priva
   END_TIMING(timing_and_size->sign.secret_sharing);
 
   START_TIMING;
-  mzd_t*** c_mpc_p   = calloc(NUM_ROUNDS, sizeof(mzd_t**));
-  mzd_t*** c_mpc_s   = calloc(NUM_ROUNDS, sizeof(mzd_t**));
+  mzd_t*** c_mpc_p = calloc(NUM_ROUNDS, sizeof(mzd_t**));
+  mzd_t*** c_mpc_s = calloc(NUM_ROUNDS, sizeof(mzd_t**));
 #pragma omp parallel for
   for (unsigned i = 0; i < NUM_ROUNDS; ++i) {
     c_mpc_p[i] = mpc_lowmc_call(lowmc, &lowmc_key_s[i], p, views_p[i], rvec_p[i]);
-    c_mpc_s[i] = mpc_lowmc_call_shared_p(lowmc, &lowmc_key_k[i], &lowmc_key_s[i], views_s[i], rvec_s[i]);
+    c_mpc_s[i] =
+        mpc_lowmc_call_shared_p(lowmc, &lowmc_key_k[i], &lowmc_key_s[i], views_s[i], rvec_s[i]);
   }
   signature->c = mpc_reconstruct_from_share(c_mpc_p[0]);
   END_TIMING(timing_and_size->sign.lowmc_enc);
@@ -158,8 +160,8 @@ static bg_signature_t* bg_prove(public_parameters_t* pp, bg_private_key_t* priva
 #pragma omp parallel for
   for (unsigned i = 0; i < NUM_ROUNDS; ++i) {
     for (unsigned int j = 0; j < 3; ++j) {
-      H(keys_p[i][j], c_mpc_p[i], views_p[i], j, 2 + lowmc->r, r_p[i][j], hashes_p[i][j]);
-      H(keys_s[i][j], c_mpc_s[i], views_s[i], j, 2 + lowmc->r, r_s[i][j], hashes_s[i][j]);
+      H(keys_p[i][j], c_mpc_p[i], views_p[i], j, view_count, r_p[i][j], hashes_p[i][j]);
+      H(keys_s[i][j], c_mpc_s[i], views_s[i], j, view_count, r_s[i][j], hashes_s[i][j]);
     }
   }
   END_TIMING(timing_and_size->sign.views);
@@ -184,7 +186,7 @@ static bg_signature_t* bg_prove(public_parameters_t* pp, bg_private_key_t* priva
       mpc_free(rvec_p[j][i], lowmc->r);
       mpc_free(rvec_s[j][i], lowmc->r);
     }
-    for (unsigned i = 0; i < lowmc->r + 2; ++i) {
+    for (unsigned i = 0; i < view_count; ++i) {
       free(views_p[j][i].s);
       free(views_s[j][i].s);
     }
@@ -210,8 +212,8 @@ static int verify_with_shared_p(mpc_lowmc_t* lowmc, mzd_t* p, mzd_shared_t* shar
   return mpc_lowmc_verify_shared_p(lowmc, shared_p, views, rv, ch);
 }
 
-static int verify_views(mpc_lowmc_t* lowmc, mzd_t* p, mzd_shared_t shared_p[NUM_ROUNDS], proof_t* proof,
-                        verify_ptr verify, int ch[NUM_ROUNDS]) {
+static int verify_views(mpc_lowmc_t* lowmc, mzd_t* p, mzd_shared_t shared_p[NUM_ROUNDS],
+                        proof_t* proof, verify_ptr verify, int ch[NUM_ROUNDS]) {
   int view_verify_status = 0;
 
 #pragma omp parallel for reduction(| : view_verify_status)
@@ -235,21 +237,27 @@ static int bg_proof_verify(public_parameters_t* pp, bg_public_key_t* pk, mzd_t* 
                            bg_signature_t* signature) {
   TIME_FUNCTION;
 
-  lowmc_t* lowmc         = pp->lowmc;
-  proof_t* proof_p = &signature->proof_p;
-  proof_t* proof_s = &signature->proof_s;
+  lowmc_t* lowmc                     = pp->lowmc;
+  const unsigned int view_count      = lowmc->r + 2;
+  const unsigned int last_view_index = lowmc->r + 1;
+  proof_t* proof_p                   = &signature->proof_p;
+  proof_t* proof_s                   = &signature->proof_s;
 
   START_TIMING;
-  int ch[NUM_ROUNDS]; 
+  int ch[NUM_ROUNDS];
   unsigned char hash_p[NUM_ROUNDS][2][SHA256_DIGEST_LENGTH];
   unsigned char hash_s[NUM_ROUNDS][2][SHA256_DIGEST_LENGTH];
 
-  for(unsigned i = 0 ; i < NUM_ROUNDS ; i++) {
-    H(proof_p->keys[i][0], proof_p->y[i], proof_p->views[i], 0, 2 + lowmc->r, proof_p->r[i][0], hash_p[i][0]);
-    H(proof_p->keys[i][1], proof_p->y[i], proof_p->views[i], 1, 2 + lowmc->r, proof_p->r[i][1], hash_p[i][1]);
+  for (unsigned i = 0; i < NUM_ROUNDS; i++) {
+    H(proof_p->keys[i][0], proof_p->y[i], proof_p->views[i], 0, view_count, proof_p->r[i][0],
+      hash_p[i][0]);
+    H(proof_p->keys[i][1], proof_p->y[i], proof_p->views[i], 1, view_count, proof_p->r[i][1],
+      hash_p[i][1]);
 
-    H(proof_s->keys[i][0], proof_s->y[i], proof_s->views[i], 0, 2 + lowmc->r, proof_s->r[i][0], hash_s[i][0]);
-    H(proof_s->keys[i][1], proof_s->y[i], proof_s->views[i], 1, 2 + lowmc->r, proof_s->r[i][1], hash_s[i][1]);
+    H(proof_s->keys[i][0], proof_s->y[i], proof_s->views[i], 0, view_count, proof_s->r[i][0],
+      hash_s[i][0]);
+    H(proof_s->keys[i][1], proof_s->y[i], proof_s->views[i], 1, view_count, proof_s->r[i][1],
+      hash_s[i][1]);
   }
 
   bg_H3_verify(hash_p, proof_p->hashes, hash_s, proof_s->hashes, proof_s->ch, ch);
@@ -277,26 +285,27 @@ static int bg_proof_verify(public_parameters_t* pp, bg_public_key_t* pk, mzd_t* 
   int output_share_status = 0;
 #pragma omp parallel for reduction(| : output_share_status)
   for (unsigned int i = 0; i < NUM_ROUNDS; i++) {
-    if (mzd_equal(proof_p->y[i][ch[i]], proof_p->views[i][lowmc->r + 1].s[0]) ||
-        mzd_equal(proof_p->y[i][(ch[i] + 1) % 3], proof_p->views[i][lowmc->r + 1].s[1]))
+    const unsigned int a = ch[i];
+    const unsigned int b = (a + 1) % 3;
+
+    if (mzd_equal(proof_p->y[i][a], proof_p->views[i][last_view_index].s[0]) ||
+        mzd_equal(proof_p->y[i][b], proof_p->views[i][last_view_index].s[1]) ||
+        mzd_equal(proof_s->y[i][a], proof_s->views[i][last_view_index].s[0]) ||
+        mzd_equal(proof_s->y[i][b], proof_s->views[i][last_view_index].s[1])) {
       output_share_status |= -1;
-    if (mzd_equal(proof_s->y[i][ch[i]], proof_s->views[i][lowmc->r + 1].s[0]) ||
-        mzd_equal(proof_s->y[i][(ch[i] + 1) % 3], proof_s->views[i][lowmc->r + 1].s[1]))
-      output_share_status |= -1;
+    }
   }
   END_TIMING(timing_and_size->verify.output_views);
 
   START_TIMING;
-  mzd_shared_t shared_s[NUM_ROUNDS] = { {0, NULL} };
+  mzd_shared_t shared_s[NUM_ROUNDS] = {{0, NULL}};
   for (unsigned int i = 0; i < NUM_ROUNDS; i++) {
     mzd_shared_from_shares(&shared_s[i], proof_p->views[i][0].s, 2);
   }
 
   int view_verify_status = 0;
-  if (0 != verify_views(lowmc, p, shared_s, proof_p, verify_with_p, ch)) {
-    view_verify_status = -1;
-  }
-  if (0 != verify_views(lowmc, p, shared_s, proof_s, verify_with_shared_p, ch)) {
+  if (verify_views(lowmc, p, shared_s, proof_p, verify_with_p, ch) ||
+      verify_views(lowmc, p, shared_s, proof_s, verify_with_shared_p, ch)) {
     view_verify_status = -1;
   }
 
@@ -326,11 +335,11 @@ static int bg_proof_verify(public_parameters_t* pp, bg_public_key_t* pk, mzd_t* 
   return output_share_status || reconstruct_status || view_verify_status;
 }
 
-bg_signature_t *bg_sign(public_parameters_t* pp, bg_private_key_t* private_key, mzd_t *m) {
+bg_signature_t* bg_sign(public_parameters_t* pp, bg_private_key_t* private_key, mzd_t* m) {
   return bg_prove(pp, private_key, m);
 }
 
-int bg_verify(public_parameters_t* pp, bg_public_key_t *public_key, mzd_t *m, bg_signature_t *sig) {
+int bg_verify(public_parameters_t* pp, bg_public_key_t* public_key, mzd_t* m, bg_signature_t* sig) {
   return bg_proof_verify(pp, public_key, m, sig);
 }
 

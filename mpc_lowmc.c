@@ -13,8 +13,7 @@
 static void sbox_vars_free(sbox_vars_t* vars, unsigned int sc);
 
 typedef int (*BIT_and_ptr)(BIT*, BIT*, BIT*, view_t*, int*, unsigned, unsigned);
-typedef int (*and_ptr)(mzd_t**, mzd_t**, mzd_t**, mzd_t**, view_t*, mzd_t*, unsigned,
-                       mzd_t**);
+typedef int (*and_ptr)(mzd_t**, mzd_t**, mzd_t**, mzd_t**, view_t*, mzd_t*, unsigned, mzd_t**);
 
 unsigned char* proof_to_char_array(mpc_lowmc_t *lowmc, proof_t *proof, unsigned *len, bool store_ch) {
    unsigned first_view_bytes = lowmc->k / 8;
