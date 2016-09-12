@@ -220,20 +220,10 @@ static int verify_views(mpc_lowmc_t* lowmc, mzd_t* p, mzd_shared_t shared_p[NUM_
     rv[0] = mzd_init_random_vectors_from_seed(proof->keys[i][0], lowmc->n, lowmc->r);
     rv[1] = mzd_init_random_vectors_from_seed(proof->keys[i][1], lowmc->n, lowmc->r);
 
-    mzd_t* c_ch[2];
-    c_ch[0] = mzd_init(1, lowmc->n);
-    c_ch[1] = mzd_init(1, lowmc->n);
-    mzd_copy(c_ch[0], proof->views[i][lowmc->r + 1].s[0]);
-    mzd_copy(c_ch[1], proof->views[i][lowmc->r + 1].s[1]);
-
-    if (verify(lowmc, p, shared_p != NULL ? &shared_p[i] : NULL, proof->views[i], rv, ch[i]) ||
-        mzd_equal(c_ch[0], proof->views[i][1 + lowmc->r].s[0]) ||
-        mzd_equal(c_ch[1], proof->views[i][1 + lowmc->r].s[1])) {
+    if (verify(lowmc, p, shared_p != NULL ? &shared_p[i] : NULL, proof->views[i], rv, ch[i])) {
       view_verify_status |= -1;
     }
 
-    mzd_free(c_ch[0]);
-    mzd_free(c_ch[1]);
     mpc_free(rv[0], lowmc->r);
     mpc_free(rv[1], lowmc->r);
   }

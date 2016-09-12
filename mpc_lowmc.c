@@ -687,8 +687,12 @@ int mpc_lowmc_verify(mpc_lowmc_t* lowmc, mzd_t* p, view_t* views, mzd_t*** rvec,
 
   int status = 0;
   mzd_t** v  = _mpc_lowmc_call_verify(lowmc, &lowmc_key, p, views, rvec, &status, c);
-  if (v)
+  if (v) {
+    if (mzd_equal(views[lowmc->r + 1].s[0], v[0]) || mzd_equal(views[lowmc->r + 1].s[1], v[1])) {
+      status = 1;
+    }
     mpc_free(v, 2);
+  }
 
   mzd_shared_clear(&lowmc_key);
 
@@ -703,9 +707,12 @@ int mpc_lowmc_verify_shared_p(mpc_lowmc_t* lowmc, mzd_shared_t* shared_p, view_t
 
   int status = 0;
   mzd_t** v = _mpc_lowmc_call_verify_shared_p(lowmc, &lowmc_key, shared_p, views, rvec, &status, c);
-  if (v)
+  if (v) {
+    if (mzd_equal(views[lowmc->r + 1].s[0], v[0]) || mzd_equal(views[lowmc->r + 1].s[1], v[1])) {
+      status = 1;
+    }
     mpc_free(v, 2);
-
+  }
   mzd_shared_clear(&lowmc_key);
 
   return status;
