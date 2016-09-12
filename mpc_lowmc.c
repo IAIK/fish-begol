@@ -13,7 +13,7 @@
 static void sbox_vars_free(sbox_vars_t* vars, unsigned int sc);
 
 typedef int (*BIT_and_ptr)(BIT*, BIT*, BIT*, view_t*, int*, unsigned, unsigned);
-typedef int (*and_ptr)(mzd_t**, mzd_t**, mzd_t**, mzd_t**, view_t*, mzd_t*, unsigned, unsigned,
+typedef int (*and_ptr)(mzd_t**, mzd_t**, mzd_t**, mzd_t**, view_t*, mzd_t*, unsigned,
                        mzd_t**);
 
 unsigned char getChAt(unsigned char *ch, unsigned int i) {
@@ -228,9 +228,9 @@ static int _mpc_sbox_layer_bitsliced(mzd_t** out, mzd_t** in, rci_t m, view_t* v
   mpc_shift_left(vars->x1s, vars->x1m, 1, sc);
   mpc_shift_left(vars->r1s, vars->r1m, 1, sc);
 
-  if (andPtr(vars->r0m, vars->x0s, vars->x1s, vars->r2m, view, mask->x2, 0, sc, vars->v) ||
-      andPtr(vars->r2m, vars->x1s, vars->x2m, vars->r0s, view, mask->x2, 2, sc, vars->v) ||
-      andPtr(vars->r1m, vars->x0s, vars->x2m, vars->r1s, view, mask->x2, 1, sc, vars->v)) {
+  if (andPtr(vars->r0m, vars->x0s, vars->x1s, vars->r2m, view, mask->x2, 0, vars->v) ||
+      andPtr(vars->r2m, vars->x1s, vars->x2m, vars->r0s, view, mask->x2, 2, vars->v) ||
+      andPtr(vars->r1m, vars->x0s, vars->x2m, vars->r1s, view, mask->x2, 1, vars->v)) {
     return -1;
   }
 
@@ -291,9 +291,9 @@ _mpc_sbox_layer_bitsliced_sse(mzd_t** out, mzd_t** in, rci_t m, view_t* view, mz
     _mm_store_si128((__m128i*)vars->r1s[m]->rows[0], x1s);
   }
 
-  if (andPtr(vars->r0m, vars->x0s, vars->x1s, vars->r2m, view, mask->x2, 0, sc, vars->v) ||
-      andPtr(vars->r2m, vars->x1s, vars->x2m, vars->r0s, view, mask->x2, 2, sc, vars->v) ||
-      andPtr(vars->r1m, vars->x0s, vars->x2m, vars->r1s, view, mask->x2, 1, sc, vars->v)) {
+  if (andPtr(vars->r0m, vars->x0s, vars->x1s, vars->r2m, view, mask->x2, 0, vars->v) ||
+      andPtr(vars->r2m, vars->x1s, vars->x2m, vars->r0s, view, mask->x2, 2, vars->v) ||
+      andPtr(vars->r1m, vars->x0s, vars->x2m, vars->r1s, view, mask->x2, 1, vars->v)) {
     return -1;
   }
 
@@ -374,9 +374,9 @@ _mpc_sbox_layer_bitsliced_avx(mzd_t** out, mzd_t** in, rci_t m, view_t* view, mz
     _mm256_store_si256((__m256i*)vars->r1s[m]->rows[0], x1s);
   }
 
-  if (andPtr(vars->r0m, vars->x0s, vars->x1s, vars->r2m, view, mask->x2, 0, sc, vars->v) ||
-      andPtr(vars->r2m, vars->x1s, vars->x2m, vars->r0s, view, mask->x2, 2, sc, vars->v) ||
-      andPtr(vars->r1m, vars->x0s, vars->x2m, vars->r1s, view, mask->x2, 1, sc, vars->v)) {
+  if (andPtr(vars->r0m, vars->x0s, vars->x1s, vars->r2m, view, mask->x2, 0, vars->v) ||
+      andPtr(vars->r2m, vars->x1s, vars->x2m, vars->r0s, view, mask->x2, 2, vars->v) ||
+      andPtr(vars->r1m, vars->x0s, vars->x2m, vars->r1s, view, mask->x2, 1, vars->v)) {
     return -1;
   }
 

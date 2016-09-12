@@ -47,10 +47,10 @@ mzd_t** mpc_xor(mzd_t** res, mzd_t** first, mzd_t** second, unsigned sc) {
 
 __attribute__((target("sse2"))) int mpc_and_sse(mzd_t** res, mzd_t** first, mzd_t** second,
                                                 mzd_t** r, view_t* view, mzd_t* mask,
-                                                unsigned viewshift, unsigned sc, mzd_t** buffer) {
+                                                unsigned viewshift, mzd_t** buffer) {
   (void)mask;
 
-  for (unsigned m = 0; m < sc; ++m) {
+  for (unsigned m = 0; m < 3; ++m) {
     const unsigned j = (m + 1) % 3;
 
     __m128i firstm  = _mm_load_si128((__m128i*)first[m]->rows[0]);
@@ -81,10 +81,10 @@ __attribute__((target("sse2"))) int mpc_and_sse(mzd_t** res, mzd_t** first, mzd_
 
 __attribute__((target("avx2"))) int mpc_and_avx(mzd_t** res, mzd_t** first, mzd_t** second,
                                                 mzd_t** r, view_t* view, mzd_t* mask,
-                                                unsigned viewshift, unsigned sc, mzd_t** buffer) {
+                                                unsigned viewshift, mzd_t** buffer) {
   (void)mask;
 
-  for (unsigned m = 0; m < sc; ++m) {
+  for (unsigned m = 0; m < 3; ++m) {
     const unsigned j = (m + 1) % 3;
 
     __m256i firstm  = _mm256_load_si256((__m256i*)first[m]->rows[0]);
@@ -113,13 +113,13 @@ __attribute__((target("avx2"))) int mpc_and_avx(mzd_t** res, mzd_t** first, mzd_
 }
 
 int mpc_and(mzd_t** res, mzd_t** first, mzd_t** second, mzd_t** r, view_t* view, mzd_t* mask,
-            unsigned viewshift, unsigned sc, mzd_t** buffer) {
+            unsigned viewshift, mzd_t** buffer) {
   (void)mask;
 
   mzd_t* b = NULL;
   mzd_t* c = NULL;
 
-  for (unsigned m = 0; m < sc; ++m) {
+  for (unsigned m = 0; m < 3; ++m) {
     unsigned j = (m + 1) % 3;
     res[m]     = mzd_and(res[m], first[m], second[m]);
 
@@ -135,18 +135,18 @@ int mpc_and(mzd_t** res, mzd_t** first, mzd_t** second, mzd_t** r, view_t* view,
   mzd_free(b);
   mzd_free(c);
 
-  mpc_shift_right(buffer, res, viewshift, sc);
-  mpc_xor(view->s, view->s, buffer, sc);
+  mpc_shift_right(buffer, res, viewshift, 3);
+  mpc_xor(view->s, view->s, buffer, 3);
   return 0;
 }
 
 __attribute__((target("sse2"))) int mpc_and_verify_sse(mzd_t** res, mzd_t** first, mzd_t** second,
                                                        mzd_t** r, view_t* view, mzd_t* mask,
-                                                       unsigned viewshift, unsigned sc,
+                                                       unsigned viewshift,
                                                        mzd_t** buffer) {
   (void)buffer;
 
-  for (unsigned m = 0; m < sc - 1; ++m) {
+  for (unsigned m = 0; m < 1; ++m) {
     const unsigned j = (m + 1);
 
     __m128i firstm  = _mm_load_si128((__m128i*)first[m]->rows[0]);
@@ -175,21 +175,21 @@ __attribute__((target("sse2"))) int mpc_and_verify_sse(mzd_t** res, mzd_t** firs
     }
   }
 
-  __m128i rsc = _mm_load_si128((__m128i*)view->s[sc - 1]->rows[0]);
+  __m128i rsc = _mm_load_si128((__m128i*)view->s[2 - 1]->rows[0]);
   rsc         = mm128_shift_left(rsc, viewshift);
   rsc         = _mm_and_si128(rsc, _mm_load_si128((__m128i*)mask->rows[0]));
-  _mm_store_si128((__m128i*)res[sc - 1]->rows[0], rsc);
+  _mm_store_si128((__m128i*)res[2 - 1]->rows[0], rsc);
 
   return 0;
 }
 
 __attribute__((target("avx2"))) int mpc_and_verify_avx(mzd_t** res, mzd_t** first, mzd_t** second,
                                                        mzd_t** r, view_t* view, mzd_t* mask,
-                                                       unsigned viewshift, unsigned sc,
+                                                       unsigned viewshift,
                                                        mzd_t** buffer) {
   (void)buffer;
 
-  for (unsigned m = 0; m < sc - 1; ++m) {
+  for (unsigned m = 0; m < 1; ++m) {
     const unsigned j = (m + 1);
 
     __m256i firstm  = _mm256_load_si256((__m256i*)first[m]->rows[0]);
@@ -218,20 +218,20 @@ __attribute__((target("avx2"))) int mpc_and_verify_avx(mzd_t** res, mzd_t** firs
     }
   }
 
-  __m256i rsc = _mm256_load_si256((__m256i*)view->s[sc - 1]->rows[0]);
+  __m256i rsc = _mm256_load_si256((__m256i*)view->s[2 - 1]->rows[0]);
   rsc         = mm256_shift_left(rsc, viewshift);
   rsc         = _mm256_and_si256(rsc, _mm256_load_si256((__m256i*)mask->rows[0]));
-  _mm256_store_si256((__m256i*)res[sc - 1]->rows[0], rsc);
+  _mm256_store_si256((__m256i*)res[2 - 1]->rows[0], rsc);
 
   return 0;
 }
 
 int mpc_and_verify(mzd_t** res, mzd_t** first, mzd_t** second, mzd_t** r, view_t* view, mzd_t* mask,
-                   unsigned viewshift, unsigned sc, mzd_t** buffer) {
+                   unsigned viewshift, mzd_t** buffer) {
   mzd_t* b = NULL;
   mzd_t* c = NULL;
 
-  for (unsigned m = 0; m < sc - 1; m++) {
+  for (unsigned m = 0; m < 1; m++) {
     unsigned j = m + 1;
     res[m]     = mzd_and(res[m], first[m], second[m]);
 
@@ -247,7 +247,7 @@ int mpc_and_verify(mzd_t** res, mzd_t** first, mzd_t** second, mzd_t** r, view_t
   mzd_free(b);
   mzd_free(c);
 
-  for (unsigned m = 0; m < sc - 1; m++) {
+  for (unsigned m = 0; m < 1; m++) {
     mzd_shift_left(buffer[m], view->s[m], viewshift);
     mzd_and(buffer[m], buffer[m], res[m]);
     if (mzd_equal(buffer[m], res[m])) {
@@ -255,8 +255,8 @@ int mpc_and_verify(mzd_t** res, mzd_t** first, mzd_t** second, mzd_t** r, view_t
     }
   }
 
-  mzd_shift_left(res[sc - 1], view->s[sc - 1], viewshift);
-  mzd_and(res[sc - 1], res[sc - 1], mask);
+  mzd_shift_left(res[2 - 1], view->s[2 - 1], viewshift);
+  mzd_and(res[2 - 1], res[2 - 1], mask);
 
   return 0;
 }

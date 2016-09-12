@@ -1,4 +1,5 @@
-#include "m4ri/m4ri.h"
+#include <m4ri/m4ri.h>
+
 #include "io.h"
 
 unsigned char *mzd_to_char_array(mzd_t *data, unsigned numbytes) {
