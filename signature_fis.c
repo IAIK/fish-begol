@@ -165,20 +165,10 @@ static int fis_proof_verify(mpc_lowmc_t* lowmc, mzd_t* p, mzd_t* c, proof_t* prf
     rv[0] = mzd_init_random_vectors_from_seed(prf->keys[i][0], lowmc->n, lowmc->r);
     rv[1] = mzd_init_random_vectors_from_seed(prf->keys[i][1], lowmc->n, lowmc->r);
 
-    mzd_t* c_ch[2];
-    c_ch[0] = mzd_init(1, lowmc->n);
-    c_ch[1] = mzd_init(1, lowmc->n);
-    mzd_copy(c_ch[0], prf->views[i][lowmc->r + 1].s[0]);
-    mzd_copy(c_ch[1], prf->views[i][lowmc->r + 1].s[1]);
-
-    if (mpc_lowmc_verify(lowmc, p, prf->views[i], rv, ch[i]) ||
-        mzd_cmp(c_ch[0], prf->views[i][1 + lowmc->r].s[0]) ||
-        mzd_cmp(c_ch[1], prf->views[i][1 + lowmc->r].s[1])) {
+    if (mpc_lowmc_verify(lowmc, p, prf->views[i], rv, ch[i])) {
       view_verify_status = -1;
     }
 
-    mzd_free(c_ch[0]);
-    mzd_free(c_ch[1]);
     mpc_free(rv[0], lowmc->r);
     mpc_free(rv[1], lowmc->r);
   }
