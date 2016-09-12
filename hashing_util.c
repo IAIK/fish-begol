@@ -91,12 +91,13 @@ void bg_H3_verify(unsigned char h1[NUM_ROUNDS][2][SHA256_DIGEST_LENGTH],
   unsigned char tmp1[NUM_ROUNDS][3][SHA256_DIGEST_LENGTH];
   unsigned char tmp2[NUM_ROUNDS][3][SHA256_DIGEST_LENGTH];
   for(unsigned i = 0 ; i < NUM_ROUNDS ; i++) {
-    if(getChAt(ch_in, i) == 0) {
+    const unsigned char c = getChAt(ch_in, i);
+    if(c == 0) {
       memcpy(tmp1[i][0], h1[i], 2 * SHA256_DIGEST_LENGTH);
       memcpy(tmp1[i][2], hp1[i], SHA256_DIGEST_LENGTH);
       memcpy(tmp2[i][0], h2[i], 2 * SHA256_DIGEST_LENGTH);
       memcpy(tmp2[i][2], hp2[i], SHA256_DIGEST_LENGTH);
-    } else if(getChAt(ch_in, i) == 1) {
+    } else if(c == 1) {
       memcpy(tmp1[i][0], hp1[i], SHA256_DIGEST_LENGTH);
       memcpy(tmp1[i][1], h1[i], 2 * SHA256_DIGEST_LENGTH);
       memcpy(tmp2[i][0], hp2[i], SHA256_DIGEST_LENGTH);
@@ -110,9 +111,8 @@ void bg_H3_verify(unsigned char h1[NUM_ROUNDS][2][SHA256_DIGEST_LENGTH],
       memcpy(tmp2[i][2], h2[i][0], SHA256_DIGEST_LENGTH);
     }
   }
-  
-  bg_H3(tmp1, tmp2, ch);  
 
+  bg_H3(tmp1, tmp2, ch);
 }
 
 void bg_H3(unsigned char h1[NUM_ROUNDS][3][SHA256_DIGEST_LENGTH],

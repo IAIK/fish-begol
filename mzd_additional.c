@@ -29,7 +29,7 @@ void mzd_randomize_upper_triangular(mzd_t* val) {
 
     row[offset] |= ((word)1) << bit;
     if (bit) {
-      row[offset] &= ~((((word) 1) << bit) - 1);
+      row[offset] &= ~((((word)1) << bit) - 1);
     }
   }
 }
