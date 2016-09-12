@@ -155,9 +155,6 @@ static bg_signature_t* bg_prove(public_parameters_t* pp, bg_private_key_t* priva
   for (unsigned i = 0; i < NUM_ROUNDS; ++i) {
     c_mpc_p[i] = mpc_lowmc_call(lowmc, &lowmc_key_s[i], p, views_p[i], rvec_p[i]);
     c_mpc_s[i] = mpc_lowmc_call_shared_p(lowmc, &lowmc_key_k[i], &lowmc_key_s[i], views_s[i], rvec_s[i]);
-
-    mzd_shared_clear(&lowmc_key_s[i]);
-    mzd_shared_clear(&lowmc_key_k[i]);
   }
   signature->c = mpc_reconstruct_from_share(c_mpc_p[0]);
   END_TIMING(timing_and_size.sign.lowmc_enc);
@@ -181,6 +178,12 @@ static bg_signature_t* bg_prove(public_parameters_t* pp, bg_private_key_t* priva
 
   create_proof(&signature->proof_p, lowmc, hashes_p, ch, r_p, keys_p, c_mpc_p, views_p);
   create_proof(&signature->proof_s, lowmc, hashes_s, ch, r_s, keys_s, c_mpc_s, views_s);
+
+  for (unsigned i = 0; i < NUM_ROUNDS; ++i) {
+    mzd_shared_clear(&lowmc_key_s[i]);
+    mzd_shared_clear(&lowmc_key_k[i]);
+  }
+
 
 #pragma omp parallel for
   for (unsigned j = 0; j < NUM_ROUNDS; ++j) {
