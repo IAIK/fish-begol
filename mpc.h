@@ -26,8 +26,6 @@ int mpc_and_verify_sse(mzd_t **res, mzd_t **first, mzd_t **second, mzd_t **r, vi
 
 int mpc_and_verify_avx(mzd_t **res, mzd_t **first, mzd_t **second, mzd_t **r, view_t *view, mzd_t *mask, unsigned viewshift, mzd_t **buffer);
 
-void mpc_set(mzd_t **res, mzd_t **src, unsigned sc);
-
 /**
  * Linearly secret shares the vector v 
  * 

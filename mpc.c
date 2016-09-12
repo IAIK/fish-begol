@@ -2,13 +2,6 @@
 #include "avx.h"
 #include "mzd_additional.h"
 
-void mpc_set(mzd_t** res, mzd_t** src, unsigned sc) {
-  for (unsigned int i = 0; i < sc; i++) {
-    mzd_free(res[i]);
-    res[i] = src[i];
-  }
-}
-
 void mpc_clear(mzd_t** res, unsigned sc) {
   for (unsigned int i = 0; i < sc; i++)
     for (int j = 0; j < res[i]->nrows; j++)
@@ -263,12 +256,13 @@ int mpc_and_verify(mzd_t** res, mzd_t** first, mzd_t** second, mzd_t** r, view_t
 
 int mpc_and_bit(BIT* a, BIT* b, BIT* r, view_t* views, int* i, unsigned bp, unsigned sc) {
   BIT* wp = (BIT*)malloc(sc * sizeof(BIT));
-  for (unsigned m = 0; m < sc; m++) {
+  for (unsigned m = 0; m < sc; ++m) {
     unsigned j = (m + 1) % 3;
     wp[m]      = (a[m] & b[m]) ^ (a[j] & b[m]) ^ (a[m] & b[j]) ^ r[m] ^ r[j];
   }
-  for (unsigned m = 0; m < sc; m++)
+  for (unsigned m = 0; m < sc; ++m) {
     a[m]          = wp[m];
+  }
   mpc_write_bit(views[*i].s, bp, a, sc);
   free(wp);
   return 0;
@@ -329,14 +323,16 @@ mzd_t** mpc_const_add(mzd_t** result, mzd_t** first, mzd_t* second, unsigned sc,
 mzd_t** mpc_const_mat_mul(mzd_t** result, mzd_t* matrix, mzd_t** vector, unsigned sc) {
   if (result == 0)
     result = mpc_init_empty_share_vector(vector[0]->ncols, sc);
-  for (unsigned i = 0; i < sc; i++)
+  for (unsigned i = 0; i < sc; ++i) {
     mzd_mul_v(result[i], vector[i], matrix);
+  }
   return result;
 }
 
 void mpc_copy(mzd_t** out, mzd_t** in, unsigned sc) {
-  for (unsigned i = 0; i < sc; i++)
+  for (unsigned i = 0; i < sc; ++i) {
     mzd_copy(out[i], in[i]);
+  }
 }
 
 mzd_t* mpc_reconstruct_from_share(mzd_t** shared_vec) {
@@ -352,22 +348,25 @@ void mpc_print(mzd_t** shared_vec) {
 }
 
 void mpc_free(mzd_t** vec, unsigned sc) {
-  for (unsigned i = 0; i < sc; i++)
+  for (unsigned i = 0; i < sc; ++i) {
     mzd_free(vec[i]);
+  }
   free(vec);
 }
 
 mzd_t** mpc_init_empty_share_vector(rci_t n, unsigned sc) {
   mzd_t** s = calloc(sc, sizeof(mzd_t*));
-  for (unsigned i = 0; i < sc; i++)
-    s[i]          = mzd_init(1, n);
+  for (unsigned i = 0; i < sc; ++i) {
+    s[i] = mzd_init(1, n);
+  }
   return s;
 }
 
 mzd_t** mpc_init_random_vector(rci_t n, unsigned sc) {
   mzd_t** s = calloc(sc, sizeof(mzd_t*));
-  for (unsigned i = 0; i < sc; i++)
-    s[i]          = mzd_init_random_vector(n);
+  for (unsigned i = 0; i < sc; ++i) {
+    s[i]  = mzd_init_random_vector(n);
+  }
   return s;
 }
 

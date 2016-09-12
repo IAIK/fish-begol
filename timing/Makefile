@@ -1,4 +1,4 @@
-ITER=10
+ITER?=10
 
 generate-timings:
 	set -e && for n in 128 192 256 ; do \
