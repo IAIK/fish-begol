@@ -20,7 +20,7 @@ typedef union {
   uint64_t data[13];
 } timing_and_size_t;
 
-extern timing_and_size_t timing_and_size;
+extern timing_and_size_t* timing_and_size;
 
 #ifdef WITH_DETAILED_TIMING
 
