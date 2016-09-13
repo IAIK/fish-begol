@@ -1,8 +1,8 @@
-#include "signature_bg.h" 
-#include "lowmc.h"
+#include "signature_bg.h"
 #include "hashing_util.h"
-#include "mpc.h"
 #include "io.h"
+#include "lowmc.h"
+#include "mpc.h"
 #include "randomness.h"
 #include "timing.h"
 
@@ -10,25 +10,27 @@ unsigned bg_compute_sig_size(unsigned m, unsigned n, unsigned r, unsigned k) {
   unsigned first_view_size = k;
   unsigned full_view_size  = n;
   unsigned int_view_size   = 3 * m;
-  unsigned views           = 2 * (r * int_view_size + first_view_size + 
-                             full_view_size) + 3 * full_view_size;
-  return (2 * NUM_ROUNDS * (8 * SHA256_DIGEST_LENGTH + 8 * 40 + views) + 
-         full_view_size + ((NUM_ROUNDS + 3) / 4) + 7) / 8; 
+  unsigned views = 2 * (r * int_view_size + first_view_size + full_view_size) + 3 * full_view_size;
+  return (2 * NUM_ROUNDS * (8 * COMMITMENT_LENGTH + 8 * 40 + views) + full_view_size +
+          ((NUM_ROUNDS + 3) / 4) + 7) /
+         8;
 }
 
-unsigned char *bg_sig_to_char_array(public_parameters_t *pp, bg_signature_t *sig, unsigned *len) {
-  unsigned len1 = 0;
+unsigned char* bg_sig_to_char_array(public_parameters_t* pp, bg_signature_t* sig, unsigned* len) {
+  unsigned len1     = 0;
   unsigned char* p1 = proof_to_char_array(pp->lowmc, &sig->proof_s, &len1, true);
-  unsigned len2 = 0;
+  unsigned len2     = 0;
   unsigned char* p2 = proof_to_char_array(pp->lowmc, &sig->proof_p, &len2, false);
-  unsigned char* c = mzd_to_char_array(sig->c, pp->lowmc->n / 8);
+  unsigned char* c  = mzd_to_char_array(sig->c, pp->lowmc->n / 8);
 
   *len = len1 + len2 + (pp->lowmc->n / 8);
 
-  unsigned char *result = (unsigned char *)malloc(*len * sizeof(unsigned char));
-  unsigned char *temp = result;
-  memcpy(temp, p1, len1); temp += len1;
-  memcpy(temp, p2, len2); temp += len2;
+  unsigned char* result = (unsigned char*)malloc(*len * sizeof(unsigned char));
+  unsigned char* temp   = result;
+  memcpy(temp, p1, len1);
+  temp += len1;
+  memcpy(temp, p2, len2);
+  temp += len2;
   memcpy(temp, c, pp->lowmc->n / 8);
 
   free(p1);
@@ -38,11 +40,13 @@ unsigned char *bg_sig_to_char_array(public_parameters_t *pp, bg_signature_t *sig
   return result;
 }
 
-bg_signature_t *bg_sig_from_char_array(public_parameters_t *pp, unsigned char *data) {
-  bg_signature_t *sig = (bg_signature_t*)malloc(sizeof(bg_signature_t));
-  unsigned len = 0;
-  proof_from_char_array(pp->lowmc, &sig->proof_s, data, &len, true); data += len;
-  proof_from_char_array(pp->lowmc, &sig->proof_p, data, &len, false); data += len;
+bg_signature_t* bg_sig_from_char_array(public_parameters_t* pp, unsigned char* data) {
+  bg_signature_t* sig = (bg_signature_t*)malloc(sizeof(bg_signature_t));
+  unsigned len        = 0;
+  proof_from_char_array(pp->lowmc, &sig->proof_s, data, &len, true);
+  data += len;
+  proof_from_char_array(pp->lowmc, &sig->proof_p, data, &len, false);
+  data += len;
   sig->c = mzd_from_char_array(data, pp->lowmc->n / 8, pp->lowmc->n);
 
   return sig;
@@ -131,7 +135,7 @@ static bg_signature_t* bg_prove(public_parameters_t* pp, bg_private_key_t* priva
   mpc_lowmc_key_t lowmc_key_s[NUM_ROUNDS] = {{0, NULL}};
 
   aes_prng_t* aes_prng = aes_prng_init(secret_sharing_key);
-  #pragma omp parallel for
+#pragma omp parallel for
   for (unsigned i = 0; i < NUM_ROUNDS; ++i) {
     mzd_shared_init(&lowmc_key_s[i], private_key->s);
     mzd_shared_share_prng(&lowmc_key_s[i], aes_prng);
@@ -155,8 +159,8 @@ static bg_signature_t* bg_prove(public_parameters_t* pp, bg_private_key_t* priva
   END_TIMING(timing_and_size->sign.lowmc_enc);
 
   START_TIMING;
-  unsigned char hashes_p[NUM_ROUNDS][3][SHA256_DIGEST_LENGTH];
-  unsigned char hashes_s[NUM_ROUNDS][3][SHA256_DIGEST_LENGTH];
+  unsigned char hashes_p[NUM_ROUNDS][3][COMMITMENT_LENGTH];
+  unsigned char hashes_s[NUM_ROUNDS][3][COMMITMENT_LENGTH];
 #pragma omp parallel for
   for (unsigned i = 0; i < NUM_ROUNDS; ++i) {
     for (unsigned int j = 0; j < 3; ++j) {
@@ -178,7 +182,6 @@ static bg_signature_t* bg_prove(public_parameters_t* pp, bg_private_key_t* priva
     mzd_shared_clear(&lowmc_key_s[i]);
     mzd_shared_clear(&lowmc_key_k[i]);
   }
-
 
 #pragma omp parallel for
   for (unsigned j = 0; j < NUM_ROUNDS; ++j) {
@@ -245,8 +248,8 @@ static int bg_proof_verify(public_parameters_t* pp, bg_public_key_t* pk, mzd_t* 
 
   START_TIMING;
   int ch[NUM_ROUNDS];
-  unsigned char hash_p[NUM_ROUNDS][2][SHA256_DIGEST_LENGTH];
-  unsigned char hash_s[NUM_ROUNDS][2][SHA256_DIGEST_LENGTH];
+  unsigned char hash_p[NUM_ROUNDS][2][COMMITMENT_LENGTH];
+  unsigned char hash_s[NUM_ROUNDS][2][COMMITMENT_LENGTH];
 
   for (unsigned i = 0; i < NUM_ROUNDS; i++) {
     H(proof_p->keys[i][0], proof_p->y[i], proof_p->views[i], 0, view_count, proof_p->r[i][0],
@@ -342,4 +345,3 @@ bg_signature_t* bg_sign(public_parameters_t* pp, bg_private_key_t* private_key, 
 int bg_verify(public_parameters_t* pp, bg_public_key_t* public_key, mzd_t* m, bg_signature_t* sig) {
   return bg_proof_verify(pp, public_key, m, sig);
 }
-

@@ -12,7 +12,7 @@ unsigned fis_compute_sig_size(unsigned m, unsigned n, unsigned r, unsigned k) {
   unsigned int_view_size   = 3 * m;
   unsigned views           = 2 * (r * int_view_size + first_view_size + 
                              full_view_size) + 3 * full_view_size;
-  return (NUM_ROUNDS * (8 * SHA256_DIGEST_LENGTH + 8 * 40 + views) + 
+  return (NUM_ROUNDS * (8 * COMMITMENT_LENGTH + 8 * 40 + views) + 
          ((NUM_ROUNDS + 3) / 4) + 7) / 8; 
 }
 
@@ -97,7 +97,7 @@ static proof_t* fis_prove(mpc_lowmc_t* lowmc, lowmc_key_t* lowmc_key, mzd_t* p, 
   END_TIMING(timing_and_size->sign.lowmc_enc);
 
   START_TIMING;
-  unsigned char hashes[NUM_ROUNDS][3][SHA256_DIGEST_LENGTH];
+  unsigned char hashes[NUM_ROUNDS][3][COMMITMENT_LENGTH];
 #pragma omp parallel for
   for (unsigned i = 0; i < NUM_ROUNDS; i++) {
     H(keys[i][0], c_mpc[i], views[i], 0, 2 + lowmc->r, r[i][0], hashes[i][0]);
@@ -131,7 +131,7 @@ static int fis_proof_verify(mpc_lowmc_t* lowmc, mzd_t* p, mzd_t* c, proof_t* prf
 
   START_TIMING;
   int ch[NUM_ROUNDS];
-  unsigned char hash[NUM_ROUNDS][2][SHA256_DIGEST_LENGTH];
+  unsigned char hash[NUM_ROUNDS][2][COMMITMENT_LENGTH];
 #pragma omp parallel for
   for (unsigned i = 0; i < NUM_ROUNDS; i++) {
     H(prf->keys[i][0], prf->y[i], prf->views[i], 0, 2 + lowmc->r, prf->r[i][0], hash[i][0]);

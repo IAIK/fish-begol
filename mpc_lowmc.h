@@ -2,12 +2,10 @@
 #define MPC_LOWMC_H
 
 #include <m4ri/m4ri.h>
-#include <openssl/sha.h>
-#include "stdbool.h"
+#include <stdbool.h>
 
 #include "lowmc_pars.h"
-
-#define NUM_ROUNDS 137
+#include "parameters.h"
 
 typedef mzd_shared_t mpc_lowmc_key_t;
 
@@ -21,7 +19,7 @@ typedef struct {
   view_t **views;
   unsigned char ***keys;
   unsigned char ***r;
-  unsigned char hashes[NUM_ROUNDS][SHA256_DIGEST_LENGTH];
+  unsigned char hashes[NUM_ROUNDS][COMMITMENT_LENGTH];
   unsigned char ch[(NUM_ROUNDS + 3) / 4];
   mzd_t ***y;
 } proof_t;
@@ -45,7 +43,7 @@ proof_t *proof_from_char_array(mpc_lowmc_t *lowmc, proof_t *proof, unsigned char
 unsigned char *proof_to_char_array(mpc_lowmc_t *lowmc, proof_t *proof, unsigned *len, bool store_ch); 
 
 proof_t *create_proof(proof_t* proof, mpc_lowmc_t* lowmc,
-                      unsigned char hashes[NUM_ROUNDS][3][SHA256_DIGEST_LENGTH],
+                      unsigned char hashes[NUM_ROUNDS][3][COMMITMENT_LENGTH],
                       int ch[NUM_ROUNDS], unsigned char r[NUM_ROUNDS][3][4],
                       unsigned char keys[NUM_ROUNDS][3][16], mzd_t*** c_mpc,
                       view_t* views[NUM_ROUNDS]);
