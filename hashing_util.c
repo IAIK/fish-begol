@@ -27,7 +27,6 @@ static inline unsigned int getChAt(unsigned char const *ch, unsigned int i) {
   return (ch[idx] >> offset) & 3;
 }
 
-
 static void hash_mzd(commitment_ctx* ctx, mzd_t const* v) {
   const rci_t nrows = v->nrows;
   const unsigned int width = sizeof(word) * v->width;
@@ -57,12 +56,12 @@ void H(const unsigned char k[16], mzd_t* y[3], const view_t* v, unsigned vidx, u
   commitment_final(hash, &ctx);
 }
 
-static void H3_compute(unsigned char hash[SHA256_DIGEST_LENGTH], int* ch) {
+static void H3_compute(unsigned char hash[SHA256_DIGEST_LENGTH], unsigned char* ch) {
   // Pick bits from hash
-  int* eof                = ch + NUM_ROUNDS;
+  unsigned char* eof       = ch + NUM_ROUNDS;
   unsigned int bitTracker = 0;
   while (ch < eof) {
-    if (bitTracker >= SHA256_DIGEST_LENGTH * 8) { // Generate new hash
+    if (bitTracker >= SHA256_DIGEST_LENGTH * 8) {
       SHA256_CTX ctx;
       SHA256_Init(&ctx);
       SHA256_Update(&ctx, hash, SHA256_DIGEST_LENGTH);
@@ -78,9 +77,9 @@ static void H3_compute(unsigned char hash[SHA256_DIGEST_LENGTH], int* ch) {
   }
 }
 
-void fis_H3_verify(unsigned char h[NUM_ROUNDS][2][COMMITMENT_LENGTH],
-                   unsigned char hp[NUM_ROUNDS][COMMITMENT_LENGTH],
-                   unsigned char ch_in[(NUM_ROUNDS + 3) / 4], char* m, unsigned m_len, int* ch) {
+void fis_H3_verify(unsigned char const h[NUM_ROUNDS][2][COMMITMENT_LENGTH],
+                   unsigned char const hp[NUM_ROUNDS][COMMITMENT_LENGTH],
+                   unsigned char const ch_in[(NUM_ROUNDS + 3) / 4], char* m, unsigned m_len, unsigned char* ch) {
   SHA256_CTX ctx;
   SHA256_Init(&ctx);
 
@@ -115,8 +114,8 @@ void fis_H3_verify(unsigned char h[NUM_ROUNDS][2][COMMITMENT_LENGTH],
  * Computes the challenge (similar as in
  * https://github.com/Sobuno/ZKBoo/blob/master/MPC_SHA256/shared.h)
  */
-void fis_H3(unsigned char h[NUM_ROUNDS][3][COMMITMENT_LENGTH], char* m, unsigned m_len,
-            int* ch) {
+void fis_H3(unsigned char const h[NUM_ROUNDS][3][COMMITMENT_LENGTH], char* m, unsigned m_len,
+            unsigned char* ch) {
 
   unsigned char hash[SHA256_DIGEST_LENGTH];
   SHA256_CTX ctx;
@@ -132,7 +131,8 @@ void bg_H3_verify(unsigned char const h1[NUM_ROUNDS][2][COMMITMENT_LENGTH],
                   unsigned char const hp1[NUM_ROUNDS][COMMITMENT_LENGTH],
                   unsigned char const h2[NUM_ROUNDS][2][COMMITMENT_LENGTH],
                   unsigned char const hp2[NUM_ROUNDS][COMMITMENT_LENGTH],
-                  unsigned char const ch_in[(NUM_ROUNDS + 3) / 4], int* ch) {
+                  unsigned char const ch_in[(NUM_ROUNDS + 3) / 4],
+                  unsigned char* ch) {
 
   SHA256_CTX ctx;
   SHA256_Init(&ctx);
@@ -185,7 +185,8 @@ void bg_H3_verify(unsigned char const h1[NUM_ROUNDS][2][COMMITMENT_LENGTH],
 }
 
 void bg_H3(const unsigned char h1[NUM_ROUNDS][3][COMMITMENT_LENGTH],
-           const unsigned char h2[NUM_ROUNDS][3][COMMITMENT_LENGTH], int* ch) {
+           const unsigned char h2[NUM_ROUNDS][3][COMMITMENT_LENGTH],
+           unsigned char* ch) {
   unsigned char hash[SHA256_DIGEST_LENGTH];
   SHA256_CTX ctx;
   SHA256_Init(&ctx);

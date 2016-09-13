@@ -171,7 +171,7 @@ static bg_signature_t* bg_prove(public_parameters_t* pp, bg_private_key_t* priva
   END_TIMING(timing_and_size->sign.views);
 
   START_TIMING;
-  int ch[NUM_ROUNDS];
+  unsigned char ch[NUM_ROUNDS];
   bg_H3(hashes_p, hashes_s, ch);
   END_TIMING(timing_and_size->sign.challenge);
 
@@ -201,22 +201,22 @@ static bg_signature_t* bg_prove(public_parameters_t* pp, bg_private_key_t* priva
 }
 
 typedef int (*verify_ptr)(mpc_lowmc_t* lowmc, mzd_t* p, mzd_shared_t* shared_p, view_t* views,
-                          mzd_t** rv[2], int ch);
+                          mzd_t** rv[2], unsigned char ch);
 
 static int verify_with_p(mpc_lowmc_t* lowmc, mzd_t* p, mzd_shared_t* shared_p, view_t* views,
-                         mzd_t** rv[2], int ch) {
+                         mzd_t** rv[2], unsigned char ch) {
   (void)shared_p;
   return mpc_lowmc_verify(lowmc, p, views, rv, ch);
 }
 
 static int verify_with_shared_p(mpc_lowmc_t* lowmc, mzd_t* p, mzd_shared_t* shared_p, view_t* views,
-                                mzd_t** rv[2], int ch) {
+                                mzd_t** rv[2], unsigned char ch) {
   (void)p;
   return mpc_lowmc_verify_shared_p(lowmc, shared_p, views, rv, ch);
 }
 
 static int verify_views(mpc_lowmc_t* lowmc, mzd_t* p, mzd_shared_t shared_p[NUM_ROUNDS],
-                        proof_t* proof, verify_ptr verify, int ch[NUM_ROUNDS]) {
+                        proof_t* proof, verify_ptr verify, unsigned char ch[NUM_ROUNDS]) {
   int view_verify_status = 0;
 
 #pragma omp parallel for reduction(| : view_verify_status)
@@ -247,7 +247,7 @@ static int bg_proof_verify(public_parameters_t* pp, bg_public_key_t* pk, mzd_t* 
   proof_t* proof_s                   = &signature->proof_s;
 
   START_TIMING;
-  int ch[NUM_ROUNDS];
+  unsigned char ch[NUM_ROUNDS];
   unsigned char hash_p[NUM_ROUNDS][2][COMMITMENT_LENGTH];
   unsigned char hash_s[NUM_ROUNDS][2][COMMITMENT_LENGTH];
 

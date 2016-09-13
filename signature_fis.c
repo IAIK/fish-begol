@@ -110,7 +110,7 @@ static proof_t* fis_prove(mpc_lowmc_t* lowmc, lowmc_key_t* lowmc_key, mzd_t* p, 
   END_TIMING(timing_and_size->sign.views);
 
   START_TIMING;
-  int ch[NUM_ROUNDS];
+  unsigned char ch[NUM_ROUNDS];
   fis_H3(hashes, m, m_len, ch);
   END_TIMING(timing_and_size->sign.challenge);
 
@@ -136,7 +136,7 @@ static int fis_proof_verify(mpc_lowmc_t* lowmc, mzd_t* p, mzd_t* c, proof_t* prf
   const unsigned int last_view_index = lowmc->r + 1;
 
   START_TIMING;
-  int ch[NUM_ROUNDS];
+  unsigned char ch[NUM_ROUNDS];
   unsigned char hash[NUM_ROUNDS][2][COMMITMENT_LENGTH];
 #pragma omp parallel for
   for (unsigned i = 0; i < NUM_ROUNDS; ++i) {

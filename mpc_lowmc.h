@@ -44,7 +44,7 @@ unsigned char *proof_to_char_array(mpc_lowmc_t *lowmc, proof_t *proof, unsigned 
 
 proof_t *create_proof(proof_t* proof, mpc_lowmc_t* lowmc,
                       unsigned char hashes[NUM_ROUNDS][3][COMMITMENT_LENGTH],
-                      int ch[NUM_ROUNDS], unsigned char r[NUM_ROUNDS][3][4],
+                      unsigned char ch[NUM_ROUNDS], unsigned char r[NUM_ROUNDS][3][4],
                       unsigned char keys[NUM_ROUNDS][3][16], mzd_t*** c_mpc,
                       view_t* views[NUM_ROUNDS]);
 
