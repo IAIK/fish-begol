@@ -17,10 +17,11 @@ mask_t* prepare_masks(mask_t* mask, rci_t n, rci_t m) {
   mask->x2   = mzd_init(1, n);
   mask->mask = mzd_init(1, n);
 
-  for (int i = 0; i < n - 3 * m; i++) {
+  const int bound = n - 3 * m;
+  for (int i = 0; i < bound; ++i) {
     mzd_write_bit(mask->mask, 0, i, 1);
   }
-  for (int i = n - 3 * m; i < n; i += 3) {
+  for (int i = bound; i < n; i += 3) {
     mzd_write_bit(mask->x0, 0, i, 1);
   }
   mzd_shift_left(mask->x1, mask->x0, 1);

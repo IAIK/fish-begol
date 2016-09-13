@@ -54,6 +54,8 @@ void fis_destroy_key(fis_private_key_t* private_key, fis_public_key_t* public_ke
 static proof_t* fis_prove(mpc_lowmc_t* lowmc, lowmc_key_t* lowmc_key, mzd_t* p, char *m, unsigned m_len) {
   TIME_FUNCTION;
 
+  const unsigned int view_count = lowmc->r + 2;
+
   unsigned char r[NUM_ROUNDS][3][4];
   unsigned char keys[NUM_ROUNDS][3][16];
   unsigned char secret_sharing_key[16];
@@ -82,7 +84,7 @@ static proof_t* fis_prove(mpc_lowmc_t* lowmc, lowmc_key_t* lowmc_key, mzd_t* p, 
 
   aes_prng_t* aes_prng = aes_prng_init(secret_sharing_key);
   mzd_shared_t s[NUM_ROUNDS];
-  for(int i = 0 ; i < NUM_ROUNDS ; i++) {
+  for(unsigned int i = 0; i < NUM_ROUNDS; ++i) {
     mzd_shared_init(&s[i], lowmc_key);
     mzd_shared_share_prng(&s[i], aes_prng);
   }
@@ -92,17 +94,18 @@ static proof_t* fis_prove(mpc_lowmc_t* lowmc, lowmc_key_t* lowmc_key, mzd_t* p, 
   START_TIMING;
   mzd_t*** c_mpc     = (mzd_t***)malloc(NUM_ROUNDS * sizeof(mzd_t**));
 #pragma omp parallel for
-  for (unsigned i    = 0; i < NUM_ROUNDS; i++)
-    c_mpc[i]         = mpc_lowmc_call(lowmc, &s[i], p, views[i], rvec[i]);
+  for (unsigned i = 0; i < NUM_ROUNDS; i++) {
+    c_mpc[i] = mpc_lowmc_call(lowmc, &s[i], p, views[i], rvec[i]);
+  }
   END_TIMING(timing_and_size->sign.lowmc_enc);
 
   START_TIMING;
   unsigned char hashes[NUM_ROUNDS][3][COMMITMENT_LENGTH];
 #pragma omp parallel for
-  for (unsigned i = 0; i < NUM_ROUNDS; i++) {
-    H(keys[i][0], c_mpc[i], views[i], 0, 2 + lowmc->r, r[i][0], hashes[i][0]);
-    H(keys[i][1], c_mpc[i], views[i], 1, 2 + lowmc->r, r[i][1], hashes[i][1]);
-    H(keys[i][2], c_mpc[i], views[i], 2, 2 + lowmc->r, r[i][2], hashes[i][2]);
+  for (unsigned i = 0; i < NUM_ROUNDS; ++i) {
+    H(keys[i][0], c_mpc[i], views[i], 0, view_count, r[i][0], hashes[i][0]);
+    H(keys[i][1], c_mpc[i], views[i], 1, view_count, r[i][1], hashes[i][1]);
+    H(keys[i][2], c_mpc[i], views[i], 2, view_count, r[i][2], hashes[i][2]);
   }
   END_TIMING(timing_and_size->sign.views);
 
@@ -118,7 +121,7 @@ static proof_t* fis_prove(mpc_lowmc_t* lowmc, lowmc_key_t* lowmc_key, mzd_t* p, 
     mzd_shared_clear(&s[j]);
     for (unsigned i = 0; i < 3; i++)
       mpc_free(rvec[j][i], lowmc->r);
-    for (unsigned i = 0; i < lowmc->r + 2; i++) {
+    for (unsigned i = 0; i < view_count; i++) {
       free(views[j][i].s);
     }
   }
@@ -129,13 +132,16 @@ static proof_t* fis_prove(mpc_lowmc_t* lowmc, lowmc_key_t* lowmc_key, mzd_t* p, 
 static int fis_proof_verify(mpc_lowmc_t* lowmc, mzd_t* p, mzd_t* c, proof_t* prf, char *m, unsigned m_len) {
   TIME_FUNCTION;
 
+  const unsigned int view_count = lowmc->r + 2;
+  const unsigned int last_view_index = lowmc->r + 1;
+
   START_TIMING;
   int ch[NUM_ROUNDS];
   unsigned char hash[NUM_ROUNDS][2][COMMITMENT_LENGTH];
 #pragma omp parallel for
   for (unsigned i = 0; i < NUM_ROUNDS; i++) {
-    H(prf->keys[i][0], prf->y[i], prf->views[i], 0, 2 + lowmc->r, prf->r[i][0], hash[i][0]);
-    H(prf->keys[i][1], prf->y[i], prf->views[i], 1, 2 + lowmc->r, prf->r[i][1], hash[i][1]);
+    H(prf->keys[i][0], prf->y[i], prf->views[i], 0, view_count, prf->r[i][0], hash[i][0]);
+    H(prf->keys[i][1], prf->y[i], prf->views[i], 1, view_count, prf->r[i][1], hash[i][1]);
   }
   fis_H3_verify(hash, prf->hashes, prf->ch, m, m_len, ch);
   END_TIMING(timing_and_size->verify.challenge);
@@ -153,8 +159,8 @@ static int fis_proof_verify(mpc_lowmc_t* lowmc, mzd_t* p, mzd_t* c, proof_t* prf
   START_TIMING;
   int output_share_status = 0;
   for (int i = 0; i < NUM_ROUNDS; i++)
-    if (mzd_cmp(prf->y[i][ch[i]], prf->views[i][lowmc->r + 1].s[0]) ||
-        mzd_cmp(prf->y[i][(ch[i] + 1) % 3], prf->views[i][lowmc->r + 1].s[1]))
+    if (mzd_cmp(prf->y[i][ch[i]], prf->views[i][last_view_index].s[0]) ||
+        mzd_cmp(prf->y[i][(ch[i] + 1) % 3], prf->views[i][last_view_index].s[1]))
       output_share_status = -1;
   END_TIMING(timing_and_size->verify.output_views);
 
