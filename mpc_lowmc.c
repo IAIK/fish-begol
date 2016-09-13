@@ -230,7 +230,7 @@ proof_t* create_proof(proof_t* proof, mpc_lowmc_t* lowmc,
 }
 
 static int _mpc_sbox_layer_bitsliced(mzd_t** out, mzd_t** in, rci_t m, view_t* view, mzd_t** rvec,
-                                     unsigned sc, and_ptr andPtr, mask_t* mask, sbox_vars_t* vars) {
+                                     unsigned sc, and_ptr andPtr, mask_t const* mask, sbox_vars_t* vars) {
   if (in[0]->ncols - 3 * m < 2) {
     printf("Bitsliced implementation requires in->ncols - 3 * m >= 2\n");
     return 0;
@@ -278,7 +278,7 @@ static int _mpc_sbox_layer_bitsliced(mzd_t** out, mzd_t** in, rci_t m, view_t* v
 #ifdef WITH_OPT
 __attribute__((target("sse2"))) static int
 _mpc_sbox_layer_bitsliced_sse(mzd_t** out, mzd_t** in, rci_t m, view_t* view, mzd_t** rvec,
-                              unsigned sc, and_ptr andPtr, mask_t* mask, sbox_vars_t* vars) {
+                              unsigned sc, and_ptr andPtr, mask_t const* mask, sbox_vars_t* vars) {
   __m128i mx0 = _mm_load_si128((__m128i*)mask->x0->rows[0]);
   __m128i mx1 = _mm_load_si128((__m128i*)mask->x1->rows[0]);
   __m128i mx2 = _mm_load_si128((__m128i*)mask->x2->rows[0]);
@@ -350,7 +350,7 @@ _mpc_sbox_layer_bitsliced_sse(mzd_t** out, mzd_t** in, rci_t m, view_t* view, mz
 
 __attribute__((target("avx2"))) static int
 _mpc_sbox_layer_bitsliced_avx(mzd_t** out, mzd_t** in, rci_t m, view_t* view, mzd_t** rvec,
-                              unsigned sc, and_ptr andPtr, mask_t* mask, sbox_vars_t* vars) {
+                              unsigned sc, and_ptr andPtr, mask_t const* mask, sbox_vars_t* vars) {
   __m256i mx0 = _mm256_load_si256((__m256i*)mask->x0->rows[0]);
   __m256i mx1 = _mm256_load_si256((__m256i*)mask->x1->rows[0]);
   __m256i mx2 = _mm256_load_si256((__m256i*)mask->x2->rows[0]);
@@ -474,7 +474,7 @@ static int _mpc_sbox_layer(mzd_t** out, mzd_t** in, rci_t m, view_t* views, int*
   return 0;
 }
 
-static mzd_t** _mpc_lowmc_call(mpc_lowmc_t* lowmc, mpc_lowmc_key_t* lowmc_key, mzd_t* p,
+static mzd_t** _mpc_lowmc_call(mpc_lowmc_t const* lowmc, mpc_lowmc_key_t* lowmc_key, mzd_t* p,
                                view_t* views, mzd_t*** rvec, unsigned sc, unsigned ch,
                                BIT_and_ptr andBitPtr, int* status) {
   int vcnt = 0;
@@ -519,13 +519,13 @@ static mzd_t** _mpc_lowmc_call(mpc_lowmc_t* lowmc, mpc_lowmc_key_t* lowmc_key, m
   return c;
 }
 
-static mzd_t** _mpc_lowmc_call_bitsliced(mpc_lowmc_t* lowmc, mpc_lowmc_key_t* lowmc_key, mzd_t* p,
+static mzd_t** _mpc_lowmc_call_bitsliced(mpc_lowmc_t const* lowmc, mpc_lowmc_key_t* lowmc_key, mzd_t* p,
                                          view_t* views, mzd_t*** rvec, unsigned sc, unsigned ch,
                                          and_ptr andPtr, int* status, bool update_view) {
   if (update_view) {
-    mpc_copy(views[0].s, lowmc_key->shared, sc);
+    mpc_copy(views->s, lowmc_key->shared, sc);
   }
-  unsigned int vcnt = 1;
+  ++views;
 
   mzd_t** x = mpc_init_empty_share_vector(lowmc->n, sc);
   mzd_t** y = mpc_init_empty_share_vector(lowmc->n, sc);
@@ -538,7 +538,7 @@ static mzd_t** _mpc_lowmc_call_bitsliced(mpc_lowmc_t* lowmc, mpc_lowmc_key_t* lo
 
   lowmc_round_t* round = lowmc->rounds;
   mzd_t* r[3];
-  for (unsigned i = 0; i < lowmc->r; ++i, ++vcnt, ++round) {
+  for (unsigned i = 0; i < lowmc->r; ++i, ++views, ++round) {
     for (unsigned j = 0; j < sc; j++) {
       r[j] = rvec[j][i];
     }
@@ -546,18 +546,18 @@ static mzd_t** _mpc_lowmc_call_bitsliced(mpc_lowmc_t* lowmc, mpc_lowmc_key_t* lo
     int ret = 0;
 #ifdef WITH_OPT
     if (CPU_SUPPORTS_SSE2 && lowmc->n == 128) {
-      ret = _mpc_sbox_layer_bitsliced_sse(y, x, lowmc->m, &views[vcnt], r, sc, andPtr, &lowmc->mask,
+      ret = _mpc_sbox_layer_bitsliced_sse(y, x, lowmc->m, views, r, sc, andPtr, &lowmc->mask,
                                           vars);
     } else if (CPU_SUPPORTS_AVX2 && lowmc->n == 256) {
-      ret = _mpc_sbox_layer_bitsliced_avx(y, x, lowmc->m, &views[vcnt], r, sc, andPtr, &lowmc->mask,
+      ret = _mpc_sbox_layer_bitsliced_avx(y, x, lowmc->m, views, r, sc, andPtr, &lowmc->mask,
                                           vars);
     } else {
-      ret = _mpc_sbox_layer_bitsliced(y, x, lowmc->m, &views[vcnt], r, sc, andPtr, &lowmc->mask,
+      ret = _mpc_sbox_layer_bitsliced(y, x, lowmc->m, views, r, sc, andPtr, &lowmc->mask,
                                       vars);
     }
 #else
     ret =
-        _mpc_sbox_layer_bitsliced(y, x, lowmc->m, &views[vcnt], r, sc, andPtr, &lowmc->mask, vars);
+        _mpc_sbox_layer_bitsliced(y, x, lowmc->m, views, r, sc, andPtr, &lowmc->mask, vars);
 #endif
     if (ret) {
       *status = -1;
@@ -571,7 +571,7 @@ static mzd_t** _mpc_lowmc_call_bitsliced(mpc_lowmc_t* lowmc, mpc_lowmc_key_t* lo
   }
 
   if (update_view) {
-    mpc_copy(views[vcnt].s, x, sc);
+    mpc_copy(views->s, x, sc);
   }
 
   sbox_vars_free(vars, sc);
@@ -581,14 +581,14 @@ static mzd_t** _mpc_lowmc_call_bitsliced(mpc_lowmc_t* lowmc, mpc_lowmc_key_t* lo
   return x;
 }
 
-static mzd_t** _mpc_lowmc_call_bitsliced_shared_p(mpc_lowmc_t* lowmc, mpc_lowmc_key_t* lowmc_key,
+static mzd_t** _mpc_lowmc_call_bitsliced_shared_p(mpc_lowmc_t const* lowmc, mpc_lowmc_key_t* lowmc_key,
                                                   mzd_t** p, view_t* views, mzd_t*** rvec,
                                                   unsigned sc, unsigned ch, and_ptr andPtr,
                                                   int* status, bool update_view) {
   if (update_view) {
-    mpc_copy(views[0].s, lowmc_key->shared, sc);
+    mpc_copy(views->s, lowmc_key->shared, sc);
   }
-  unsigned int vcnt = 1;
+  ++views;
 
   mzd_t** x = mpc_init_empty_share_vector(lowmc->n, sc);
   mzd_t** y = mpc_init_empty_share_vector(lowmc->n, sc);
@@ -602,26 +602,26 @@ static mzd_t** _mpc_lowmc_call_bitsliced_shared_p(mpc_lowmc_t* lowmc, mpc_lowmc_
 
   mzd_t* r[3];
   lowmc_round_t* round = lowmc->rounds;
-  for (unsigned i = 0; i < lowmc->r; ++i, ++vcnt, ++round) {
-    for (unsigned j = 0; j < sc; j++) {
+  for (unsigned i = 0; i < lowmc->r; ++i, ++round, ++views) {
+    for (unsigned j = 0; j < sc; ++j) {
       r[j] = rvec[j][i];
     }
 
     int ret = 0;
 #ifdef WITH_OPT
     if (CPU_SUPPORTS_SSE2 && lowmc->n == 128) {
-      ret = _mpc_sbox_layer_bitsliced_sse(y, x, lowmc->m, &views[vcnt], r, sc, andPtr, &lowmc->mask,
+      ret = _mpc_sbox_layer_bitsliced_sse(y, x, lowmc->m, views, r, sc, andPtr, &lowmc->mask,
                                           vars);
     } else if (CPU_SUPPORTS_AVX2 && lowmc->n == 256) {
-      ret = _mpc_sbox_layer_bitsliced_avx(y, x, lowmc->m, &views[vcnt], r, sc, andPtr, &lowmc->mask,
+      ret = _mpc_sbox_layer_bitsliced_avx(y, x, lowmc->m, views, r, sc, andPtr, &lowmc->mask,
                                           vars);
     } else {
-      ret = _mpc_sbox_layer_bitsliced(y, x, lowmc->m, &views[vcnt], r, sc, andPtr, &lowmc->mask,
+      ret = _mpc_sbox_layer_bitsliced(y, x, lowmc->m, views, r, sc, andPtr, &lowmc->mask,
                                       vars);
     }
 #else
     ret =
-        _mpc_sbox_layer_bitsliced(y, x, lowmc->m, &views[vcnt], r, sc, andPtr, &lowmc->mask, vars);
+        _mpc_sbox_layer_bitsliced(y, x, lowmc->m, views, r, sc, andPtr, &lowmc->mask, vars);
 #endif
     if (ret) {
       *status = -1;
@@ -635,7 +635,7 @@ static mzd_t** _mpc_lowmc_call_bitsliced_shared_p(mpc_lowmc_t* lowmc, mpc_lowmc_
   }
 
   if (update_view) {
-    mpc_copy(views[vcnt].s, x, sc);
+    mpc_copy(views->s, x, sc);
   }
 
   sbox_vars_free(vars, sc);
