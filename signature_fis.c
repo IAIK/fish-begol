@@ -13,7 +13,7 @@ unsigned fis_compute_sig_size(unsigned m, unsigned n, unsigned r, unsigned k) {
   unsigned views           = 2 * (r * int_view_size + first_view_size + 
                              full_view_size) + 3 * full_view_size;
   return (NUM_ROUNDS * (8 * COMMITMENT_LENGTH + 8 * 40 + views) + 
-         ((NUM_ROUNDS + 3) / 4) + 7) / 8; 
+         ((NUM_ROUNDS + 3) / 4) + 7) / 8;
 }
 
 unsigned char *fis_sig_to_char_array(public_parameters_t *pp, fis_signature_t *sig, unsigned *len) {
@@ -139,7 +139,7 @@ static int fis_proof_verify(mpc_lowmc_t* lowmc, mzd_t* p, mzd_t* c, proof_t* prf
   int ch[NUM_ROUNDS];
   unsigned char hash[NUM_ROUNDS][2][COMMITMENT_LENGTH];
 #pragma omp parallel for
-  for (unsigned i = 0; i < NUM_ROUNDS; i++) {
+  for (unsigned i = 0; i < NUM_ROUNDS; ++i) {
     H(prf->keys[i][0], prf->y[i], prf->views[i], 0, view_count, prf->r[i][0], hash[i][0]);
     H(prf->keys[i][1], prf->y[i], prf->views[i], 1, view_count, prf->r[i][1], hash[i][1]);
   }
@@ -148,20 +148,23 @@ static int fis_proof_verify(mpc_lowmc_t* lowmc, mzd_t* p, mzd_t* c, proof_t* prf
 
   START_TIMING;
   int reconstruct_status = 0;
-  for (int i = 0; i < NUM_ROUNDS; i++) {
+  for (int i = 0; i < NUM_ROUNDS; ++i) {
     mzd_t* c_mpcr = mpc_reconstruct_from_share(prf->y[0]);
-    if (mzd_cmp(c, c_mpcr) != 0)
+    if (mzd_cmp(c, c_mpcr) != 0) {
       reconstruct_status = -1;
+    }
     mzd_free(c_mpcr);
   }
   END_TIMING(timing_and_size->verify.output_shares);
 
   START_TIMING;
   int output_share_status = 0;
-  for (int i = 0; i < NUM_ROUNDS; i++)
+  for (int i = 0; i < NUM_ROUNDS; ++i) {
     if (mzd_cmp(prf->y[i][ch[i]], prf->views[i][last_view_index].s[0]) ||
-        mzd_cmp(prf->y[i][(ch[i] + 1) % 3], prf->views[i][last_view_index].s[1]))
+        mzd_cmp(prf->y[i][(ch[i] + 1) % 3], prf->views[i][last_view_index].s[1])) {
       output_share_status = -1;
+    }
+  }
   END_TIMING(timing_and_size->verify.output_views);
 
   START_TIMING;
