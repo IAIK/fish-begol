@@ -3,8 +3,8 @@
 
 #include <immintrin.h>
 
-#define FN_ATTRIBUTES_AVX2 __attribute__((__always_inline__, target("avx2")))
-#define FN_ATTRIBUTES_SSE2 __attribute__((__always_inline__, target("sse2")))
+#define FN_ATTRIBUTES_AVX2 __attribute__((__always_inline__, target("avx2"), pure))
+#define FN_ATTRIBUTES_SSE2 __attribute__((__always_inline__, target("sse2"), pure))
 
 #define CPU_SUPPORTS_AVX2 __builtin_cpu_supports("avx2")
 #define CPU_SUPPORTS_SSE4 __builtin_cpu_supports("sse4.1")

@@ -34,7 +34,7 @@ BIT getrandbit() {
   return b;
 }
 
-static void handleErrors(void) {
+static void __attribute__((noreturn)) handleErrors(void) {
   ERR_print_errors_fp(stderr);
   abort();
 }
@@ -43,7 +43,7 @@ struct aes_prng_s {
   EVP_CIPHER_CTX* ctx;
 };
 
-aes_prng_t* aes_prng_init(unsigned char* key) {
+aes_prng_t* aes_prng_init(const unsigned char* key) {
   aes_prng_t* aes_prng = malloc(sizeof(aes_prng_t));
   aes_prng->ctx        = EVP_CIPHER_CTX_new();
 
@@ -51,8 +51,6 @@ aes_prng_t* aes_prng_init(unsigned char* key) {
   static const unsigned char iv[16] = {'0', '1', '2', '3', '4', '5', '6', '7',
                                        '8', '9', '0', '1', '2', '3', '4', '5'};
   if (1 != EVP_EncryptInit_ex(aes_prng->ctx, EVP_aes_128_ctr(), NULL, key, iv))
-    handleErrors();
-  if (1 != EVP_CIPHER_CTX_set_padding(aes_prng->ctx, 0))
     handleErrors();
 
   return aes_prng;
@@ -67,18 +65,24 @@ void aes_prng_free(aes_prng_t* aes_prng) {
   free(aes_prng);
 }
 
+#define unlikely(p) __builtin_expect(!!(p), 0)
+
 void aes_prng_get_randomness(aes_prng_t* aes_prng, unsigned char* dst, unsigned int count) {
   static const unsigned char plaintext[16] = {'0'};
 
+  EVP_CIPHER_CTX* ctx = aes_prng->ctx;
+
   int len = 0;
-  for (unsigned int j = 0; j < count / 16; ++j, dst += 16) {
-    if (1 != EVP_EncryptUpdate(aes_prng->ctx, dst, &len, plaintext, sizeof(plaintext)))
+  for (; count >= 16; count -= 16, dst += 16) {
+    if (unlikely(1 != EVP_EncryptUpdate(ctx, dst, &len, plaintext, sizeof(plaintext)))) {
       handleErrors();
+    }
   }
 
-  if (count % 16 != 0) {
-    if (1 != EVP_EncryptUpdate(aes_prng->ctx, dst, &len, plaintext, count % 16))
+  if (count) {
+    if (unlikely(1 != (EVP_EncryptUpdate(ctx, dst, &len, plaintext, count), 1))) {
       handleErrors();
+    }
   }
 }
 

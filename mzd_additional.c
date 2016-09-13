@@ -49,7 +49,7 @@ static mzd_t* mzd_init_random_vector_prng(rci_t n, aes_prng_t* aes_prng) {
   return v;
 }
 
-mzd_t** mzd_init_random_vectors_from_seed(unsigned char key[16], rci_t n, unsigned int count) {
+mzd_t** mzd_init_random_vectors_from_seed(const unsigned char key[16], rci_t n, unsigned int count) {
   aes_prng_t* aes_prng = aes_prng_init(key);
 
   mzd_t** vectors = calloc(count, sizeof(mzd_t*));
@@ -181,7 +181,7 @@ mzd_t* mzd_and(mzd_t* res, mzd_t const* first, mzd_t const* second) {
   while (width--) {
     *resptr++ = *firstptr++ & *secondptr++;
   }
-  *(--resptr) &= mask;
+  *(resptr - 1) &= mask;
 
   return res;
 }
@@ -268,7 +268,7 @@ mzd_t* mzd_xor(mzd_t* res, mzd_t const* first, mzd_t const* second) {
   while (width--) {
     *resptr++ = *firstptr++ ^ *secondptr++;
   }
-  *(--resptr) &= mask;
+  *(resptr - 1) &= mask;
 
   return res;
 }

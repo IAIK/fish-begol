@@ -230,7 +230,7 @@ proof_t* create_proof(proof_t* proof, mpc_lowmc_t* lowmc,
 }
 
 static int _mpc_sbox_layer_bitsliced(mzd_t** out, mzd_t** in, rci_t m, view_t* view, mzd_t** rvec,
-                                     unsigned sc, and_ptr andPtr, mask_t const* mask, sbox_vars_t* vars) {
+                                     unsigned sc, and_ptr andPtr, mask_t const* mask, sbox_vars_t const* vars) {
   if (in[0]->ncols - 3 * m < 2) {
     printf("Bitsliced implementation requires in->ncols - 3 * m >= 2\n");
     return 0;
@@ -278,7 +278,7 @@ static int _mpc_sbox_layer_bitsliced(mzd_t** out, mzd_t** in, rci_t m, view_t* v
 #ifdef WITH_OPT
 __attribute__((target("sse2"))) static int
 _mpc_sbox_layer_bitsliced_sse(mzd_t** out, mzd_t** in, rci_t m, view_t* view, mzd_t** rvec,
-                              unsigned sc, and_ptr andPtr, mask_t const* mask, sbox_vars_t* vars) {
+                              unsigned sc, and_ptr andPtr, mask_t const* mask, sbox_vars_t const* vars) {
   __m128i mx0 = _mm_load_si128((__m128i*)mask->x0->rows[0]);
   __m128i mx1 = _mm_load_si128((__m128i*)mask->x1->rows[0]);
   __m128i mx2 = _mm_load_si128((__m128i*)mask->x2->rows[0]);
@@ -350,7 +350,7 @@ _mpc_sbox_layer_bitsliced_sse(mzd_t** out, mzd_t** in, rci_t m, view_t* view, mz
 
 __attribute__((target("avx2"))) static int
 _mpc_sbox_layer_bitsliced_avx(mzd_t** out, mzd_t** in, rci_t m, view_t* view, mzd_t** rvec,
-                              unsigned sc, and_ptr andPtr, mask_t const* mask, sbox_vars_t* vars) {
+                              unsigned sc, and_ptr andPtr, mask_t const* mask, sbox_vars_t const* vars) {
   __m256i mx0 = _mm256_load_si256((__m256i*)mask->x0->rows[0]);
   __m256i mx1 = _mm256_load_si256((__m256i*)mask->x1->rows[0]);
   __m256i mx2 = _mm256_load_si256((__m256i*)mask->x2->rows[0]);
@@ -519,7 +519,8 @@ static mzd_t** _mpc_lowmc_call(mpc_lowmc_t const* lowmc, mpc_lowmc_key_t* lowmc_
   return c;
 }
 
-static mzd_t** _mpc_lowmc_call_bitsliced(mpc_lowmc_t const* lowmc, mpc_lowmc_key_t* lowmc_key, mzd_t* p,
+
+static mzd_t** _mpc_lowmc_call_bitsliced(mpc_lowmc_t const* lowmc, mpc_lowmc_key_t* lowmc_key, mzd_t* p, mzd_t** shared_p,
                                          view_t* views, mzd_t*** rvec, unsigned sc, unsigned ch,
                                          and_ptr andPtr, int* status, bool update_view) {
   if (update_view) {
@@ -529,10 +530,14 @@ static mzd_t** _mpc_lowmc_call_bitsliced(mpc_lowmc_t const* lowmc, mpc_lowmc_key
 
   mzd_t** x = mpc_init_empty_share_vector(lowmc->n, sc);
   mzd_t** y = mpc_init_empty_share_vector(lowmc->n, sc);
-  mzd_t** t = mpc_init_empty_share_vector(lowmc->n, sc);
 
   mpc_const_mat_mul(x, lowmc->k0_matrix, lowmc_key->shared, sc);
-  mpc_const_add(x, x, p, sc, ch);
+  if (p) {
+    mpc_const_add(x, x, p, sc, ch);
+  } else {
+    mpc_copy(y, shared_p, sc);
+    mpc_add(x, x, y, sc);
+  }
 
   sbox_vars_t* vars = sbox_vars_init(0, lowmc->n, sc);
 
@@ -566,8 +571,8 @@ static mzd_t** _mpc_lowmc_call_bitsliced(mpc_lowmc_t const* lowmc, mpc_lowmc_key
 
     mpc_const_mat_mul(x, round->l_matrix, y, sc);
     mpc_const_add(x, x, round->constant, sc, ch);
-    mpc_const_mat_mul(t, round->k_matrix, lowmc_key->shared, sc);
-    mpc_add(x, x, t, sc);
+    mpc_const_mat_mul(y, round->k_matrix, lowmc_key->shared, sc);
+    mpc_add(x, x, y, sc);
   }
 
   if (update_view) {
@@ -576,76 +581,11 @@ static mzd_t** _mpc_lowmc_call_bitsliced(mpc_lowmc_t const* lowmc, mpc_lowmc_key
 
   sbox_vars_free(vars, sc);
 
-  mpc_free(t, sc);
   mpc_free(y, sc);
   return x;
 }
 
-static mzd_t** _mpc_lowmc_call_bitsliced_shared_p(mpc_lowmc_t const* lowmc, mpc_lowmc_key_t* lowmc_key,
-                                                  mzd_t** p, view_t* views, mzd_t*** rvec,
-                                                  unsigned sc, unsigned ch, and_ptr andPtr,
-                                                  int* status, bool update_view) {
-  if (update_view) {
-    mpc_copy(views->s, lowmc_key->shared, sc);
-  }
-  ++views;
-
-  mzd_t** x = mpc_init_empty_share_vector(lowmc->n, sc);
-  mzd_t** y = mpc_init_empty_share_vector(lowmc->n, sc);
-  mzd_t** t = mpc_init_empty_share_vector(lowmc->n, sc);
-
-  mpc_const_mat_mul(x, lowmc->k0_matrix, lowmc_key->shared, sc);
-  mpc_copy(t, p, sc);
-  mpc_add(x, x, t, sc);
-
-  sbox_vars_t* vars = sbox_vars_init(0, lowmc->n, sc);
-
-  mzd_t* r[3];
-  lowmc_round_t* round = lowmc->rounds;
-  for (unsigned i = 0; i < lowmc->r; ++i, ++round, ++views) {
-    for (unsigned j = 0; j < sc; ++j) {
-      r[j] = rvec[j][i];
-    }
-
-    int ret = 0;
-#ifdef WITH_OPT
-    if (CPU_SUPPORTS_SSE2 && lowmc->n == 128) {
-      ret = _mpc_sbox_layer_bitsliced_sse(y, x, lowmc->m, views, r, sc, andPtr, &lowmc->mask,
-                                          vars);
-    } else if (CPU_SUPPORTS_AVX2 && lowmc->n == 256) {
-      ret = _mpc_sbox_layer_bitsliced_avx(y, x, lowmc->m, views, r, sc, andPtr, &lowmc->mask,
-                                          vars);
-    } else {
-      ret = _mpc_sbox_layer_bitsliced(y, x, lowmc->m, views, r, sc, andPtr, &lowmc->mask,
-                                      vars);
-    }
-#else
-    ret =
-        _mpc_sbox_layer_bitsliced(y, x, lowmc->m, views, r, sc, andPtr, &lowmc->mask, vars);
-#endif
-    if (ret) {
-      *status = -1;
-      return 0;
-    }
-
-    mpc_const_mat_mul(x, round->l_matrix, y, sc);
-    mpc_const_add(x, x, round->constant, sc, ch);
-    mpc_const_mat_mul(t, round->k_matrix, lowmc_key->shared, sc);
-    mpc_add(x, x, t, sc);
-  }
-
-  if (update_view) {
-    mpc_copy(views->s, x, sc);
-  }
-
-  sbox_vars_free(vars, sc);
-
-  mpc_free(t, sc);
-  mpc_free(y, sc);
-  return x;
-}
-
-static inline and_ptr select_and(mpc_lowmc_t* lowmc) {
+static inline and_ptr select_and(mpc_lowmc_t const* lowmc) {
 #ifdef WITH_OPT
   if (CPU_SUPPORTS_SSE2 && lowmc->n == 128) {
     return &mpc_and_sse;
@@ -659,7 +599,7 @@ static inline and_ptr select_and(mpc_lowmc_t* lowmc) {
   return &mpc_and;
 }
 
-static inline and_ptr select_and_verify(mpc_lowmc_t* lowmc) {
+static inline and_ptr select_and_verify(mpc_lowmc_t const* lowmc) {
 #ifdef WITH_OPT
   if (CPU_SUPPORTS_SSE2 && lowmc->n == 128) {
     return &mpc_and_verify_sse;
@@ -673,36 +613,32 @@ static inline and_ptr select_and_verify(mpc_lowmc_t* lowmc) {
   return &mpc_and_verify;
 }
 
-mzd_t** mpc_lowmc_call(mpc_lowmc_t* lowmc, mpc_lowmc_key_t* lowmc_key, mzd_t* p, view_t* views,
+mzd_t** mpc_lowmc_call(mpc_lowmc_t const* lowmc, mpc_lowmc_key_t* lowmc_key, mzd_t* p, view_t* views,
                        mzd_t*** rvec) {
   // return _mpc_lowmc_call(lowmc, lowmc_key, p, views, rvec, 3, 0,
   // &mpc_and_bit, 0);
-  return _mpc_lowmc_call_bitsliced(lowmc, lowmc_key, p, views, rvec, 3, 0, select_and(lowmc), 0,
+  return _mpc_lowmc_call_bitsliced(lowmc, lowmc_key, p, NULL, views, rvec, 3, 0, select_and(lowmc), 0,
                                    true);
 }
 
-mzd_t** mpc_lowmc_call_shared_p(mpc_lowmc_t* lowmc, mpc_lowmc_key_t* lowmc_key, mzd_shared_t* p,
+mzd_t** mpc_lowmc_call_shared_p(mpc_lowmc_t const* lowmc, mpc_lowmc_key_t* lowmc_key, mzd_shared_t* p,
                                 view_t* views, mzd_t*** rvec) {
   // return _mpc_lowmc_call(lowmc, lowmc_key, p, views, rvec, 3, 0,
   // &mpc_and_bit, 0);
-  return _mpc_lowmc_call_bitsliced_shared_p(lowmc, lowmc_key, p->shared, views, rvec, 3, 0,
+  return _mpc_lowmc_call_bitsliced(lowmc, lowmc_key, NULL, p->shared, views, rvec, 3, 0,
                                             select_and(lowmc), 0, true);
 }
 
-mzd_t** _mpc_lowmc_call_verify(mpc_lowmc_t* lowmc, mpc_lowmc_key_t* lowmc_key, mzd_t* p,
+static mzd_t** _mpc_lowmc_call_verify(mpc_lowmc_t const* lowmc, mpc_lowmc_key_t* lowmc_key, mzd_t* p,
                                view_t* views, mzd_t*** rvec, int* status, int c) {
-  // return _mpc_lowmc_call(lowmc, lowmc_key, p, views, rvec, 2, c,
-  // &mpc_and_bit_verify, status);
-  return _mpc_lowmc_call_bitsliced(lowmc, lowmc_key, p, views, rvec, 2, c, select_and_verify(lowmc),
+  return _mpc_lowmc_call_bitsliced(lowmc, lowmc_key, p, NULL, views, rvec, 2, c, select_and_verify(lowmc),
                                    status, false);
 }
 
-mzd_t** _mpc_lowmc_call_verify_shared_p(mpc_lowmc_t* lowmc, mpc_lowmc_key_t* lowmc_key,
+static mzd_t** _mpc_lowmc_call_verify_shared_p(mpc_lowmc_t const* lowmc, mpc_lowmc_key_t* lowmc_key,
                                         mzd_shared_t* p, view_t* views, mzd_t*** rvec, int* status,
                                         int c) {
-  // return _mpc_lowmc_call(lowmc, lowmc_key, p, views, rvec, 2, c,
-  // &mpc_and_bit_verify, status);
-  return _mpc_lowmc_call_bitsliced_shared_p(lowmc, lowmc_key, p->shared, views, rvec, 2, c,
+  return _mpc_lowmc_call_bitsliced(lowmc, lowmc_key, NULL, p->shared, views, rvec, 2, c,
                                             select_and_verify(lowmc), status, false);
 }
 
@@ -722,11 +658,11 @@ mzd_t** _mpc_lowmc_call_verify_shared_p(mpc_lowmc_t* lowmc, mpc_lowmc_key_t* low
                                                                                                    \
   return status
 
-int mpc_lowmc_verify(mpc_lowmc_t* lowmc, mzd_t* p, view_t* views, mzd_t*** rvec, int c) {
+int mpc_lowmc_verify(mpc_lowmc_t const* lowmc, mzd_t* p, view_t* views, mzd_t*** rvec, int c) {
   mpc_lowmc_verify_template(_mpc_lowmc_call_verify);
 }
 
-int mpc_lowmc_verify_shared_p(mpc_lowmc_t* lowmc, mzd_shared_t* p, view_t* views, mzd_t*** rvec,
+int mpc_lowmc_verify_shared_p(mpc_lowmc_t const* lowmc, mzd_shared_t* p, view_t* views, mzd_t*** rvec,
                               int c) {
   mpc_lowmc_verify_template(_mpc_lowmc_call_verify_shared_p);
 }

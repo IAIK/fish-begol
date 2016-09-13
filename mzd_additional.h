@@ -15,7 +15,7 @@ void mzd_randomize_ssl(mzd_t* val);
 
 void mzd_randomize_upper_triangular(mzd_t* valu);
 
-mzd_t** mzd_init_random_vectors_from_seed(unsigned char key[16], rci_t n, unsigned count);
+mzd_t** mzd_init_random_vectors_from_seed(const unsigned char key[16], rci_t n, unsigned count);
 
 void mzd_shift_right(mzd_t* res, mzd_t const* val, unsigned count);
 
