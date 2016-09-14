@@ -15,10 +15,9 @@ void destroy_instance(public_parameters_t* pp) {
   pp->lowmc = NULL;
 }
 
-void init_view(mpc_lowmc_t* mpc_lowmc, view_t* views[NUM_ROUNDS]) {
+void init_view(mpc_lowmc_t const* mpc_lowmc, view_t* views[NUM_ROUNDS]) {
   const unsigned int size = 2 + mpc_lowmc->r;
 
-#pragma omp parallel for
   for (unsigned int i = 0; i < NUM_ROUNDS; i++) {
     views[i] = calloc(size, sizeof(view_t*));
 

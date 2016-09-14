@@ -39,30 +39,18 @@ static void __attribute__((noreturn)) handleErrors(void) {
   abort();
 }
 
-struct aes_prng_s {
-  EVP_CIPHER_CTX* ctx;
-};
-
-aes_prng_t* aes_prng_init(const unsigned char* key) {
-  aes_prng_t* aes_prng = malloc(sizeof(aes_prng_t));
-  aes_prng->ctx        = EVP_CIPHER_CTX_new();
+void aes_prng_init(aes_prng_t* aes_prng, const unsigned char* key) {
+  aes_prng->ctx = EVP_CIPHER_CTX_new();
 
   /* A 128 bit IV */
   static const unsigned char iv[16] = {'0', '1', '2', '3', '4', '5', '6', '7',
                                        '8', '9', '0', '1', '2', '3', '4', '5'};
   if (1 != EVP_EncryptInit_ex(aes_prng->ctx, EVP_aes_128_ctr(), NULL, key, iv))
     handleErrors();
-
-  return aes_prng;
 }
 
-void aes_prng_free(aes_prng_t* aes_prng) {
-  if (!aes_prng) {
-    return;
-  }
-
+void aes_prng_clear(aes_prng_t* aes_prng) {
   EVP_CIPHER_CTX_free(aes_prng->ctx);
-  free(aes_prng);
 }
 
 #define unlikely(p) __builtin_expect(!!(p), 0)

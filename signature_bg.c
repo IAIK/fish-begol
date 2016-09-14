@@ -134,15 +134,16 @@ static bg_signature_t* bg_prove(public_parameters_t* pp, bg_private_key_t* priva
   mpc_lowmc_key_t lowmc_key_k[NUM_ROUNDS] = {{0, NULL}};
   mpc_lowmc_key_t lowmc_key_s[NUM_ROUNDS] = {{0, NULL}};
 
-  aes_prng_t* aes_prng = aes_prng_init(secret_sharing_key);
+  aes_prng_t aes_prng;
+  aes_prng_init(&aes_prng, secret_sharing_key);
   for (unsigned i = 0; i < NUM_ROUNDS; ++i) {
     mzd_shared_init(&lowmc_key_s[i], private_key->s);
-    mzd_shared_share_prng(&lowmc_key_s[i], aes_prng);
+    mzd_shared_share_prng(&lowmc_key_s[i], &aes_prng);
 
     mzd_shared_init(&lowmc_key_k[i], private_key->k);
-    mzd_shared_share_prng(&lowmc_key_k[i], aes_prng);
+    mzd_shared_share_prng(&lowmc_key_k[i], &aes_prng);
   }
-  aes_prng_free(aes_prng);
+  aes_prng_clear(&aes_prng);
   END_TIMING(timing_and_size->sign.secret_sharing);
 
   START_TIMING;
