@@ -73,6 +73,7 @@ lowmc_t* lowmc_init(size_t m, size_t n, size_t r, size_t k) {
   lowmc->k0_matrix = mzd_sample_kmatrix(k, n);
 
   lowmc->rounds = calloc(sizeof(lowmc_round_t), r);
+  #pragma omp parallel for
   for (unsigned int i = 0; i < r; ++i) {
     lowmc->rounds[i].l_matrix = mzd_sample_lmatrix(n);
     lowmc->rounds[i].k_matrix = mzd_sample_kmatrix(k, n);
