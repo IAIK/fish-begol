@@ -4,6 +4,6 @@
 #include <openssl/sha.h>
 
 #define COMMITMENT_LENGTH SHA256_DIGEST_LENGTH
-#define NUM_ROUNDS 137
+#define NUM_ROUNDS 219
 
 #endif
