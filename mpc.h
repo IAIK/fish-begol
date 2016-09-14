@@ -8,7 +8,7 @@ void mpc_shift_right(mzd_t**res, mzd_t **val, unsigned count, unsigned sc);
 
 void mpc_shift_left(mzd_t **res, mzd_t **val, unsigned count, unsigned sc);
 
-mzd_t **mpc_and_const(mzd_t **res, mzd_t **first, mzd_t *second, unsigned sc);
+mzd_t **mpc_and_const(mzd_t **res, mzd_t **first, mzd_t const *second, unsigned sc);
 
 mzd_t **mpc_xor(mzd_t **res, mzd_t **first, mzd_t **second, unsigned sc);
 
@@ -20,11 +20,11 @@ int mpc_and_sse(mzd_t **res, mzd_t **first, mzd_t **second, mzd_t **r, view_t *v
 
 int mpc_and_avx(mzd_t **res, mzd_t **first, mzd_t **second, mzd_t **r, view_t *view, mzd_t *mask, unsigned viewshift, mzd_t **buffer);
 
-int mpc_and_verify(mzd_t **res, mzd_t **first, mzd_t **second, mzd_t **r, view_t *view, mzd_t *mask, unsigned viewshift, mzd_t **buffer);
+int mpc_and_verify(mzd_t **res, mzd_t **first, mzd_t **second, mzd_t **r, view_t const *view, mzd_t const *mask, unsigned viewshift, mzd_t **buffer);
 
-int mpc_and_verify_sse(mzd_t **res, mzd_t **first, mzd_t **second, mzd_t **r, view_t *view, mzd_t *mask, unsigned viewshift, mzd_t **buffer);
+int mpc_and_verify_sse(mzd_t **res, mzd_t **first, mzd_t **second, mzd_t **r, view_t const *view, mzd_t const *mask, unsigned viewshift, mzd_t **buffer);
 
-int mpc_and_verify_avx(mzd_t **res, mzd_t **first, mzd_t **second, mzd_t **r, view_t *view, mzd_t *mask, unsigned viewshift, mzd_t **buffer);
+int mpc_and_verify_avx(mzd_t **res, mzd_t **first, mzd_t **second, mzd_t **r, view_t const *view, mzd_t const *mask, unsigned viewshift, mzd_t **buffer);
 
 /**
  * Linearly secret shares the vector v 
@@ -32,7 +32,7 @@ int mpc_and_verify_avx(mzd_t **res, mzd_t **first, mzd_t **second, mzd_t **r, vi
  * \param  v the vector to be secret shared
  * \return the vector v represented as three shares
  */
-mzd_t **mpc_init_share_vector(mzd_t *v);
+mzd_t **mpc_init_share_vector(mzd_t const *v);
 
 /**
  * Initializes a share vector where all three components 
@@ -41,7 +41,7 @@ mzd_t **mpc_init_share_vector(mzd_t *v);
  * \param  v the vector to be copied to all three share components
  * \return   the vector v containing three copies of the vector
  */
-mzd_t **mpc_init_plain_share_vector(mzd_t *v);
+mzd_t **mpc_init_plain_share_vector(mzd_t const *v);
 
 /**
  * Initializes a vector representing a sharing of a random 
@@ -140,7 +140,7 @@ mzd_t **mpc_add(mzd_t **result, mzd_t **first, mzd_t **second, unsigned sc);
  * \param  c      the callenge for verification (0 if in proving mode)
  * \return        the result of the computation
  */
-mzd_t **mpc_const_add(mzd_t **result, mzd_t **first, mzd_t *second, unsigned sc, unsigned c);
+mzd_t **mpc_const_add(mzd_t **result, mzd_t **first, mzd_t const *second, unsigned sc, unsigned c);
 
 /**
  * Computes result = first * second in GF(2) of a 
@@ -153,7 +153,7 @@ mzd_t **mpc_const_add(mzd_t **result, mzd_t **first, mzd_t *second, unsigned sc,
  * \param  sc     the share count
  * \return        the result of the computation
  */
-mzd_t **mpc_const_mat_mul(mzd_t** result, mzd_t *matrix, mzd_t **vector, unsigned sc);
+mzd_t **mpc_const_mat_mul(mzd_t** result, mzd_t const *matrix, mzd_t **vector, unsigned sc);
 
 /**
  * Deep copies a secret shared vector
