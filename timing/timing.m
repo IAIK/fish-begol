@@ -34,7 +34,7 @@ endfunction
 
 function create_plot(prefix, n, k, labels, data)
   fig = figure;
-  [ax, h1, h2] = plotyy(1:rows(data), data(:, 1:3), 1:rows(data), data(:,4));
+  [ax, h1, h2] = plotyy(1:rows(data), data(:,1:3), 1:rows(data), data(:,4));
   set(h1(1), 'marker', '.','markersize', 8, 'color', 'blue', 'linewidth', 2);
   set(h1(2), 'marker', 'diamond','markersize', 2, 'color', 'red', 'linewidth', 2);
   set(h1(3), 'marker', 'square','markersize', 2, 'color', 'magenta', 'linewidth', 2);
@@ -45,7 +45,7 @@ function create_plot(prefix, n, k, labels, data)
   title(strcat("LowMC Timing n=", n, " k=", k, "\n\n", "Parameters [m]-[r]"));
   xlabel(" ");
   set(ax, 'xtick', 1:rows(data));
-  set(ax, 'xticklabel', "");  
+  set(ax, 'xticklabel', "");
 
   xlim([1, rows(data)])
   for i = 1:rows(data)
@@ -53,7 +53,7 @@ function create_plot(prefix, n, k, labels, data)
   endfor
   set(get(ax(1),'Ylabel'),'String','Time [ms]');
   set(get(ax(2),'Ylabel'),'String','Signature Size [kB]');
-  legend(ax(1), "Instance Gen", "Sign", "Verify");
+  legend(ax(1), "Instance Gen", "Sign", "Verify", "Signature Size");
   fixAxes
   print(fig, strcat(prefix, "-", n, "-", k, ".png"), "-dpng", "-loose");
 endfunction
