@@ -10,7 +10,22 @@
 #include "avx.h"
 #endif
 
-static void sbox_vars_free(sbox_vars_t* vars, unsigned int sc);
+typedef struct {
+  mzd_t** x0m;
+  mzd_t** x1m;
+  mzd_t** x2m;
+  mzd_t** r0m;
+  mzd_t** r1m;
+  mzd_t** r2m;
+  mzd_t** x0s;
+  mzd_t** r0s;
+  mzd_t** x1s;
+  mzd_t** r1s;
+  mzd_t** v;
+} sbox_vars_t;
+
+static sbox_vars_t* sbox_vars_init(sbox_vars_t* vars, rci_t n, unsigned sc);
+static void sbox_vars_clear(sbox_vars_t* vars, unsigned int sc);
 
 typedef int (*BIT_and_ptr)(BIT*, BIT*, BIT*, view_t*, int*, unsigned, unsigned);
 typedef int (*and_ptr)(mzd_t**, mzd_t**, mzd_t**, mzd_t**, view_t*, mzd_t*, unsigned, mzd_t**);
@@ -528,6 +543,8 @@ static mzd_t** _mpc_lowmc_call_bitsliced(mpc_lowmc_t const* lowmc, mpc_lowmc_key
   }
   ++views;
 
+  sbox_vars_t vars;
+  sbox_vars_init(&vars, lowmc->n, 2);
   mzd_t** x = mpc_init_empty_share_vector(lowmc->n, sc);
   mzd_t** y = mpc_init_empty_share_vector(lowmc->n, sc);
 
@@ -538,8 +555,6 @@ static mzd_t** _mpc_lowmc_call_bitsliced(mpc_lowmc_t const* lowmc, mpc_lowmc_key
     mpc_copy(y, shared_p, sc);
     mpc_add(x, x, y, sc);
   }
-
-  sbox_vars_t* vars = sbox_vars_init(0, lowmc->n, sc);
 
   lowmc_round_t* round = lowmc->rounds;
   mzd_t* r[3];
@@ -579,9 +594,8 @@ static mzd_t** _mpc_lowmc_call_bitsliced(mpc_lowmc_t const* lowmc, mpc_lowmc_key
     mpc_copy(views->s, x, sc);
   }
 
-  sbox_vars_free(vars, sc);
-
-  mpc_free(y, sc);
+  sbox_vars_clear(&vars, 2);
+  mpc_free(y, 2);
   return x;
 }
 
@@ -667,7 +681,7 @@ int mpc_lowmc_verify_shared_p(mpc_lowmc_t const* lowmc, mzd_shared_t* p, view_t*
   mpc_lowmc_verify_template(_mpc_lowmc_call_verify_shared_p);
 }
 
-void sbox_vars_free(sbox_vars_t* vars, unsigned int sc) {
+void sbox_vars_clear(sbox_vars_t* vars, unsigned int sc) {
   mpc_free(vars->x0m, sc);
   mpc_free(vars->x1m, sc);
   mpc_free(vars->x2m, sc);
@@ -679,14 +693,9 @@ void sbox_vars_free(sbox_vars_t* vars, unsigned int sc) {
   mpc_free(vars->x1s, sc);
   mpc_free(vars->r1s, sc);
   mpc_free(vars->v, sc);
-  free(vars);
 }
 
 sbox_vars_t* sbox_vars_init(sbox_vars_t* vars, rci_t n, unsigned sc) {
-  if (!vars) {
-    vars = calloc(1, sizeof(sbox_vars_t));
-  }
-
   vars->x0m = mpc_init_empty_share_vector(n, sc);
   vars->x1m = mpc_init_empty_share_vector(n, sc);
   vars->x2m = mpc_init_empty_share_vector(n, sc);

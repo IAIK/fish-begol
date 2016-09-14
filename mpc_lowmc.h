@@ -24,20 +24,6 @@ typedef struct {
   mzd_t ***y;
 } proof_t;
 
-typedef struct {
-  mzd_t **x0m;
-  mzd_t **x1m;
-  mzd_t **x2m;
-  mzd_t **r0m;
-  mzd_t **r1m;
-  mzd_t **r2m;
-  mzd_t **x0s;
-  mzd_t **r0s;
-  mzd_t **x1s;
-  mzd_t **r1s;
-  mzd_t **v;
-} sbox_vars_t;
-
 proof_t *proof_from_char_array(mpc_lowmc_t *lowmc, proof_t *proof, unsigned char *data, unsigned *len, bool contains_ch);
 
 unsigned char *proof_to_char_array(mpc_lowmc_t *lowmc, proof_t *proof, unsigned *len, bool store_ch); 
@@ -48,7 +34,6 @@ proof_t *create_proof(proof_t* proof, mpc_lowmc_t* lowmc,
                       unsigned char keys[NUM_ROUNDS][3][16], mzd_t*** c_mpc,
                       view_t* views[NUM_ROUNDS]);
 
-sbox_vars_t *sbox_vars_init(sbox_vars_t *vars, rci_t n, unsigned sc);
 
 void clear_proof(mpc_lowmc_t *lowmc, proof_t *proof);
 void free_proof(mpc_lowmc_t *lowmc, proof_t *proof);
