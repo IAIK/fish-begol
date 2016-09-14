@@ -37,8 +37,8 @@ unsigned char* proof_to_char_array(mpc_lowmc_t* lowmc, proof_t* proof, unsigned*
   unsigned single_mzd_bytes = ((3 * lowmc->m) + 7) / 8;
   unsigned mzd_bytes =
       2 * (lowmc->r * single_mzd_bytes + first_view_bytes + full_mzd_size) + 3 * full_mzd_size;
-  *len = NUM_ROUNDS * (COMMITMENT_LENGTH + 40 + mzd_bytes) +
-         (store_ch ? ((NUM_ROUNDS + 3) / 4) : 0);
+  *len =
+      NUM_ROUNDS * (COMMITMENT_LENGTH + 40 + mzd_bytes) + (store_ch ? ((NUM_ROUNDS + 3) / 4) : 0);
   unsigned char* result = (unsigned char*)malloc(*len * sizeof(unsigned char));
 
   unsigned char* temp = result;
@@ -137,7 +137,6 @@ proof_t* proof_from_char_array(mpc_lowmc_t* lowmc, proof_t* proof, unsigned char
 
   proof->y = (mzd_t***)malloc(NUM_ROUNDS * sizeof(mzd_t**));
 
-#pragma omp parallel for
   for (unsigned int i = 0; i < NUM_ROUNDS; i++) {
     proof->r[i]    = (unsigned char**)malloc(2 * sizeof(unsigned char*));
     proof->r[i][0] = (unsigned char*)malloc(4 * sizeof(unsigned char));
@@ -189,10 +188,11 @@ proof_t* proof_from_char_array(mpc_lowmc_t* lowmc, proof_t* proof, unsigned char
   return proof;
 }
 
-proof_t* create_proof(proof_t* proof, mpc_lowmc_t* lowmc,
-                      unsigned char hashes[NUM_ROUNDS][3][COMMITMENT_LENGTH], unsigned char ch[NUM_ROUNDS],
-                      unsigned char r[NUM_ROUNDS][3][4], unsigned char keys[NUM_ROUNDS][3][16],
-                      mzd_t*** c_mpc, view_t* views[NUM_ROUNDS]) {
+proof_t* create_proof(proof_t* proof, mpc_lowmc_t const* lowmc,
+                      unsigned char hashes[NUM_ROUNDS][3][COMMITMENT_LENGTH],
+                      unsigned char ch[NUM_ROUNDS], unsigned char r[NUM_ROUNDS][3][4],
+                      unsigned char keys[NUM_ROUNDS][3][16], mzd_t*** c_mpc,
+                      view_t* const views[NUM_ROUNDS]) {
   if (!proof)
     proof = (proof_t*)malloc(sizeof(proof_t));
 
@@ -202,7 +202,6 @@ proof_t* create_proof(proof_t* proof, mpc_lowmc_t* lowmc,
   proof->keys = (unsigned char***)malloc(NUM_ROUNDS * sizeof(unsigned char**));
 // memcpy(proof->hashes, hashes, NUM_ROUNDS * 3 * SHA256_DIGEST_LENGTH * sizeof(char));
 
-#pragma omp parallel for
   for (unsigned int i = 0; i < NUM_ROUNDS; i++) {
     unsigned int a = ch[i];
     unsigned int b = (a + 1) % 3;
@@ -627,16 +626,16 @@ static inline and_ptr select_and_verify(mpc_lowmc_t const* lowmc) {
   return &mpc_and_verify;
 }
 
-mzd_t** mpc_lowmc_call(mpc_lowmc_t const* lowmc, mpc_lowmc_key_t* lowmc_key, mzd_t* p, view_t* views,
-                       mzd_t*** rvec) {
+mzd_t** mpc_lowmc_call(mpc_lowmc_t const* lowmc, mpc_lowmc_key_t* lowmc_key, mzd_t const* p,
+                       view_t* views, mzd_t*** rvec) {
   // return _mpc_lowmc_call(lowmc, lowmc_key, p, views, rvec, 3, 0,
   // &mpc_and_bit, 0);
   return _mpc_lowmc_call_bitsliced(lowmc, lowmc_key, p, NULL, views, rvec, 3, 0, select_and(lowmc), 0,
                                    true);
 }
 
-mzd_t** mpc_lowmc_call_shared_p(mpc_lowmc_t const* lowmc, mpc_lowmc_key_t* lowmc_key, mzd_shared_t* p,
-                                view_t* views, mzd_t*** rvec) {
+mzd_t** mpc_lowmc_call_shared_p(mpc_lowmc_t const* lowmc, mpc_lowmc_key_t* lowmc_key,
+                                mzd_shared_t const* p, view_t* views, mzd_t*** rvec) {
   // return _mpc_lowmc_call(lowmc, lowmc_key, p, views, rvec, 3, 0,
   // &mpc_and_bit, 0);
   return _mpc_lowmc_call_bitsliced(lowmc, lowmc_key, NULL, p->shared, views, rvec, 3, 0,
@@ -650,8 +649,8 @@ static mzd_t** _mpc_lowmc_call_verify(mpc_lowmc_t const* lowmc, mpc_lowmc_key_t*
 }
 
 static mzd_t** _mpc_lowmc_call_verify_shared_p(mpc_lowmc_t const* lowmc, mpc_lowmc_key_t* lowmc_key,
-                                        mzd_shared_t* p, view_t* views, mzd_t*** rvec, int* status,
-                                        int c) {
+                                               mzd_shared_t const* p, view_t const* views, mzd_t*** rvec,
+                                               int* status, int c) {
   return _mpc_lowmc_call_bitsliced(lowmc, lowmc_key, NULL, p->shared, views, rvec, 2, c,
                                             select_and_verify(lowmc), status, false);
 }
@@ -672,12 +671,12 @@ static mzd_t** _mpc_lowmc_call_verify_shared_p(mpc_lowmc_t const* lowmc, mpc_low
                                                                                                    \
   return status
 
-int mpc_lowmc_verify(mpc_lowmc_t const* lowmc, mzd_t* p, view_t* views, mzd_t*** rvec, int c) {
+int mpc_lowmc_verify(mpc_lowmc_t const* lowmc, mzd_t const* p, view_t const* views, mzd_t*** rvec, int c) {
   mpc_lowmc_verify_template(_mpc_lowmc_call_verify);
 }
 
-int mpc_lowmc_verify_shared_p(mpc_lowmc_t const* lowmc, mzd_shared_t* p, view_t* views, mzd_t*** rvec,
-                              int c) {
+int mpc_lowmc_verify_shared_p(mpc_lowmc_t const* lowmc, mzd_shared_t const* p, view_t const* views,
+                              mzd_t*** rvec, int c) {
   mpc_lowmc_verify_template(_mpc_lowmc_call_verify_shared_p);
 }
 
@@ -711,7 +710,7 @@ sbox_vars_t* sbox_vars_init(sbox_vars_t* vars, rci_t n, unsigned sc) {
   return vars;
 }
 
-void clear_proof(mpc_lowmc_t* lowmc, proof_t* proof) {
+void clear_proof(mpc_lowmc_t const* lowmc, proof_t const* proof) {
   for (unsigned i = 0; i < NUM_ROUNDS; i++) {
     mpc_free(proof->y[i], 3);
     for (unsigned j = 0; j < 2 + lowmc->r; j++) {
@@ -735,7 +734,7 @@ void clear_proof(mpc_lowmc_t* lowmc, proof_t* proof) {
   free(proof->r);
 }
 
-void free_proof(mpc_lowmc_t* mpc_lowmc, proof_t* proof) {
+void free_proof(mpc_lowmc_t const* mpc_lowmc, proof_t* proof) {
   clear_proof(mpc_lowmc, proof);
   free(proof);
 }

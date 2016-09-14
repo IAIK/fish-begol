@@ -89,7 +89,7 @@ void bg_free_signature(public_parameters_t* pp, bg_signature_t* signature) {
 
 static bg_signature_t* bg_prove(public_parameters_t* pp, bg_private_key_t* private_key, mzd_t* p) {
   TIME_FUNCTION;
-  lowmc_t* lowmc                = pp->lowmc;
+  lowmc_t const* lowmc          = pp->lowmc;
   const unsigned int view_count = lowmc->r + 2;
 
   unsigned char r_p[NUM_ROUNDS][3][4];
@@ -104,7 +104,7 @@ static bg_signature_t* bg_prove(public_parameters_t* pp, bg_private_key_t* priva
       rand_bytes((unsigned char*)r_p, sizeof(r_p)) != 1 ||
       rand_bytes((unsigned char*)keys_s, sizeof(keys_s)) != 1 ||
       rand_bytes((unsigned char*)r_s, sizeof(r_s)) != 1 ||
-      rand_bytes(secret_sharing_key, sizeof(secret_sharing_key)) != 1) {
+      rand_bytes((unsigned char*)secret_sharing_key, sizeof(secret_sharing_key)) != 1) {
 #ifdef VERBOSE
     printf("rand_bytes failed crypto, aborting\n");
 #endif
@@ -199,23 +199,23 @@ static bg_signature_t* bg_prove(public_parameters_t* pp, bg_private_key_t* priva
   return signature;
 }
 
-typedef int (*verify_ptr)(mpc_lowmc_t* lowmc, mzd_t* p, mzd_shared_t* shared_p, view_t* views,
+typedef int (*verify_ptr)(mpc_lowmc_t const* lowmc, mzd_t const* p, mzd_shared_t const* shared_p, view_t const* views,
                           mzd_t** rv[2], unsigned char ch);
 
-static int verify_with_p(mpc_lowmc_t* lowmc, mzd_t* p, mzd_shared_t* shared_p, view_t* views,
+static int verify_with_p(mpc_lowmc_t const* lowmc, mzd_t const* p, mzd_shared_t const* shared_p, view_t const* views,
                          mzd_t** rv[2], unsigned char ch) {
   (void)shared_p;
   return mpc_lowmc_verify(lowmc, p, views, rv, ch);
 }
 
-static int verify_with_shared_p(mpc_lowmc_t* lowmc, mzd_t* p, mzd_shared_t* shared_p, view_t* views,
+static int verify_with_shared_p(mpc_lowmc_t const* lowmc, mzd_t const* p, mzd_shared_t const* shared_p, view_t const* views,
                                 mzd_t** rv[2], unsigned char ch) {
   (void)p;
   return mpc_lowmc_verify_shared_p(lowmc, shared_p, views, rv, ch);
 }
 
-static int verify_views(mpc_lowmc_t* lowmc, mzd_t* p, mzd_shared_t shared_p[NUM_ROUNDS],
-                        proof_t* proof, verify_ptr verify, unsigned char ch[NUM_ROUNDS]) {
+static int verify_views(mpc_lowmc_t const* lowmc, mzd_t const* p, mzd_shared_t shared_p[NUM_ROUNDS],
+                        proof_t const* proof, verify_ptr verify, unsigned char ch[NUM_ROUNDS]) {
   int view_verify_status = 0;
 
   #pragma omp parallel for reduction(| : view_verify_status)
@@ -239,7 +239,7 @@ static int bg_proof_verify(public_parameters_t* pp, bg_public_key_t* pk, mzd_t* 
                            bg_signature_t* signature) {
   TIME_FUNCTION;
 
-  lowmc_t* lowmc                     = pp->lowmc;
+  lowmc_t const* lowmc               = pp->lowmc;
   const unsigned int view_count      = lowmc->r + 2;
   const unsigned int last_view_index = lowmc->r + 1;
   proof_t* proof_p                   = &signature->proof_p;
