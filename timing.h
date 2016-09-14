@@ -31,9 +31,17 @@ extern timing_and_size_t* timing_and_size;
 
 #define TIMING_SCALE (1000000 / CLOCKS_PER_SEC);
 
+#ifdef WITH_OPENMP
+#include <omp.h>
+
+static inline uint64_t gettime_clock() {
+  return omp_get_wtime() * 1000 * 1000;
+}
+#else
 static inline uint64_t gettime_clock() {
   return clock() * TIMING_SCALE;
 }
+#endif
 
 #else
 
