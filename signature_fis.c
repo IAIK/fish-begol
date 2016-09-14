@@ -27,7 +27,6 @@ fis_signature_t *fis_sig_from_char_array(public_parameters_t *pp, unsigned char 
   return sig;
 }
 
-
 void fis_create_key(public_parameters_t* pp, fis_private_key_t* private_key,
                            fis_public_key_t* public_key) {
   TIME_FUNCTION;
@@ -70,7 +69,7 @@ static proof_t* fis_prove(mpc_lowmc_t* lowmc, lowmc_key_t* lowmc_key, mzd_t* p, 
   }
 
   mzd_t** rvec[NUM_ROUNDS][3];
-#pragma omp parallel for
+  #pragma omp parallel for
   for (unsigned i = 0; i < NUM_ROUNDS; i++) {
     rvec[i][0] = mzd_init_random_vectors_from_seed(keys[i][0], lowmc->n, lowmc->r);
     rvec[i][1] = mzd_init_random_vectors_from_seed(keys[i][1], lowmc->n, lowmc->r);
@@ -93,7 +92,7 @@ static proof_t* fis_prove(mpc_lowmc_t* lowmc, lowmc_key_t* lowmc_key, mzd_t* p, 
 
   START_TIMING;
   mzd_t*** c_mpc     = (mzd_t***)malloc(NUM_ROUNDS * sizeof(mzd_t**));
-#pragma omp parallel for
+  #pragma omp parallel for
   for (unsigned i = 0; i < NUM_ROUNDS; i++) {
     c_mpc[i] = mpc_lowmc_call(lowmc, &s[i], p, views[i], rvec[i]);
   }
@@ -101,7 +100,7 @@ static proof_t* fis_prove(mpc_lowmc_t* lowmc, lowmc_key_t* lowmc_key, mzd_t* p, 
 
   START_TIMING;
   unsigned char hashes[NUM_ROUNDS][3][COMMITMENT_LENGTH];
-#pragma omp parallel for
+  #pragma omp parallel for
   for (unsigned i = 0; i < NUM_ROUNDS; ++i) {
     H(keys[i][0], c_mpc[i], views[i], 0, view_count, r[i][0], hashes[i][0]);
     H(keys[i][1], c_mpc[i], views[i], 1, view_count, r[i][1], hashes[i][1]);
@@ -116,7 +115,6 @@ static proof_t* fis_prove(mpc_lowmc_t* lowmc, lowmc_key_t* lowmc_key, mzd_t* p, 
 
   proof_t* proof = create_proof(0, lowmc, hashes, ch, r, keys, c_mpc, views);
 
-#pragma omp parallel for
   for (unsigned j = 0; j < NUM_ROUNDS; j++) {
     mzd_shared_clear(&s[j]);
     for (unsigned i = 0; i < 3; i++)
@@ -129,7 +127,7 @@ static proof_t* fis_prove(mpc_lowmc_t* lowmc, lowmc_key_t* lowmc_key, mzd_t* p, 
   return proof;
 }
 
-static int fis_proof_verify(mpc_lowmc_t* lowmc, mzd_t* p, mzd_t* c, proof_t* prf, char *m, unsigned m_len) {
+static int fis_proof_verify(mpc_lowmc_t const* lowmc, mzd_t const* p, mzd_t const* c, proof_t const* prf, const char *m, unsigned m_len) {
   TIME_FUNCTION;
 
   const unsigned int view_count = lowmc->r + 2;
@@ -138,7 +136,7 @@ static int fis_proof_verify(mpc_lowmc_t* lowmc, mzd_t* p, mzd_t* c, proof_t* prf
   START_TIMING;
   unsigned char ch[NUM_ROUNDS];
   unsigned char hash[NUM_ROUNDS][2][COMMITMENT_LENGTH];
-#pragma omp parallel for
+  #pragma omp parallel for
   for (unsigned i = 0; i < NUM_ROUNDS; ++i) {
     H(prf->keys[i][0], prf->y[i], prf->views[i], 0, view_count, prf->r[i][0], hash[i][0]);
     H(prf->keys[i][1], prf->y[i], prf->views[i], 1, view_count, prf->r[i][1], hash[i][1]);
@@ -146,36 +144,40 @@ static int fis_proof_verify(mpc_lowmc_t* lowmc, mzd_t* p, mzd_t* c, proof_t* prf
   fis_H3_verify(hash, prf->hashes, prf->ch, m, m_len, ch);
   END_TIMING(timing_and_size->verify.challenge);
 
-  START_TIMING;
   int reconstruct_status = 0;
-  for (int i = 0; i < NUM_ROUNDS; ++i) {
+  int output_share_status = 0;
+  int view_verify_status = 0;
+
+  START_TIMING;
+  #pragma omp parallel for reduction(| : reconstruct_status)  reduction(| : view_verify_status)
+  for (unsigned int i = 0; i < NUM_ROUNDS; ++i) {
     mzd_t* c_mpcr = mpc_reconstruct_from_share(prf->y[0]);
     if (mzd_cmp(c, c_mpcr) != 0) {
-      reconstruct_status = -1;
+      reconstruct_status |= -1;
     }
     mzd_free(c_mpcr);
   }
   END_TIMING(timing_and_size->verify.output_shares);
 
   START_TIMING;
-  int output_share_status = 0;
-  for (int i = 0; i < NUM_ROUNDS; ++i) {
+  #pragma omp parallel for reduction(| : output_share_status)
+  for (unsigned int i = 0; i < NUM_ROUNDS; ++i) {
     if (mzd_cmp(prf->y[i][ch[i]], prf->views[i][last_view_index].s[0]) ||
         mzd_cmp(prf->y[i][(ch[i] + 1) % 3], prf->views[i][last_view_index].s[1])) {
-      output_share_status = -1;
+      output_share_status |= -1;
     }
   }
   END_TIMING(timing_and_size->verify.output_views);
 
   START_TIMING;
-  mzd_t** rv[2];
-  int view_verify_status = 0;
-  for (int i = 0; i < NUM_ROUNDS; i++) {
+  #pragma omp parallel for reduction(| : view_verify_status)
+  for (unsigned int i = 0; i < NUM_ROUNDS; ++i) {
+    mzd_t** rv[2];
     rv[0] = mzd_init_random_vectors_from_seed(prf->keys[i][0], lowmc->n, lowmc->r);
     rv[1] = mzd_init_random_vectors_from_seed(prf->keys[i][1], lowmc->n, lowmc->r);
 
     if (mpc_lowmc_verify(lowmc, p, prf->views[i], rv, ch[i])) {
-      view_verify_status = -1;
+      view_verify_status |= -1;
     }
 
     mpc_free(rv[0], lowmc->r);
