@@ -1,0 +1,6 @@
+m:   20 blocksize:   384	ANDdepth:    32		ANDs/bit:   5.0
+m:   40 blocksize:   384	ANDdepth:    21		ANDs/bit:  6.56
+m:   60 blocksize:   384	ANDdepth:    19		ANDs/bit:  8.91
+m:   80 blocksize:   384	ANDdepth:    17		ANDs/bit: 10.62
+m:  100 blocksize:   384	ANDdepth:    17		ANDs/bit: 13.28
+m:  120 blocksize:   384	ANDdepth:    17		ANDs/bit: 15.94
