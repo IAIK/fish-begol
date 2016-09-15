@@ -34,10 +34,10 @@ endfunction
 
 function create_plot(prefix, n, k, labels, data)
   fig = figure;
-  [ax, h1, h2] = plotyy(1:rows(data), data(:,1:3), 1:rows(data), data(:,4));
+  [ax, h1, h2] = plotyy(1:rows(data), data(:,2:3), 1:rows(data), data(:,4));
   set(h1(1), 'marker', '.','markersize', 8, 'color', 'blue', 'linewidth', 2);
   set(h1(2), 'marker', 'diamond','markersize', 2, 'color', 'red', 'linewidth', 2);
-  set(h1(3), 'marker', 'square','markersize', 2, 'color', 'magenta', 'linewidth', 2);
+  % set(h1(3), 'marker', 'square','markersize', 2, 'color', 'magenta', 'linewidth', 2);
   set(h2, 'marker', '>','markersize', 2, 'color', 'green', 'linewidth', 2);
   set(ax(1), 'ycolor', 'black');
   set(ax(2), 'ycolor', 'black');
@@ -53,7 +53,8 @@ function create_plot(prefix, n, k, labels, data)
   endfor
   set(get(ax(1),'Ylabel'),'String','Time [ms]');
   set(get(ax(2),'Ylabel'),'String','Signature Size [kB]');
-  legend(ax(1), "Instance Gen", "Sign", "Verify", "Signature Size");
+  % legend(ax(1), "Instance Gen", "Sign", "Verify", "Signature Size");
+  legend(ax(1), "Verify", "Sign", "Signature Size");
   % set(h,'Location','NorthEastOutside');
   fixAxes
   print(fig, strcat(prefix, "-", n, "-", k, ".png"), "-dpng", "-loose");
@@ -80,12 +81,16 @@ bellargw = bellargw / 1000;
 fs_sum = zeros(rows(data.labels), 4);
 bg_sum = zeros(rows(data.labels), 4);
 
+% instance generation
 fs_sum(:,1) = sum(fiatshamir(:,1:3), 2);
 bg_sum(:,1) = sum(bellargw(:,1:3), 2);
+% sign
 fs_sum(:,2) = sum(fiatshamir(:,4:8), 2);
 bg_sum(:,2) = sum(bellargw(:,4:8), 2);
+% verify
 fs_sum(:,3) = sum(fiatshamir(:,9:12), 2);
 bg_sum(:,3) = sum(bellargw(:,9:12), 2);
+% size
 fs_sum(:,4) = sum(fs_size, 2);
 bg_sum(:,4) = sum(bg_size, 2);
 
