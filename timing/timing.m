@@ -56,6 +56,7 @@ function create_plot(prefix, n, k, labels, data)
   legend(ax(1), "Instance Gen", "Sign", "Verify", "Signature Size");
   fixAxes
   print(fig, strcat(prefix, "-", n, "-", k, ".png"), "-dpng", "-loose");
+  print(fig, strcat(prefix, "-", n, "-", k, ".eps"), "-depsc");
 endfunction
 
 arg_list = argv();
