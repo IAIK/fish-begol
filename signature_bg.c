@@ -76,7 +76,7 @@ void bg_destroy_key(bg_private_key_t* private_key, bg_public_key_t* public_key) 
   private_key->k = NULL;
   private_key->s = NULL;
 
-  mzd_free(public_key->pk);
+  mzd_local_free(public_key->pk);
   public_key->pk = NULL;
 }
 
@@ -199,37 +199,33 @@ static bg_signature_t* bg_prove(public_parameters_t* pp, bg_private_key_t* priva
   return signature;
 }
 
-typedef int (*verify_ptr)(mpc_lowmc_t const* lowmc, mzd_t const* p, mzd_shared_t const* shared_p, view_t const* views,
-                          mzd_t** rv[2], unsigned char ch);
-
-static int verify_with_p(mpc_lowmc_t const* lowmc, mzd_t const* p, mzd_shared_t const* shared_p, view_t const* views,
-                         mzd_t** rv[2], unsigned char ch) {
-  (void)shared_p;
-  return mpc_lowmc_verify(lowmc, p, views, rv, ch);
-}
-
-static int verify_with_shared_p(mpc_lowmc_t const* lowmc, mzd_t const* p, mzd_shared_t const* shared_p, view_t const* views,
-                                mzd_t** rv[2], unsigned char ch) {
-  (void)p;
-  return mpc_lowmc_verify_shared_p(lowmc, shared_p, views, rv, ch);
-}
-
-static int verify_views(mpc_lowmc_t const* lowmc, mzd_t const* p, mzd_shared_t shared_p[BG_NUM_ROUNDS],
-                        proof_t const* proof, verify_ptr verify, unsigned char ch[BG_NUM_ROUNDS]) {
+static int verify_views(mpc_lowmc_t const* lowmc, mzd_t const* p,
+                        proof_t const* proof_p, proof_t const* proof_s, unsigned char ch[BG_NUM_ROUNDS]) {
   int view_verify_status = 0;
 
   #pragma omp parallel for reduction(| : view_verify_status)
   for (unsigned int i = 0; i < BG_NUM_ROUNDS; i++) {
-    mzd_t** rv[2];
-    rv[0] = mzd_init_random_vectors_from_seed(proof->keys[i][0], lowmc->n, lowmc->r);
-    rv[1] = mzd_init_random_vectors_from_seed(proof->keys[i][1], lowmc->n, lowmc->r);
+    mzd_shared_t shared_s = {0, NULL};
+    mzd_shared_from_shares(&shared_s, proof_p->views[i][0].s, 2);
 
-    if (verify(lowmc, p, shared_p != NULL ? &shared_p[i] : NULL, proof->views[i], rv, ch[i])) {
+    mzd_t** rv_p[2];
+    mzd_t** rv_s[2];
+    rv_p[0] = mzd_init_random_vectors_from_seed(proof_p->keys[i][0], lowmc->n, lowmc->r);
+    rv_p[1] = mzd_init_random_vectors_from_seed(proof_p->keys[i][1], lowmc->n, lowmc->r);
+    rv_s[0] = mzd_init_random_vectors_from_seed(proof_s->keys[i][0], lowmc->n, lowmc->r);
+    rv_s[1] = mzd_init_random_vectors_from_seed(proof_s->keys[i][1], lowmc->n, lowmc->r);
+
+    if (mpc_lowmc_verify(lowmc, p, proof_p->views[i], rv_p, ch[i]) ||
+        mpc_lowmc_verify_shared_p(lowmc, &shared_s, proof_s->views[i], rv_s, ch[i])) {
       view_verify_status |= -1;
     }
 
-    mpc_free(rv[0], lowmc->r);
-    mpc_free(rv[1], lowmc->r);
+    mpc_free(rv_s[1], lowmc->r);
+    mpc_free(rv_s[0], lowmc->r);
+    mpc_free(rv_p[1], lowmc->r);
+    mpc_free(rv_p[0], lowmc->r);
+
+    mzd_shared_clear(&shared_s);
   }
 
   return view_verify_status;
@@ -278,13 +274,13 @@ static int bg_proof_verify(public_parameters_t* pp, bg_public_key_t* pk, mzd_t* 
     if (mzd_equal(signature->c, c_mpcr) != 0) {
       reconstruct_status |= -1;
     }
-    mzd_free(c_mpcr);
+    mzd_local_free(c_mpcr);
 
     c_mpcr = mpc_reconstruct_from_share(proof_s->y[i]);
     if (mzd_equal(pk->pk, c_mpcr) != 0) {
       reconstruct_status |= -1;
     }
-    mzd_free(c_mpcr);
+    mzd_local_free(c_mpcr);
   }
   END_TIMING(timing_and_size->verify.output_shares);
 
@@ -305,20 +301,7 @@ static int bg_proof_verify(public_parameters_t* pp, bg_public_key_t* pk, mzd_t* 
   END_TIMING(timing_and_size->verify.output_views);
 
   START_TIMING;
-  mzd_shared_t shared_s[BG_NUM_ROUNDS] = {{0, NULL}};
-  #pragma omp parallel for
-  for (unsigned int i = 0; i < BG_NUM_ROUNDS; i++) {
-    mzd_shared_from_shares(&shared_s[i], proof_p->views[i][0].s, 2);
-  }
-
-  if (verify_views(lowmc, p, shared_s, proof_p, verify_with_p, ch) ||
-      verify_views(lowmc, p, shared_s, proof_s, verify_with_shared_p, ch)) {
-    view_verify_status = -1;
-  }
-
-  for (unsigned int i = 0; i < BG_NUM_ROUNDS; i++) {
-    mzd_shared_clear(&shared_s[i]);
-  }
+  view_verify_status = verify_views(lowmc, p, proof_p, proof_s, ch);
   END_TIMING(timing_and_size->verify.verify);
 
 #ifdef VERBOSE
