@@ -40,7 +40,7 @@ def main():
         all_timings_fs.append(np.sum(fs, axis=0) / float(args.iterations))
         all_timings_bg.append(np.sum(bg, axis=0) / float(args.iterations))
 
-    with h5py.File('timings-{0}-{1}.mat'.format(n, k), 'w') as timings:
+    with h5py.File('{0}-{1}-{2}.mat'.format(args.prefix, n, k), 'w') as timings:
         timings.create_dataset("fis_sum", data=np.array(all_timings_fs))
         timings.create_dataset("bg_sum", data=np.array(all_timings_bg))
         timings.create_dataset('labels', data=octarg)
@@ -62,8 +62,8 @@ def parse_args():
                       default="../mpc_lowmc")
   parser.add_argument("-i", "--iterations", help="number of iterations",
                       default="100")
-  parser.add_argument("-o", "--octavescript", help="the name of the octave script",
-                      default="timing.m")
+  parser.add_argument("-p", "--prefix", help="prefix of mat files",
+                      default="timings")
   args = parser.parse_args()
   return args
 

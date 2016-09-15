@@ -54,6 +54,7 @@ function create_plot(prefix, n, k, labels, data)
   set(get(ax(1),'Ylabel'),'String','Time [ms]');
   set(get(ax(2),'Ylabel'),'String','Signature Size [kB]');
   legend(ax(1), "Instance Gen", "Sign", "Verify", "Signature Size");
+  % set(h,'Location','NorthEastOutside');
   fixAxes
   print(fig, strcat(prefix, "-", n, "-", k, ".png"), "-dpng", "-loose");
   print(fig, strcat(prefix, "-", n, "-", k, ".eps"), "-depsc");
@@ -63,11 +64,18 @@ arg_list = argv();
 
 n = arg_list{1};
 k = arg_list{2};
+prefix = arg_list{3};
 
-data = load(strcat("timings-", n, "-", k, ".mat"));
+data = load(strcat(prefix, "-", n, "-", k, ".mat"));
 
-fiatshamir = transpose(data.fis_sum) / 1000;
-bellargw = transpose(data.bg_sum) / 1000;
+fiatshamir = transpose(data.fis_sum);
+bellargw = transpose(data.bg_sum);
+
+fs_size = fiatshamir(:,end) / 1024;
+bg_size = bellargw(:,end) / 1024;
+
+fiatshamir = fiatshamir / 1000;
+bellargw = bellargw / 1000;
 
 fs_sum = zeros(rows(data.labels), 4);
 bg_sum = zeros(rows(data.labels), 4);
@@ -78,9 +86,9 @@ fs_sum(:,2) = sum(fiatshamir(:,4:8), 2);
 bg_sum(:,2) = sum(bellargw(:,4:8), 2);
 fs_sum(:,3) = sum(fiatshamir(:,9:12), 2);
 bg_sum(:,3) = sum(bellargw(:,9:12), 2);
-fs_sum(:,4) = sum(fiatshamir(:,13), 2);
-bg_sum(:,4) = sum(bellargw(:,13), 2);
+fs_sum(:,4) = sum(fs_size, 2);
+bg_sum(:,4) = sum(bg_size, 2);
 
-create_plot("fis", n, k, data.labels, fs_sum);
-create_plot("bg", n, k, data.labels, bg_sum);
+create_plot(strcat(prefix, "-", "fis"), n, k, data.labels, fs_sum);
+create_plot(strcat(prefix, "-", "bg"), n, k, data.labels, bg_sum);
 
