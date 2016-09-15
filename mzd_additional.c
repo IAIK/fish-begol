@@ -9,7 +9,7 @@ static const unsigned int avx_bound = 256 / (8 * sizeof(word));
 #endif
 static const unsigned int word_size_bits = 8 * sizeof(word);
 
-#if WITH_OPENMP
+// #if WITH_OPENMP
 mzd_t* mzd_local_init(rci_t r, rci_t c) {
   const rci_t width = (c + m4ri_radix - 1) / m4ri_radix;
   const rci_t rowstride = (width < mzd_paddingwidth || (width & 1) == 0) ? width : width + 1;
@@ -58,8 +58,7 @@ mzd_t* mzd_local_copy(mzd_t* dst, mzd_t const* src) {
     return mzd_copy(dst, src);
   }
 }
-#endif
-
+// #endif
 
 void mzd_randomize_ssl(mzd_t* val) {
   // similar to mzd_randomize but using RAND_Bytes instead

@@ -4,15 +4,15 @@
 #include "randomness.h"
 #include <m4ri/m4ri.h>
 
-#ifdef WITH_OPENMP
+// #ifdef WITH_OPENMP
 mzd_t* mzd_local_init(rci_t r, rci_t c);
 void mzd_local_free(mzd_t* v);
 mzd_t* mzd_local_copy(mzd_t* dst, mzd_t const* src);
-#else
-#define mzd_local_init mzd_init
-#define mzd_local_free mzd_free
-#define mzd_local_copy mzd_copy
-#endif
+// #else
+// #define mzd_local_init mzd_init
+// #define mzd_local_free mzd_free
+// #define mzd_local_copy mzd_copy
+// #endif
 
 /**
  * Initializes a random vector
