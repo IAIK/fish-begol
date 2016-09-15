@@ -226,7 +226,7 @@ proof_t* create_proof(proof_t* proof, mpc_lowmc_t const* lowmc,
       proof->views[i][j].s    = (mzd_t**)malloc(2 * sizeof(mzd_t*));
       proof->views[i][j].s[0] = views[i][j].s[a];
       proof->views[i][j].s[1] = views[i][j].s[b];
-      mzd_free(views[i][j].s[c]);
+      mzd_local_free(views[i][j].s[c]);
     }
 
     if ((i % 4) == 0) {
@@ -494,7 +494,7 @@ static mzd_t** _mpc_lowmc_call(mpc_lowmc_t const* lowmc, mpc_lowmc_key_t* lowmc_
   int vcnt = 0;
 
   for (unsigned i = 0; i < sc; i++)
-    mzd_copy(views[vcnt].s[i], lowmc_key->shared[i]);
+    mzd_local_copy(views[vcnt].s[i], lowmc_key->shared[i]);
   vcnt++;
 
   mzd_t** c = mpc_init_empty_share_vector(lowmc->n, sc);
@@ -714,8 +714,8 @@ void clear_proof(mpc_lowmc_t const* lowmc, proof_t const* proof) {
   for (unsigned i = 0; i < NUM_ROUNDS; i++) {
     mpc_free(proof->y[i], 3);
     for (unsigned j = 0; j < 2 + lowmc->r; j++) {
-      mzd_free(proof->views[i][j].s[0]);
-      mzd_free(proof->views[i][j].s[1]);
+      mzd_local_free(proof->views[i][j].s[0]);
+      mzd_local_free(proof->views[i][j].s[1]);
       free(proof->views[i][j].s);
     }
     free(proof->views[i]);

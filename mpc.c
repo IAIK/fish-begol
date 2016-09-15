@@ -109,7 +109,7 @@ int mpc_and(mzd_t** res, mzd_t** first, mzd_t** second, mzd_t** r, view_t* view,
             unsigned viewshift, mzd_t** buffer) {
   (void)mask;
 
-  mzd_t* b = NULL;
+  mzd_t* b = mzd_local_init(first[0]->nrows, first[0]->ncols);
 
   for (unsigned m = 0; m < 3; ++m) {
     unsigned j = (m + 1) % 3;
@@ -125,7 +125,7 @@ int mpc_and(mzd_t** res, mzd_t** first, mzd_t** second, mzd_t** r, view_t* view,
     mzd_xor(res[m], res[m], r[j]);
   }
 
-  mzd_free(b);
+  mzd_local_free(b);
 
   mpc_shift_right(buffer, res, viewshift, 3);
   mpc_xor(view->s, view->s, buffer, 3);
@@ -220,7 +220,7 @@ __attribute__((target("avx2"))) int mpc_and_verify_avx(mzd_t** res, mzd_t** firs
 
 int mpc_and_verify(mzd_t** res, mzd_t** first, mzd_t** second, mzd_t** r, view_t const* view, mzd_t const* mask,
                    unsigned viewshift, mzd_t** buffer) {
-  mzd_t* b = NULL;
+  mzd_t* b = mzd_local_init(first[0]->nrows, first[0]->ncols);
 
   for (unsigned m = 0; m < 1; m++) {
     unsigned j = m + 1;
@@ -236,7 +236,7 @@ int mpc_and_verify(mzd_t** res, mzd_t** first, mzd_t** second, mzd_t** r, view_t
     mzd_xor(res[m], res[m], r[j]);
   }
 
-  mzd_free(b);
+  mzd_local_free(b);
 
   for (unsigned m = 0; m < 1; m++) {
     mzd_shift_left(buffer[m], view->s[m], viewshift);
@@ -329,7 +329,7 @@ mzd_t** mpc_const_mat_mul(mzd_t** result, mzd_t const* matrix, mzd_t** vector, u
 
 void mpc_copy(mzd_t** out, mzd_t** in, unsigned sc) {
   for (unsigned i = 0; i < sc; ++i) {
-    mzd_copy(out[i], in[i]);
+    mzd_local_copy(out[i], in[i]);
   }
 }
 
@@ -342,12 +342,12 @@ mzd_t* mpc_reconstruct_from_share(mzd_t** shared_vec) {
 void mpc_print(mzd_t** shared_vec) {
   mzd_t* r = mpc_reconstruct_from_share(shared_vec);
   mzd_print(r);
-  mzd_free(r);
+  mzd_local_free(r);
 }
 
 void mpc_free(mzd_t** vec, unsigned sc) {
   for (unsigned i = 0; i < sc; ++i) {
-    mzd_free(vec[i]);
+    mzd_local_free(vec[i]);
   }
   free(vec);
 }
@@ -355,7 +355,7 @@ void mpc_free(mzd_t** vec, unsigned sc) {
 mzd_t** mpc_init_empty_share_vector(rci_t n, unsigned sc) {
   mzd_t** s = calloc(sc, sizeof(mzd_t*));
   for (unsigned i = 0; i < sc; ++i) {
-    s[i] = mzd_init(1, n);
+    s[i] = mzd_local_init(1, n);
   }
   return s;
 }
@@ -370,9 +370,9 @@ mzd_t** mpc_init_random_vector(rci_t n, unsigned sc) {
 
 mzd_t** mpc_init_plain_share_vector(mzd_t const* v) {
   mzd_t** s = calloc(3, sizeof(mzd_t*));
-  s[0]      = mzd_copy(NULL, v);
-  s[1]      = mzd_copy(NULL, v);
-  s[2]      = mzd_copy(NULL, v);
+  s[0]      = mzd_local_copy(NULL, v);
+  s[1]      = mzd_local_copy(NULL, v);
+  s[2]      = mzd_local_copy(NULL, v);
 
   return s;
 }
@@ -381,7 +381,7 @@ mzd_t** mpc_init_share_vector(mzd_t const* v) {
   mzd_t** s = calloc(3, sizeof(mzd_t*));
   s[0]      = mzd_init_random_vector(v->ncols);
   s[1]      = mzd_init_random_vector(v->ncols);
-  s[2]      = mzd_init(1, v->ncols);
+  s[2]      = mzd_local_init(1, v->ncols);
 
   mzd_xor(s[2], s[0], s[1]);
   mzd_xor(s[2], s[2], v);

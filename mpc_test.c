@@ -11,10 +11,10 @@ void test_mpc_share() {
   if (mzd_cmp(t1, t1cmb) == 0)
     printf("Share test successful.\n");
 
-  mzd_free(t1);
+  mzd_local_free(t1);
   for (unsigned i = 0; i < 3; i++)
-    mzd_free(s1[i]);
-  mzd_free(t1cmb);
+    mzd_local_free(s1[i]);
+  mzd_local_free(t1cmb);
 }
 
 void test_mpc_add() {
@@ -32,13 +32,13 @@ void test_mpc_add() {
   if (mzd_cmp(res, cmp) == 0)
     printf("Shared add test successful.\n");
 
-  mzd_free(t1);
-  mzd_free(t2);
-  mzd_free(res);
+  mzd_local_free(t1);
+  mzd_local_free(t2);
+  mzd_local_free(res);
   for (unsigned i = 0; i < 3; i++) {
-    mzd_free(s1[i]);
-    mzd_free(s2[i]);
-    mzd_free(ress[i]);
+    mzd_local_free(s1[i]);
+    mzd_local_free(s2[i]);
+    mzd_local_free(ress[i]);
   }
-  mzd_free(cmp);
+  mzd_local_free(cmp);
 }

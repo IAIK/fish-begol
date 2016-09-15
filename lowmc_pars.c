@@ -12,10 +12,10 @@ mask_t* prepare_masks(mask_t* mask, rci_t n, rci_t m) {
   if (mask == 0)
     mask = (mask_t*)malloc(sizeof(mask_t));
 
-  mask->x0   = mzd_init(1, n);
-  mask->x1   = mzd_init(1, n);
-  mask->x2   = mzd_init(1, n);
-  mask->mask = mzd_init(1, n);
+  mask->x0   = mzd_local_init(1, n);
+  mask->x1   = mzd_local_init(1, n);
+  mask->x2   = mzd_local_init(1, n);
+  mask->mask = mzd_local_init(1, n);
 
   const int bound = n - 3 * m;
   for (int i = 0; i < bound; ++i) {
@@ -31,8 +31,11 @@ mask_t* prepare_masks(mask_t* mask, rci_t n, rci_t m) {
 }
 
 static mzd_t* mzd_sample_matrix_word(rci_t n, rci_t k, rci_t rank, bool with_xor) {
+  // use mzd_init for A since m4ri will work with it in mzd_echolonize
+  // also, this function cannot be parallelized as mzd_echolonize will call
+  // mzd_init and mzd_free at will causing various crashes.
   mzd_t* A = mzd_init(n, k);
-  mzd_t* B = mzd_init(n, k);
+  mzd_t* B = mzd_local_init(n, k);
   do {
     mzd_randomize_ssl(A);
     if (with_xor) {
@@ -40,7 +43,7 @@ static mzd_t* mzd_sample_matrix_word(rci_t n, rci_t k, rci_t rank, bool with_xor
         mzd_xor_bits(A, n - i - 1, (k + i + 1) % k, 1, 1);
       }
     }
-    mzd_copy(B, A);
+    mzd_local_copy(B, A);
   } while (mzd_echelonize(A, 0) != rank);
   mzd_free(A);
   return B;
@@ -73,7 +76,6 @@ lowmc_t* lowmc_init(size_t m, size_t n, size_t r, size_t k) {
   lowmc->k0_matrix = mzd_sample_kmatrix(k, n);
 
   lowmc->rounds = calloc(sizeof(lowmc_round_t), r);
-  #pragma omp parallel for
   for (unsigned int i = 0; i < r; ++i) {
     lowmc->rounds[i].l_matrix = mzd_sample_lmatrix(n);
     lowmc->rounds[i].k_matrix = mzd_sample_kmatrix(k, n);
@@ -91,21 +93,21 @@ lowmc_key_t* lowmc_keygen(lowmc_t* lowmc) {
 
 void lowmc_free(lowmc_t* lowmc) {
   for (unsigned i = 0; i < lowmc->r; ++i) {
-    mzd_free(lowmc->rounds[i].constant);
-    mzd_free(lowmc->rounds[i].k_matrix);
-    mzd_free(lowmc->rounds[i].l_matrix);
+    mzd_local_free(lowmc->rounds[i].constant);
+    mzd_local_free(lowmc->rounds[i].k_matrix);
+    mzd_local_free(lowmc->rounds[i].l_matrix);
   }
-  mzd_free(lowmc->k0_matrix);
+  mzd_local_free(lowmc->k0_matrix);
   free(lowmc->rounds);
 
-  mzd_free(lowmc->mask.x0);
-  mzd_free(lowmc->mask.x1);
-  mzd_free(lowmc->mask.x2);
-  mzd_free(lowmc->mask.mask);
+  mzd_local_free(lowmc->mask.x0);
+  mzd_local_free(lowmc->mask.x1);
+  mzd_local_free(lowmc->mask.x2);
+  mzd_local_free(lowmc->mask.mask);
 
   free(lowmc);
 }
 
 void lowmc_key_free(lowmc_key_t* lowmc_key) {
-  mzd_free(lowmc_key);
+  mzd_local_free(lowmc_key);
 }

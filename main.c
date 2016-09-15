@@ -140,7 +140,7 @@ static void bg_sign_verify(int args[5]) {
 
     bg_free_signature(&pp, signature);
 
-    mzd_free(m);
+    mzd_local_free(m);
 
     destroy_instance(&pp);
     bg_destroy_key(&private_key, &public_key);

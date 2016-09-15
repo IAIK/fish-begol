@@ -1,5 +1,6 @@
 #include <m4ri/m4ri.h>
 
+#include "mzd_additional.h"
 #include "io.h"
 
 unsigned char *mzd_to_char_array(mzd_t *data, unsigned numbytes) {
@@ -28,7 +29,7 @@ unsigned char *mzd_to_char_array(mzd_t *data, unsigned numbytes) {
 }
 
 mzd_t *mzd_from_char_array(unsigned char *data, unsigned len, unsigned vec_len) {
-  mzd_t *result = mzd_init(1, vec_len);
+  mzd_t *result = mzd_local_init(1, vec_len);
 
   const unsigned word_count      = vec_len / (8 * sizeof(word));
   const unsigned num_full_words  = len / 8;

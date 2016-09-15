@@ -9,6 +9,58 @@ static const unsigned int avx_bound = 256 / (8 * sizeof(word));
 #endif
 static const unsigned int word_size_bits = 8 * sizeof(word);
 
+#if WITH_OPENMP
+mzd_t* mzd_local_init(rci_t r, rci_t c) {
+  const rci_t width = (c + m4ri_radix - 1) / m4ri_radix;
+  const rci_t rowstride = (width < mzd_paddingwidth || (width & 1) == 0) ? width : width + 1;
+
+  const size_t buffer_size = r * rowstride * sizeof(word);
+  const size_t rows_size = r * sizeof(word*);
+
+  unsigned char* buffer = aligned_alloc(32, sizeof(mzd_t) + buffer_size + rows_size);
+  memset(buffer, 0, sizeof(mzd_t) + buffer_size + rows_size);
+
+  mzd_t* A = (mzd_t*) buffer;
+  buffer += sizeof(mzd_t);
+
+  A->rows = (word**) (buffer + buffer_size);
+  for (rci_t i = 0; i < r; ++i) {
+    A->rows[i] = (word*) (buffer + i * rowstride * sizeof(word));
+  }
+
+  A->nrows = r;
+  A->ncols = c;
+  A->width = width;
+  A->rowstride = rowstride;
+  A->high_bitmask = __M4RI_LEFT_BITMASK(c % m4ri_radix);
+  A->flags = (A->high_bitmask != m4ri_ffff) ? mzd_flag_nonzero_excess : 0;
+  A->offset_vector = 0;
+  A->row_offset = 0;
+  A->blocks = 0;
+  A->blockrows_log = 0;
+
+  return A;
+}
+
+void mzd_local_free(mzd_t* v) {
+  free(v);
+}
+
+mzd_t* mzd_local_copy(mzd_t* dst, mzd_t const* src) {
+  if (!dst) {
+    dst = mzd_local_init(src->nrows, src->ncols);
+  }
+
+  if (dst->nrows == src->nrows || dst->ncols == dst->ncols) {
+    memcpy(((unsigned char*) dst) + sizeof(mzd_t), ((const unsigned char*) src) + sizeof(mzd_t), src->nrows * src->rowstride * sizeof(word));
+    return dst;
+  } else {
+    return mzd_copy(dst, src);
+  }
+}
+#endif
+
+
 void mzd_randomize_ssl(mzd_t* val) {
   // similar to mzd_randomize but using RAND_Bytes instead
   const word mask_end = val->high_bitmask;
@@ -36,14 +88,14 @@ void mzd_randomize_upper_triangular(mzd_t* val) {
 }
 
 mzd_t* mzd_init_random_vector(rci_t n) {
-  mzd_t* A = mzd_init(1, n);
+  mzd_t* A = mzd_local_init(1, n);
   mzd_randomize_ssl(A);
 
   return A;
 }
 
 static mzd_t* mzd_init_random_vector_prng(rci_t n, aes_prng_t* aes_prng) {
-  mzd_t* v = mzd_init(1, n);
+  mzd_t* v = mzd_local_init(1, n);
   aes_prng_get_randomness(aes_prng, (unsigned char*)v->rows[0], v->width * sizeof(word));
   v->rows[0][v->width - 1] &= v->high_bitmask;
   return v;
@@ -64,7 +116,7 @@ mzd_t** mzd_init_random_vectors_from_seed(const unsigned char key[16], rci_t n, 
 
 void mzd_shift_right(mzd_t* res, mzd_t const* val, unsigned count) {
   if (!count) {
-    mzd_copy(res, val);
+    mzd_local_copy(res, val);
     return;
   }
 
@@ -83,7 +135,7 @@ void mzd_shift_right(mzd_t* res, mzd_t const* val, unsigned count) {
 
 void mzd_shift_left(mzd_t* res, mzd_t const* val, unsigned count) {
   if (!count) {
-    mzd_copy(res, val);
+    mzd_local_copy(res, val);
     return;
   }
 
@@ -162,7 +214,7 @@ __attribute__((target("avx2"))) static inline mzd_t* mzd_and_avx(mzd_t* res, mzd
 
 mzd_t* mzd_and(mzd_t* res, mzd_t const* first, mzd_t const* second) {
   if (res == 0) {
-    res = mzd_init(1, first->ncols);
+    res = mzd_local_init(1, first->ncols);
   }
 
 #ifdef WITH_OPT
@@ -249,7 +301,7 @@ __attribute__((target("avx2"))) static inline mzd_t* mzd_xor_avx(mzd_t* res, mzd
 
 mzd_t* mzd_xor(mzd_t* res, mzd_t const* first, mzd_t const* second) {
   if (res == 0) {
-    res = mzd_init(1, first->ncols);
+    res = mzd_local_init(1, first->ncols);
   }
 
 #ifdef WITH_OPT
@@ -278,7 +330,7 @@ void mzd_shared_init(mzd_shared_t* shared_value, mzd_t* value) {
   shared_value->share_count = 1;
 
   shared_value->shared    = calloc(1, sizeof(mzd_t*));
-  shared_value->shared[0] = mzd_copy(NULL, value);
+  shared_value->shared[0] = mzd_local_copy(NULL, value);
 }
 
 void mzd_shared_copy(mzd_shared_t* dst, mzd_shared_t* src) {
@@ -286,7 +338,7 @@ void mzd_shared_copy(mzd_shared_t* dst, mzd_shared_t* src) {
 
   dst->shared = calloc(src->share_count, sizeof(mzd_t*));
   for (unsigned int i = 0; i < src->share_count; ++i) {
-    dst->shared[i] = mzd_copy(NULL, src->shared[i]);
+    dst->shared[i] = mzd_local_copy(NULL, src->shared[i]);
   }
   dst->share_count = src->share_count;
 }
@@ -295,7 +347,7 @@ void mzd_shared_from_shares(mzd_shared_t* shared_value, mzd_t** shares, unsigned
   shared_value->share_count = share_count;
   shared_value->shared      = calloc(share_count, sizeof(mzd_t*));
   for (unsigned int i = 0; i < share_count; ++i) {
-    shared_value->shared[i] = mzd_copy(NULL, shares[i]);
+    shared_value->shared[i] = mzd_local_copy(NULL, shares[i]);
   }
 }
 
@@ -333,7 +385,7 @@ void mzd_shared_share_prng(mzd_shared_t* shared_value, aes_prng_t* aes_prng) {
 
 void mzd_shared_clear(mzd_shared_t* shared_value) {
   for (unsigned int i = 0; i < shared_value->share_count; ++i) {
-    mzd_free(shared_value->shared[i]);
+    mzd_local_free(shared_value->shared[i]);
   }
   free(shared_value->shared);
   shared_value->share_count = 0;
@@ -347,7 +399,7 @@ mzd_t* mzd_mul_v(mzd_t* c, mzd_t const* v, mzd_t const* At) {
   }
 
   if (!c) {
-    c = mzd_init(1, At->ncols);
+    c = mzd_local_init(1, At->ncols);
   } else {
     mzd_row_clear_offset(c, 0, 0);
   }

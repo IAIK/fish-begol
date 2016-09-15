@@ -23,13 +23,13 @@ void init_view(mpc_lowmc_t const* mpc_lowmc, view_t* views[NUM_ROUNDS]) {
 
     views[i][0].s = calloc(3, sizeof(mzd_t*));
     for (unsigned m = 0; m < 3; m++) {
-      views[i][0].s[m] = mzd_init(1, mpc_lowmc->k);
+      views[i][0].s[m] = mzd_local_init(1, mpc_lowmc->k);
     }
 
     for (unsigned n = 1; n < size; n++) {
       views[i][n].s = (mzd_t**)malloc(3 * sizeof(mzd_t*));
       for (unsigned m = 0; m < 3; m++) {
-        views[i][n].s[m] = mzd_init(1, mpc_lowmc->n);
+        views[i][n].s[m] = mzd_local_init(1, mpc_lowmc->n);
       }
     }
   }

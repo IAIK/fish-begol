@@ -36,9 +36,9 @@ void fis_create_key(public_parameters_t* pp, fis_private_key_t* private_key,
   END_TIMING(timing_and_size->gen.keygen);
 
   START_TIMING;
-  mzd_t *p            = mzd_init(1, pp->lowmc->n);
+  mzd_t *p            = mzd_local_init(1, pp->lowmc->n);
   public_key->pk      = lowmc_call(pp->lowmc, private_key->k, p);
-  mzd_free(p);
+  mzd_local_free(p);
   END_TIMING(timing_and_size->gen.pubkey);
 }
 
@@ -46,7 +46,7 @@ void fis_destroy_key(fis_private_key_t* private_key, fis_public_key_t* public_ke
   lowmc_key_free(private_key->k);
   private_key->k = NULL;
 
-  mzd_free(public_key->pk);
+  mzd_local_free(public_key->pk);
   public_key->pk = NULL;
 }
 
@@ -157,7 +157,7 @@ static int fis_proof_verify(mpc_lowmc_t const* lowmc, mzd_t const* p, mzd_t cons
     if (mzd_cmp(c, c_mpcr) != 0) {
       reconstruct_status |= -1;
     }
-    mzd_free(c_mpcr);
+    mzd_local_free(c_mpcr);
   }
   END_TIMING(timing_and_size->verify.output_shares);
 
@@ -210,16 +210,16 @@ static int fis_proof_verify(mpc_lowmc_t const* lowmc, mzd_t const* p, mzd_t cons
 
 fis_signature_t *fis_sign(public_parameters_t* pp, fis_private_key_t* private_key, char *m) {
   fis_signature_t *sig = (fis_signature_t*)malloc(sizeof(fis_signature_t));
-  mzd_t *p = mzd_init(1, pp->lowmc->n);
+  mzd_t *p = mzd_local_init(1, pp->lowmc->n);
   sig->proof = fis_prove(pp->lowmc, private_key->k, p, m, strlen(m));
-  mzd_free(p);
+  mzd_local_free(p);
   return sig;
 }
 
 int fis_verify(public_parameters_t* pp, fis_public_key_t *public_key, char *m, fis_signature_t *sig) {
-  mzd_t *p = mzd_init(1, pp->lowmc->n);
+  mzd_t *p = mzd_local_init(1, pp->lowmc->n);
   int res = fis_proof_verify(pp->lowmc, p, public_key->pk, sig->proof, m, strlen(m));
-  mzd_free(p);
+  mzd_local_free(p);
   return res;
 }
 
