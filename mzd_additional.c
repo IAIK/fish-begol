@@ -47,6 +47,10 @@ void mzd_local_free(mzd_t* v) {
 }
 
 mzd_t* mzd_local_copy(mzd_t* dst, mzd_t const* src) {
+  if (dst == src) {
+    return dst;
+  }
+
   if (!dst) {
     dst = mzd_local_init(src->nrows, src->ncols);
   }
