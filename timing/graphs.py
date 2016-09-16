@@ -4,6 +4,7 @@ import numpy as np
 import matplotlib
 import matplotlib.pyplot as plt
 import pandas as pd
+import seaborn as sns
 
 
 def compute_size(data):
@@ -32,8 +33,8 @@ def create_graph(prefix, n, k, data, labels):
   })
 
   plt.figure(figsize=(6, 6 * 3 / 4.0))
-  ax = df.plot(secondary_y=['size'], mark_right=False, marker='.',
-               markersize=5, linewidth=2, legend=False)
+  ax = df.plot(secondary_y=['size'], mark_right=False, marker='>',
+               markersize=6, linewidth=2.5, legend=False)
 
   # title and labels
   ax.set_title('LowMC Timing n={0} k={1} - Parameters [m]-[r]'.format(n, k))
@@ -62,7 +63,7 @@ def create_omp_graph(prefix, n, k, data, labels, max_num_threads):
   df = pd.DataFrame(datadict)
 
   plt.figure(figsize=(6, 6 * 3 / 4.0))
-  ax = df.plot(marker='.', markersize=5, linewidth=2, legend=True)
+  ax = df.plot(marker='>', markersize=5, linewidth=2.5, legend=True)
 
   # title and labels
   ax.set_title('LowMC Timing n={0} k={1} - Parameters [m]-[r]'.format(n, k))
@@ -105,9 +106,16 @@ def create_omp_graphs(n, k, prefix, max_num_threads):
   create_omp_graph('{0}-bg-verify'.format(prefix), n, k, all_bg_verify, labels, max_num_threads)
 
 
-def main(n, k, prefix, omp=False, max_num_threads=4):
-  if omp:
-    return create_omp_graphs(n, k, prefix, max_num_threads)
+def main(args):
+  sns.set(style='white', context='paper')
+  sns.set_style('white', {'legend.frameon': True})
+
+  n = args.blocksize
+  k = args.keysize
+  prefix = args.prefix
+
+  if args.omp:
+    return create_omp_graphs(n, k, prefix, args.max_num_threads)
 
   with h5py.File('{0}-{1}-{2}.mat'.format(prefix, n, k), 'r') as timings:
     labels = timings.get("labels")
@@ -133,5 +141,5 @@ if __name__ == "__main__":
 
   args = parser.parse_args()
 
-  main(args.blocksize, args.keysize, args.prefix, args.omp, args.threads)
+  main(args)
 
