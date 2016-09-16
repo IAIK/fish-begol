@@ -55,7 +55,7 @@ mzd_t* mzd_local_copy(mzd_t* dst, mzd_t const* src) {
     dst = mzd_local_init(src->nrows, src->ncols);
   }
 
-  if (dst->nrows == src->nrows || dst->ncols == dst->ncols) {
+  if (dst->nrows >= src->nrows || dst->ncols == src->ncols) {
     memcpy(((unsigned char*) dst) + sizeof(mzd_t), ((const unsigned char*) src) + sizeof(mzd_t), src->nrows * src->rowstride * sizeof(word));
     return dst;
   } else {
