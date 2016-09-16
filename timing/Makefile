@@ -1,4 +1,5 @@
 ITER?=10
+MAXTHREADS?=8
 
 timings-plain:
 	set -e && for n in 128 192 256 ; do \
@@ -11,7 +12,7 @@ timings-pq:
 	done
 
 timings-omp:
-	set -e && for n in 1 2 3 4 5 6 7 8 ; do \
+	set -e && for n in $(shell seq 1 $(MAXTHREADS)) ; do \
 		env OMP_NUM_THREADS=$$n \
 			python timing.py lowmc-inst-256.txt -i $(ITER) -p omp-timings-$$n -x ../mpc_lowmc_openmp; \
 	done
@@ -27,6 +28,6 @@ graphs:
 	done
 
 graphs-omp:
-	python graphs.py -n 256 -k 128 -p omp-timings -o -t 8
+	python graphs.py -n 256 -k 128 -p omp-timings -o -t $(MAXTHREADS)
 
 all: timings graphs

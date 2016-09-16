@@ -115,7 +115,7 @@ def main(args):
   prefix = args.prefix
 
   if args.omp:
-    return create_omp_graphs(n, k, prefix, args.max_num_threads)
+    return create_omp_graphs(n, k, prefix, args.threads)
 
   with h5py.File('{0}-{1}-{2}.mat'.format(prefix, n, k), 'r') as timings:
     labels = timings.get("labels")
