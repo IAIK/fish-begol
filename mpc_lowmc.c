@@ -200,7 +200,7 @@ proof_t* create_proof(proof_t* proof, mpc_lowmc_t const* lowmc,
 
   proof->r    = (unsigned char***)malloc(NUM_ROUNDS * sizeof(unsigned char**));
   proof->keys = (unsigned char***)malloc(NUM_ROUNDS * sizeof(unsigned char**));
-// memcpy(proof->hashes, hashes, NUM_ROUNDS * 3 * SHA256_DIGEST_LENGTH * sizeof(char));
+  // memcpy(proof->hashes, hashes, NUM_ROUNDS * 3 * SHA256_DIGEST_LENGTH * sizeof(char));
 
   for (unsigned int i = 0; i < NUM_ROUNDS; i++) {
     unsigned int a = ch[i];
@@ -279,9 +279,9 @@ static void _mpc_sbox_layer_bitsliced(mzd_t** out, mzd_t** in, view_t* view, mzd
                                       mask_t const* mask, sbox_vars_t const* vars) {
   bitsliced_step_1(3);
 
-  mpc_and(vars->r0m, vars->x0s, vars->x1s, vars->r2m, view, mask->x2, 0, vars->v);
-  mpc_and(vars->r2m, vars->x1s, vars->x2m, vars->r0s, view, mask->x2, 2, vars->v);
-  mpc_and(vars->r1m, vars->x0s, vars->x2m, vars->r1s, view, mask->x2, 1, vars->v);
+  mpc_and(vars->r0m, vars->x0s, vars->x1s, vars->r2m, view, 0, vars->v);
+  mpc_and(vars->r2m, vars->x1s, vars->x2m, vars->r0s, view, 2, vars->v);
+  mpc_and(vars->r1m, vars->x0s, vars->x2m, vars->r1s, view, 1, vars->v);
 
   bitsliced_step_2(3);
 }
@@ -373,9 +373,9 @@ _mpc_sbox_layer_bitsliced_sse(mzd_t** out, mzd_t** in, view_t* view, mzd_t** rve
                               mask_t const* mask, sbox_vars_t const* vars) {
   bitsliced_mm_step_1(3, __m128i, _mm_load_si128, _mm_store_si128, _mm_and_si128, mm128_shift_left);
 
-  mpc_and_sse(vars->r0m, vars->x0s, vars->x1s, vars->r2m, view, mask->x2, 0, vars->v);
-  mpc_and_sse(vars->r2m, vars->x1s, vars->x2m, vars->r0s, view, mask->x2, 2, vars->v);
-  mpc_and_sse(vars->r1m, vars->x0s, vars->x2m, vars->r1s, view, mask->x2, 1, vars->v);
+  mpc_and_sse(vars->r0m, vars->x0s, vars->x1s, vars->r2m, view, 0);
+  mpc_and_sse(vars->r2m, vars->x1s, vars->x2m, vars->r0s, view, 2);
+  mpc_and_sse(vars->r1m, vars->x0s, vars->x2m, vars->r1s, view, 1);
 
   bitsliced_mm_step_2(3, __m128i, _mm_load_si128, _mm_store_si128, _mm_and_si128, _mm_xor_si128,
                       mm128_shift_right);
@@ -404,9 +404,9 @@ _mpc_sbox_layer_bitsliced_avx(mzd_t** out, mzd_t** in, view_t* view, mzd_t** rve
   bitsliced_mm_step_1(3, __m256i, _mm256_load_si256, _mm256_store_si256, _mm256_and_si256,
                       mm256_shift_left);
 
-  mpc_and_avx(vars->r0m, vars->x0s, vars->x1s, vars->r2m, view, mask->x2, 0, vars->v);
-  mpc_and_avx(vars->r2m, vars->x1s, vars->x2m, vars->r0s, view, mask->x2, 2, vars->v);
-  mpc_and_avx(vars->r1m, vars->x0s, vars->x2m, vars->r1s, view, mask->x2, 1, vars->v);
+  mpc_and_avx(vars->r0m, vars->x0s, vars->x1s, vars->r2m, view, 0);
+  mpc_and_avx(vars->r2m, vars->x1s, vars->x2m, vars->r0s, view, 2);
+  mpc_and_avx(vars->r1m, vars->x0s, vars->x2m, vars->r1s, view, 1);
 
   bitsliced_mm_step_2(3, __m256i, _mm256_load_si256, _mm256_store_si256, _mm256_and_si256,
                       _mm256_xor_si256, mm256_shift_right);

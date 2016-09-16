@@ -39,10 +39,8 @@ mzd_t** mpc_xor(mzd_t** res, mzd_t** first, mzd_t** second, unsigned sc) {
 }
 
 __attribute__((target("sse2"))) int mpc_and_sse(mzd_t** res, mzd_t** first, mzd_t** second,
-                                                mzd_t** r, view_t* view, mzd_t* mask,
-                                                unsigned viewshift, mzd_t** buffer) {
-  (void)mask;
-
+                                                mzd_t** r, view_t* view,
+                                                unsigned viewshift) {
   for (unsigned m = 0; m < 3; ++m) {
     const unsigned j = (m + 1) % 3;
 
@@ -73,10 +71,8 @@ __attribute__((target("sse2"))) int mpc_and_sse(mzd_t** res, mzd_t** first, mzd_
 
 
 __attribute__((target("avx2"))) int mpc_and_avx(mzd_t** res, mzd_t** first, mzd_t** second,
-                                                mzd_t** r, view_t* view, mzd_t* mask,
-                                                unsigned viewshift, mzd_t** buffer) {
-  (void)mask;
-
+                                                mzd_t** r, view_t* view,
+                                                unsigned viewshift) {
   for (unsigned m = 0; m < 3; ++m) {
     const unsigned j = (m + 1) % 3;
 
@@ -105,10 +101,7 @@ __attribute__((target("avx2"))) int mpc_and_avx(mzd_t** res, mzd_t** first, mzd_
   return 0;
 }
 
-int mpc_and(mzd_t** res, mzd_t** first, mzd_t** second, mzd_t** r, view_t* view, mzd_t* mask,
-            unsigned viewshift, mzd_t** buffer) {
-  (void)mask;
-
+int mpc_and(mzd_t** res, mzd_t** first, mzd_t** second, mzd_t** r, view_t* view, unsigned viewshift, mzd_t** buffer) {
   mzd_t* b = mzd_local_init(first[0]->nrows, first[0]->ncols);
 
   for (unsigned m = 0; m < 3; ++m) {
