@@ -122,7 +122,6 @@ static bg_signature_t* bg_prove(public_parameters_t* pp, bg_private_key_t* priva
   }
   END_TIMING(timing_and_size->sign.rand);
 
-  START_TIMING;
   bg_signature_t* signature = calloc(1, sizeof(bg_signature_t));
 
   view_t* views_p[BG_NUM_ROUNDS];
@@ -134,6 +133,7 @@ static bg_signature_t* bg_prove(public_parameters_t* pp, bg_private_key_t* priva
   mpc_lowmc_key_t lowmc_key_k[BG_NUM_ROUNDS] = {{0, NULL}};
   mpc_lowmc_key_t lowmc_key_s[BG_NUM_ROUNDS] = {{0, NULL}};
 
+  START_TIMING;
   aes_prng_t aes_prng;
   aes_prng_init(&aes_prng, secret_sharing_key);
   for (unsigned i = 0; i < BG_NUM_ROUNDS; ++i) {
@@ -146,9 +146,10 @@ static bg_signature_t* bg_prove(public_parameters_t* pp, bg_private_key_t* priva
   aes_prng_clear(&aes_prng);
   END_TIMING(timing_and_size->sign.secret_sharing);
 
-  START_TIMING;
   mzd_t*** c_mpc_p = calloc(BG_NUM_ROUNDS, sizeof(mzd_t**));
   mzd_t*** c_mpc_s = calloc(BG_NUM_ROUNDS, sizeof(mzd_t**));
+
+  START_TIMING;
 #pragma omp parallel for
   for (unsigned i = 0; i < BG_NUM_ROUNDS; ++i) {
     c_mpc_p[i] = mpc_lowmc_call(lowmc, &lowmc_key_s[i], p, views_p[i], rvec_p[i]);

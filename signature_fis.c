@@ -77,10 +77,10 @@ static proof_t* fis_prove(mpc_lowmc_t* lowmc, lowmc_key_t* lowmc_key, mzd_t* p, 
   }
   END_TIMING(timing_and_size->sign.rand);
 
-  START_TIMING;
   view_t *views[FIS_NUM_ROUNDS];
   init_view(lowmc, views);
 
+  START_TIMING;
   aes_prng_t aes_prng;
   aes_prng_init(&aes_prng, secret_sharing_key);
 
