@@ -135,10 +135,7 @@ int mpc_and(mzd_t** res, mzd_t** first, mzd_t** second, mzd_t** r, view_t* view,
 
 __attribute__((target("sse2"))) int mpc_and_verify_sse(mzd_t** res, mzd_t** first, mzd_t** second,
                                                        mzd_t** r, view_t const* view, mzd_t const* mask,
-                                                       unsigned viewshift,
-                                                       mzd_t** buffer) {
-  (void)buffer;
-
+                                                       unsigned viewshift) {
   for (unsigned m = 0; m < 1; ++m) {
     const unsigned j = (m + 1);
 
@@ -178,10 +175,7 @@ __attribute__((target("sse2"))) int mpc_and_verify_sse(mzd_t** res, mzd_t** firs
 
 __attribute__((target("avx2"))) int mpc_and_verify_avx(mzd_t** res, mzd_t** first, mzd_t** second,
                                                        mzd_t** r, view_t const* view, mzd_t const* mask,
-                                                       unsigned viewshift,
-                                                       mzd_t** buffer) {
-  (void)buffer;
-
+                                                       unsigned viewshift) {
   for (unsigned m = 0; m < 1; ++m) {
     const unsigned j = (m + 1);
 
@@ -220,7 +214,7 @@ __attribute__((target("avx2"))) int mpc_and_verify_avx(mzd_t** res, mzd_t** firs
 }
 
 int mpc_and_verify(mzd_t** res, mzd_t** first, mzd_t** second, mzd_t** r, view_t const* view, mzd_t const* mask,
-                   unsigned viewshift, mzd_t** buffer) {
+                   unsigned viewshift) {
   mzd_t* b = mzd_local_init(first[0]->nrows, first[0]->ncols);
 
   for (unsigned m = 0; m < 1; ++m) {
