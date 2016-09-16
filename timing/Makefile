@@ -10,10 +10,10 @@ generate-timings:
 
 generate-graphs:
 	set -e && for n in 128 192 256 ; do \
-		octave timing.m $$n 128 timings; \
+		python graphs.py -n $$n -k 128 -p timings; \
 	done
 	set -e && for n in 256 384 512 ; do \
-		octave timing.m $$n 128 pq-timings; \
+		python graphs.py -n $$n -k 128 -p pq-timings; \
 	done
 
 
