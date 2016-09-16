@@ -11,7 +11,7 @@ timings-pq:
 	done
 
 timings-omp:
-	set -e && for n in 2 4 8 ; do \
+	set -e && for n in 1 2 3 4 5 6 7 8 ; do \
 		env OMP_NUM_THREADS=$$n \
 			python timing.py lowmc-inst-256.txt -i $(ITER) -p omp-timings-$$n -x ../mpc_lowmc_openmp; \
 	done
@@ -26,5 +26,7 @@ graphs:
 		python graphs.py -n $$n -k 128 -p pq-timings; \
 	done
 
+graphs-omp:
+	python graphs.py -n 256 -k 128 -p omp-timings -o -t 8
 
 all: timings graphs

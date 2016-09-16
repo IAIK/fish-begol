@@ -5,12 +5,25 @@ import matplotlib
 import matplotlib.pyplot as plt
 import pandas as pd
 
+
+def compute_size(data):
+  return data[:, 12] / 1024
+
+
+def compute_sign(data):
+  return np.sum(data[:, 3:7] / 1000, axis=1)
+
+
+def compute_verify(data):
+  return np.sum(data[:, 8:12] / 1000, axis=1)
+
+
 def create_graph(prefix, n, k, data, labels):
   data = np.array(data)
 
-  size = data[:, 12] / 1024
-  sign = np.sum(data[:, 3:7] / 1000, axis=1)
-  verify = np.sum(data[:, 8:12] / 1000, axis=1)
+  size = compute_size(data)
+  sign = compute_sign(data)
+  verify = compute_verify(data)
 
   df = pd.DataFrame({
       'sign': pd.Series(sign, index=labels),
@@ -18,20 +31,12 @@ def create_graph(prefix, n, k, data, labels):
       'size': pd.Series(size, index=labels)
   })
 
-  style = {
-      'sign': ['marker', '.','markersize', 8, 'color', 'blue', 'linewidth', 2],
-      'verify': ['marker', 'diamond','markersize', 2, 'color', 'red', 'linewidth', 2],
-      'size': ['marker', '>','markersize', 2, 'color', 'green', 'linewidth', 2]
-  }
-
-  marker={'sign': '.', 'verify': 'diamond', 'size': '>'}
-
   plt.figure(figsize=(6, 6 * 3 / 4.0))
-  ax = df.plot(secondary_y=['size'], mark_right=False, marker='>',
-               markersize=8, linewidth=3, legend=False)
+  ax = df.plot(secondary_y=['size'], mark_right=False, marker='.',
+               markersize=5, linewidth=2, legend=False)
 
   # title and labels
-  ax.set_title('LowMC Timing n={0} k={1} - Parameters [m]-[r])'.format(n, k))
+  ax.set_title('LowMC Timing n={0} k={1} - Parameters [m]-[r]'.format(n, k))
   ax.set_ylabel('Time [ms]')
   ax.set_xlabel('')
   ax.right_ax.set_ylabel('Size [kB]')
@@ -51,10 +56,58 @@ def create_graph(prefix, n, k, data, labels):
   plt.savefig('{0}-{1}-{2}.png'.format(prefix, n, k))
 
 
-def main(args):
-  n = args.blocksize
-  k = args.keysize
-  prefix = args.prefix
+def create_omp_graph(prefix, n, k, data, labels, max_num_threads):
+  datadict = {'1 thread' if not i else '{0} threads'.format(i + 1):
+              pd.Series(data[i], index=labels) for i in xrange(max_num_threads)}
+  df = pd.DataFrame(datadict)
+
+  plt.figure(figsize=(6, 6 * 3 / 4.0))
+  ax = df.plot(marker='.', markersize=5, linewidth=2, legend=True)
+
+  # title and labels
+  ax.set_title('LowMC Timing n={0} k={1} - Parameters [m]-[r]'.format(n, k))
+  ax.set_ylabel('Time [ms]')
+  ax.set_xlabel('')
+
+  ax.set_xticks(range(len(labels)))
+  ax.set_xticklabels(labels, rotation=45, fontsize=8)
+
+  # grid
+  ax.grid(True, axis='y')
+
+  plt.savefig('{0}-{1}-{2}.eps'.format(prefix, n, k))
+  plt.savefig('{0}-{1}-{2}.png'.format(prefix, n, k))
+
+
+def create_omp_graphs(n, k, prefix, max_num_threads):
+  labels = None
+  all_fis_sign = []
+  all_fis_verify = []
+  all_bg_sign = []
+  all_bg_verify = []
+
+  for threads in xrange(1, 1 + max_num_threads):
+    with h5py.File('{0}-{1}-{2}-{3}.mat'.format(prefix, threads, n, k), 'r') as timings:
+      if labels is None:
+        labels = list(timings.get("labels"))[5:]
+
+      fis_sum = np.array(timings.get("fis_sum"))
+      bg_sum = np.array(timings.get("bg_sum"))
+
+      all_fis_sign.append(compute_sign(fis_sum)[5:])
+      all_fis_verify.append(compute_verify(fis_sum)[5:])
+      all_bg_sign.append(compute_sign(bg_sum)[5:])
+      all_bg_verify.append(compute_verify(bg_sum)[5:])
+
+  create_omp_graph('{0}-fis-sign'.format(prefix), n, k, all_fis_sign, labels, max_num_threads)
+  create_omp_graph('{0}-fis-verify'.format(prefix), n, k, all_fis_verify, labels, max_num_threads)
+  create_omp_graph('{0}-bg-sign'.format(prefix), n, k, all_bg_sign, labels, max_num_threads)
+  create_omp_graph('{0}-bg-verify'.format(prefix), n, k, all_bg_verify, labels, max_num_threads)
+
+
+def main(n, k, prefix, omp=False, max_num_threads=4):
+  if omp:
+    return create_omp_graphs(n, k, prefix, max_num_threads)
 
   with h5py.File('{0}-{1}-{2}.mat'.format(prefix, n, k), 'r') as timings:
     labels = timings.get("labels")
@@ -73,7 +126,12 @@ if __name__ == "__main__":
                       default=128)
   parser.add_argument("-p", "--prefix", help="prefix of mat files",
                       default="timings")
+  parser.add_argument("-o", "--omp", help="produce graphs for omp runs",
+                      action='store_true', default=False)
+  parser.add_argument("-t", "--threads", help="# of OpenMP threads", type=int,
+                      default=4)
+
   args = parser.parse_args()
 
-  main(args)
+  main(args.blocksize, args.keysize, args.prefix, args.omp, args.threads)
 
