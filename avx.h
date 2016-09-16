@@ -54,11 +54,12 @@ static inline __m128i FN_ATTRIBUTES_SSE2 mm128_shift_left(__m128i data, unsigned
     return data;
   }
 
-  __m128i carry  = _mm_srli_epi64(data, 64 - count);
-  __m128i upper  = _mm_slli_si128(carry, 8);
-  __m128i lower  = _mm_srli_si128(carry, 8);
-  carry          = _mm_or_si128(upper, lower);
-  data           = _mm_slli_epi64(data, count);
+  __m128i carry = _mm_bslli_si128(data, 8);
+  /* if (count >= 64) {
+    return _mm_slli_epi64(carry, count - 64);
+  } */
+  carry = _mm_srli_epi64(carry, 64 - count);
+  data = _mm_slli_epi64(data, count);
   return _mm_or_si128(data, carry);
 }
 
@@ -70,11 +71,12 @@ static inline __m128i FN_ATTRIBUTES_SSE2 mm128_shift_right(__m128i data, unsigne
     return data;
   }
 
-  __m128i carry  = _mm_slli_epi64(data, 64 - count);
-  __m128i upper  = _mm_slli_si128(carry, 8);
-  __m128i lower  = _mm_srli_si128(carry, 8);
-  carry          = _mm_or_si128(upper, lower);
-  data           = _mm_srli_epi64(data, count);
+  __m128i carry = _mm_bsrli_si128(data, 8);
+  /* if (count >= 64) {
+    return _mm_srli_epi64(carry, count - 64);
+  } */
+  carry = _mm_slli_epi64(carry, 64 - count);
+  data = _mm_srli_epi64(data, count);
   return _mm_or_si128(data, carry);
 }
 
