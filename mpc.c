@@ -112,13 +112,14 @@ int mpc_and(mzd_t** res, mzd_t** first, mzd_t** second, mzd_t** r, view_t* view,
   mzd_t* b = mzd_local_init(first[0]->nrows, first[0]->ncols);
 
   for (unsigned m = 0; m < 3; ++m) {
-    unsigned j = (m + 1) % 3;
-    res[m]     = mzd_and(res[m], first[m], second[m]);
+    const unsigned j = (m + 1) % 3;
 
-    b = mzd_and(b, first[j], second[m]);
+    res[m] = mzd_and(res[m], first[m], second[m]);
+
+    mzd_and(b, first[j], second[m]);
     mzd_xor(res[m], res[m], b);
 
-    b = mzd_and(b, first[m], second[j]);
+    mzd_and(b, first[m], second[j]);
     mzd_xor(res[m], res[m], b);
 
     mzd_xor(res[m], res[m], r[m]);
@@ -222,29 +223,30 @@ int mpc_and_verify(mzd_t** res, mzd_t** first, mzd_t** second, mzd_t** r, view_t
                    unsigned viewshift, mzd_t** buffer) {
   mzd_t* b = mzd_local_init(first[0]->nrows, first[0]->ncols);
 
-  for (unsigned m = 0; m < 1; m++) {
-    unsigned j = m + 1;
-    res[m]     = mzd_and(res[m], first[m], second[m]);
+  for (unsigned m = 0; m < 1; ++m) {
+    const unsigned j = m + 1;
 
-    b = mzd_and(b, first[j], second[m]);
+    res[m] = mzd_and(res[m], first[m], second[m]);
+
+    mzd_and(b, first[j], second[m]);
     mzd_xor(res[m], res[m], b);
 
-    b = mzd_and(b, first[m], second[j]);
+    mzd_and(b, first[m], second[j]);
     mzd_xor(res[m], res[m], b);
 
     mzd_xor(res[m], res[m], r[m]);
     mzd_xor(res[m], res[m], r[j]);
   }
 
-  mzd_local_free(b);
-
-  for (unsigned m = 0; m < 1; m++) {
-    mzd_shift_left(buffer[m], view->s[m], viewshift);
-    mzd_and(buffer[m], buffer[m], res[m]);
-    if (mzd_equal(buffer[m], res[m])) {
+  for (unsigned m = 0; m < 1; ++m) {
+    mzd_shift_left(b, view->s[m], viewshift);
+    mzd_and(b, b, res[m]);
+    if (mzd_equal(b, res[m])) {
       return -1;
     }
   }
+
+  mzd_local_free(b);
 
   mzd_shift_left(res[2 - 1], view->s[2 - 1], viewshift);
   mzd_and(res[2 - 1], res[2 - 1], mask);
