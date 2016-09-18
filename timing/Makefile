@@ -23,6 +23,8 @@ graphs:
 	set -e && for n in 128 192 256 ; do \
 		python graphs.py -n $$n -k 128 -p timings; \
 	done
+
+graphs-pq:
 	set -e && for n in 256 384 512 ; do \
 		python graphs.py -n $$n -k 128 -p pq-timings; \
 	done
