@@ -186,8 +186,8 @@ static bg_signature_t* bg_prove(public_parameters_t* pp, bg_private_key_t* priva
 
   for (unsigned j = 0; j < BG_NUM_ROUNDS; ++j) {
     for (unsigned i = 0; i < 3; ++i) {
-      mpc_free(rvec_p[j][i], lowmc->r);
-      mpc_free(rvec_s[j][i], lowmc->r);
+      mzd_local_free_multiple(rvec_p[j][i]);
+      mzd_local_free_multiple(rvec_s[j][i]);
     }
   }
 
@@ -218,10 +218,10 @@ static int verify_views(mpc_lowmc_t const* lowmc, mzd_t const* p,
       view_verify_status |= -1;
     }
 
-    mpc_free(rv_s[1], lowmc->r);
-    mpc_free(rv_s[0], lowmc->r);
-    mpc_free(rv_p[1], lowmc->r);
-    mpc_free(rv_p[0], lowmc->r);
+    mzd_local_free_multiple(rv_s[1]);
+    mzd_local_free_multiple(rv_s[0]);
+    mzd_local_free_multiple(rv_p[1]);
+    mzd_local_free_multiple(rv_p[0]);
 
     mzd_shared_clear(&shared_s);
   }

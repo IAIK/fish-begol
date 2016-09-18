@@ -7,6 +7,8 @@
 // #ifdef WITH_OPENMP
 mzd_t* mzd_local_init(rci_t r, rci_t c) __attribute__((assume_aligned(32)));
 void mzd_local_free(mzd_t* v);
+void mzd_local_init_multiple(mzd_t** dst, size_t n, rci_t r, rci_t c);
+void mzd_local_free_multiple(mzd_t** vs);
 mzd_t* mzd_local_copy(mzd_t* dst, mzd_t const* src);
 // #else
 // #define mzd_local_init mzd_init

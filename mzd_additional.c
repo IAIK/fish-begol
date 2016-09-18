@@ -44,6 +44,46 @@ void mzd_local_free(mzd_t* v) {
   free(v);
 }
 
+void mzd_local_init_multiple(mzd_t** dst, size_t n, rci_t r, rci_t c) {
+  const rci_t width = (c + m4ri_radix - 1) / m4ri_radix;
+  const rci_t rowstride = (width < mzd_paddingwidth || (width & 1) == 0) ? width : width + 1;
+  const word high_bitmask  = __M4RI_LEFT_BITMASK(c % m4ri_radix);
+  const uint8_t flags = (high_bitmask != m4ri_ffff) ? mzd_flag_nonzero_excess : 0;
+
+  const size_t buffer_size = r * rowstride * sizeof(word);
+  const size_t rows_size = r * sizeof(word*);
+  const size_t size_per_elem = (sizeof(mzd_t) + buffer_size + rows_size + 31) & ~31;
+
+  unsigned char* full_buffer = aligned_alloc(32, size_per_elem * n);
+  memset(full_buffer, 0, size_per_elem * n);
+
+  for (size_t s = 0; s < n; ++s, full_buffer += size_per_elem) {
+    unsigned char* buffer = full_buffer;
+    mzd_t* A = (mzd_t*) buffer;
+    buffer += sizeof(mzd_t);
+
+    A->rows = (word**) (buffer + buffer_size);
+    for (rci_t i = 0; i < r; ++i) {
+      A->rows[i] = (word*) (buffer + i * rowstride * sizeof(word));
+    }
+
+    A->nrows = r;
+    A->ncols = c;
+    A->width = width;
+    A->rowstride = rowstride;
+    A->high_bitmask = high_bitmask;
+    A->flags = flags;
+
+    dst[s] = A;
+  }
+}
+
+void mzd_local_free_multiple(mzd_t** vs) {
+  if (vs) {
+    free(vs[0]);
+  }
+}
+
 mzd_t* mzd_local_copy(mzd_t* dst, mzd_t const* src) {
   if (dst == src) {
     return dst;
@@ -71,6 +111,16 @@ void mzd_randomize_ssl(mzd_t* val) {
   }
 }
 
+static void mzd_randomize_aes_prng(mzd_t* v, aes_prng_t* aes_prng) {
+  // similar to mzd_randomize but using aes_prng_t instead
+  const word mask_end = v->high_bitmask;
+  for (rci_t i = 0; i < v->nrows; ++i) {
+    aes_prng_get_randomness(aes_prng, (unsigned char*)v->rows[i], v->width * sizeof(word));
+    v->rows[i][v->width - 1] &= mask_end;
+  }
+}
+
+
 void mzd_randomize_upper_triangular(mzd_t* val) {
   const word mask_end = val->high_bitmask;
   for (rci_t i = 0; i < val->nrows; ++i) {
@@ -97,8 +147,7 @@ mzd_t* mzd_init_random_vector(rci_t n) {
 
 static mzd_t* mzd_init_random_vector_prng(rci_t n, aes_prng_t* aes_prng) {
   mzd_t* v = mzd_local_init(1, n);
-  aes_prng_get_randomness(aes_prng, (unsigned char*)v->rows[0], v->width * sizeof(word));
-  v->rows[0][v->width - 1] &= v->high_bitmask;
+  mzd_randomize_aes_prng(v, aes_prng);
   return v;
 }
 
@@ -107,8 +156,9 @@ mzd_t** mzd_init_random_vectors_from_seed(const unsigned char key[16], rci_t n, 
   aes_prng_init(&aes_prng, key);
 
   mzd_t** vectors = calloc(count, sizeof(mzd_t*));
+  mzd_local_init_multiple(vectors, count, 1, n);
   for (unsigned int v = 0; v < count; ++v) {
-    vectors[v] = mzd_init_random_vector_prng(n, &aes_prng);
+    mzd_randomize_aes_prng(vectors[v], &aes_prng);
   }
 
   aes_prng_clear(&aes_prng);

@@ -120,7 +120,7 @@ static proof_t* fis_prove(mpc_lowmc_t* lowmc, lowmc_key_t* lowmc_key, mzd_t* p, 
   for (unsigned j = 0; j < FIS_NUM_ROUNDS; j++) {
     mzd_shared_clear(&s[j]);
     for (unsigned i = 0; i < 3; i++)
-      mpc_free(rvec[j][i], lowmc->r);
+      mzd_local_free_multiple(rvec[j][i]);
   }
 
   free_view(lowmc, views);
@@ -181,8 +181,8 @@ static int fis_proof_verify(mpc_lowmc_t const* lowmc, mzd_t const* p, mzd_t cons
       view_verify_status |= -1;
     }
 
-    mpc_free(rv[0], lowmc->r);
-    mpc_free(rv[1], lowmc->r);
+    mzd_local_free_multiple(rv[1]);
+    mzd_local_free_multiple(rv[0]);
   }
   END_TIMING(timing_and_size->verify.verify);
 
