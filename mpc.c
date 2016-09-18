@@ -102,12 +102,12 @@ __attribute__((target("avx2"))) int mpc_and_avx(mzd_t** res, mzd_t** first, mzd_
 }
 
 int mpc_and(mzd_t** res, mzd_t** first, mzd_t** second, mzd_t** r, view_t* view, unsigned viewshift, mzd_t** buffer) {
-  mzd_t* b = mzd_local_init(first[0]->nrows, first[0]->ncols);
+  mzd_t* b = buffer[0];
 
   for (unsigned m = 0; m < 3; ++m) {
     const unsigned j = (m + 1) % 3;
 
-    res[m] = mzd_and(res[m], first[m], second[m]);
+    mzd_and(res[m], first[m], second[m]);
 
     mzd_and(b, first[j], second[m]);
     mzd_xor(res[m], res[m], b);
@@ -118,8 +118,6 @@ int mpc_and(mzd_t** res, mzd_t** first, mzd_t** second, mzd_t** r, view_t* view,
     mzd_xor(res[m], res[m], r[m]);
     mzd_xor(res[m], res[m], r[j]);
   }
-
-  mzd_local_free(b);
 
   mpc_shift_right(buffer, res, viewshift, 3);
   mpc_xor(view->s, view->s, buffer, 3);
@@ -213,7 +211,7 @@ int mpc_and_verify(mzd_t** res, mzd_t** first, mzd_t** second, mzd_t** r, view_t
   for (unsigned m = 0; m < 1; ++m) {
     const unsigned j = m + 1;
 
-    res[m] = mzd_and(res[m], first[m], second[m]);
+    mzd_and(res[m], first[m], second[m]);
 
     mzd_and(b, first[j], second[m]);
     mzd_xor(res[m], res[m], b);
