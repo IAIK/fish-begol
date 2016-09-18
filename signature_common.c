@@ -6,7 +6,7 @@ void create_instance(public_parameters_t* pp, int m, int n, int r, int k) {
   TIME_FUNCTION;
 
   START_TIMING;
-  pp->lowmc    = lowmc_init(m, n, r, k);
+  pp->lowmc = lowmc_init(m, n, r, k);
   END_TIMING(timing_and_size->gen.lowmc_init);
 }
 
