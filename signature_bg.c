@@ -189,13 +189,10 @@ static bg_signature_t* bg_prove(public_parameters_t* pp, bg_private_key_t* priva
       mpc_free(rvec_p[j][i], lowmc->r);
       mpc_free(rvec_s[j][i], lowmc->r);
     }
-    for (unsigned i = 0; i < view_count; ++i) {
-      free(views_p[j][i].s);
-      free(views_s[j][i].s);
-    }
-    free(views_p[j]);
-    free(views_s[j]);
   }
+
+  free_view(lowmc, views_p);
+  free_view(lowmc, views_s);
 
   return signature;
 }

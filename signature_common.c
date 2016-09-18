@@ -16,21 +16,32 @@ void destroy_instance(public_parameters_t* pp) {
 }
 
 void init_view(mpc_lowmc_t const* mpc_lowmc, view_t* views[NUM_ROUNDS]) {
-  const unsigned int size = 2 + mpc_lowmc->r;
+  const unsigned int view_count = 2 + mpc_lowmc->r;
 
   for (unsigned int i = 0; i < NUM_ROUNDS; i++) {
-    views[i] = calloc(size, sizeof(view_t*));
+    views[i] = calloc(view_count, sizeof(view_t*));
 
     views[i][0].s = calloc(3, sizeof(mzd_t*));
     for (unsigned m = 0; m < 3; m++) {
       views[i][0].s[m] = mzd_local_init(1, mpc_lowmc->k);
     }
 
-    for (unsigned n = 1; n < size; n++) {
+    for (unsigned n = 1; n < view_count; n++) {
       views[i][n].s = (mzd_t**)malloc(3 * sizeof(mzd_t*));
       for (unsigned m = 0; m < 3; m++) {
         views[i][n].s[m] = mzd_local_init(1, mpc_lowmc->n);
       }
     }
+  }
+}
+
+void free_view(mpc_lowmc_t const* mpc_lowmc, view_t* views[NUM_ROUNDS]) {
+  const unsigned int view_count = 2 + mpc_lowmc->r;
+
+  for (unsigned int j = 0; j < NUM_ROUNDS; ++j) {
+    for (unsigned i = 0; i < view_count; ++i) {
+      free(views[j][i].s);
+    }
+    free(views[j]);
   }
 }

@@ -121,10 +121,9 @@ static proof_t* fis_prove(mpc_lowmc_t* lowmc, lowmc_key_t* lowmc_key, mzd_t* p, 
     mzd_shared_clear(&s[j]);
     for (unsigned i = 0; i < 3; i++)
       mpc_free(rvec[j][i], lowmc->r);
-    for (unsigned i = 0; i < view_count; i++) {
-      free(views[j][i].s);
-    }
   }
+
+  free_view(lowmc, views);
 
   return proof;
 }

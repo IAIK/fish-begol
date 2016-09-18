@@ -18,6 +18,7 @@ void create_instance(public_parameters_t* pp, int m, int n, int r, int k);
 void destroy_instance(public_parameters_t* pp);
 
 void init_view(mpc_lowmc_t const* lowmc, view_t* views[NUM_ROUNDS]);
+void free_view(mpc_lowmc_t const* lowmc, view_t* views[NUM_ROUNDS]);
 
 #endif
 
