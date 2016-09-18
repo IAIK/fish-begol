@@ -13,11 +13,13 @@ static const unsigned int word_size_bits = 8 * sizeof(word);
 mzd_t* mzd_local_init(rci_t r, rci_t c) {
   const rci_t width = (c + m4ri_radix - 1) / m4ri_radix;
   const rci_t rowstride = (width < mzd_paddingwidth || (width & 1) == 0) ? width : width + 1;
+  const word high_bitmask  = __M4RI_LEFT_BITMASK(c % m4ri_radix);
+  const uint8_t flags = (high_bitmask != m4ri_ffff) ? mzd_flag_nonzero_excess : 0;
 
   const size_t buffer_size = r * rowstride * sizeof(word);
   const size_t rows_size = r * sizeof(word*);
 
-  unsigned char* buffer = aligned_alloc(32, sizeof(mzd_t) + buffer_size + rows_size);
+  unsigned char* buffer = aligned_alloc(32, (sizeof(mzd_t) + buffer_size + rows_size + 31) & ~31);
   memset(buffer, 0, sizeof(mzd_t) + buffer_size + rows_size);
 
   mzd_t* A = (mzd_t*) buffer;
@@ -32,12 +34,8 @@ mzd_t* mzd_local_init(rci_t r, rci_t c) {
   A->ncols = c;
   A->width = width;
   A->rowstride = rowstride;
-  A->high_bitmask = __M4RI_LEFT_BITMASK(c % m4ri_radix);
-  A->flags = (A->high_bitmask != m4ri_ffff) ? mzd_flag_nonzero_excess : 0;
-  A->offset_vector = 0;
-  A->row_offset = 0;
-  A->blocks = 0;
-  A->blockrows_log = 0;
+  A->high_bitmask = high_bitmask;
+  A->flags = flags;
 
   return A;
 }
