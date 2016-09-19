@@ -8,17 +8,17 @@ void mpc_clear(mzd_t** res, unsigned sc) {
       mzd_row_clear_offset(res[i], j, 0);
 }
 
-void mpc_shift_right(mzd_t** res, mzd_t** val, unsigned count, unsigned sc) {
+void mpc_shift_right(mzd_t** res, mzd_t* const* val, unsigned count, unsigned sc) {
   for (unsigned i = 0; i < sc; ++i)
     mzd_shift_right(res[i], val[i], count);
 }
 
-void mpc_shift_left(mzd_t** res, mzd_t** val, unsigned count, unsigned sc) {
+void mpc_shift_left(mzd_t** res, mzd_t* const* val, unsigned count, unsigned sc) {
   for (unsigned i = 0; i < sc; ++i)
     mzd_shift_left(res[i], val[i], count);
 }
 
-mzd_t** mpc_and_const(mzd_t** res, mzd_t** first, mzd_t const* second, unsigned sc) {
+mzd_t** mpc_and_const(mzd_t** res, mzd_t* const* first, mzd_t const* second, unsigned sc) {
   if (res == 0) {
     res = (mzd_t**)calloc(sizeof(mzd_t*), 3);
   }
@@ -29,7 +29,7 @@ mzd_t** mpc_and_const(mzd_t** res, mzd_t** first, mzd_t const* second, unsigned 
   return res;
 }
 
-mzd_t** mpc_xor(mzd_t** res, mzd_t** first, mzd_t** second, unsigned sc) {
+mzd_t** mpc_xor(mzd_t** res, mzd_t* const* first, mzd_t* const* second, unsigned sc) {
   if (res == 0)
     res = (mzd_t**)calloc(sizeof(mzd_t*), 3);
   for (unsigned i = 0; i < sc; i++) {
@@ -310,7 +310,7 @@ mzd_t** mpc_const_mat_mul(mzd_t** result, mzd_t const* matrix, mzd_t** vector, u
   return result;
 }
 
-void mpc_copy(mzd_t** out, mzd_t** in, unsigned sc) {
+void mpc_copy(mzd_t** out, mzd_t* const* in, unsigned sc) {
   for (unsigned i = 0; i < sc; ++i) {
     mzd_local_copy(out[i], in[i]);
   }

@@ -4,13 +4,13 @@
 #include "m4ri/m4ri.h"
 #include "mpc_lowmc.h"
 
-void mpc_shift_right(mzd_t**res, mzd_t **val, unsigned count, unsigned sc);
+void mpc_shift_right(mzd_t**res, mzd_t * const* val, unsigned count, unsigned sc);
 
-void mpc_shift_left(mzd_t **res, mzd_t **val, unsigned count, unsigned sc);
+void mpc_shift_left(mzd_t **res, mzd_t * const* val, unsigned count, unsigned sc);
 
-mzd_t **mpc_and_const(mzd_t **res, mzd_t **first, mzd_t const *second, unsigned sc);
+mzd_t **mpc_and_const(mzd_t **res, mzd_t * const* first, mzd_t const *second, unsigned sc);
 
-mzd_t **mpc_xor(mzd_t **res, mzd_t **first, mzd_t **second, unsigned sc);
+mzd_t **mpc_xor(mzd_t **res, mzd_t * const* first, mzd_t *const *second, unsigned sc);
 
 void mpc_clear(mzd_t **res, unsigned sc);
 
@@ -166,7 +166,7 @@ mzd_t **mpc_const_mat_mul(mzd_t** result, mzd_t const *matrix, mzd_t **vector, u
  * \param  sc    the share count
  *
  */
-void mpc_copy(mzd_t** out, mzd_t **in, unsigned sc);
+void mpc_copy(mzd_t** out, mzd_t *const *in, unsigned sc);
 
 /**
  * Prints a secret shared vector
