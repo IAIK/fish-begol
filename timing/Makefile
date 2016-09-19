@@ -19,17 +19,15 @@ timings-omp:
 
 timings: timings-plain timings-pq timings-omp
 
-graphs:
-	set -e && for n in 128 192 256 ; do \
-		python graphs.py -n $$n -k 128 -p timings; \
-	done
+graphs-plain:
+	python graphs.py -k 128 -p timings 128 256; \
 
 graphs-pq:
 	set -e && for n in 256 384 512 ; do \
-		python graphs.py -n $$n -k 128 -p pq-timings; \
+		python graphs.py $$n -k 128 -p pq-timings; \
 	done
 
 graphs-omp:
-	python graphs.py -n 256 -k 128 -p omp-timings -o -t $(MAXTHREADS)
+	python graphs.py 256 -k 128 -p omp-timings -o -t $(MAXTHREADS)
 
-all: timings graphs
+all: timings-plain graphs-plain
