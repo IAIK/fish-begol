@@ -13,7 +13,7 @@ def compute_size(data):
 
 
 def compute_sign(data):
-  return np.sum(data[:, 3:7] / 1000, axis=1)
+  return np.sum(data[:, 3:8] / 1000, axis=1)
 
 
 def compute_verify(data):
@@ -73,9 +73,9 @@ def pick_interesting(size, sign, verify, labels):
 
 
 def prepare_data(data, labels):
-  size = compute_size(data)
-  sign = compute_sign(data)
-  verify = compute_verify(data)
+  size = data[:, 3]
+  sign = data[:, 1]
+  verify = data[:, 2]
   return pick_interesting(size, sign, verify, labels)
 
 
@@ -232,8 +232,8 @@ def main(args):
   for n in args.blocksize:
     with h5py.File('{0}-{1}-{2}.mat'.format(prefix, n, k), 'r') as timings:
       labels = list(timings.get("labels"))
-      fis_sum = np.array(timings.get("fis_sum"))
-      bg_sum = np.array(timings.get("bg_sum"))
+      fis_sum = np.array(timings.get("fis_median"))
+      bg_sum = np.array(timings.get("bg_median"))
 
       all_labels.append(labels)
       all_fis_sums.append(fis_sum)
