@@ -11,31 +11,31 @@ static const unsigned int word_size_bits = 8 * sizeof(word);
 
 // #if WITH_OPENMP
 mzd_t* mzd_local_init(rci_t r, rci_t c) {
-  const rci_t width = (c + m4ri_radix - 1) / m4ri_radix;
-  const rci_t rowstride = (width < mzd_paddingwidth || (width & 1) == 0) ? width : width + 1;
-  const word high_bitmask  = __M4RI_LEFT_BITMASK(c % m4ri_radix);
-  const uint8_t flags = (high_bitmask != m4ri_ffff) ? mzd_flag_nonzero_excess : 0;
+  const rci_t width       = (c + m4ri_radix - 1) / m4ri_radix;
+  const rci_t rowstride   = (width < mzd_paddingwidth || (width & 1) == 0) ? width : width + 1;
+  const word high_bitmask = __M4RI_LEFT_BITMASK(c % m4ri_radix);
+  const uint8_t flags     = (high_bitmask != m4ri_ffff) ? mzd_flag_nonzero_excess : 0;
 
   const size_t buffer_size = r * rowstride * sizeof(word);
-  const size_t rows_size = r * sizeof(word*);
+  const size_t rows_size   = r * sizeof(word*);
 
   unsigned char* buffer = aligned_alloc(32, (sizeof(mzd_t) + buffer_size + rows_size + 31) & ~31);
   memset(buffer, 0, sizeof(mzd_t) + buffer_size + rows_size);
 
-  mzd_t* A = (mzd_t*) buffer;
+  mzd_t* A = (mzd_t*)buffer;
   buffer += sizeof(mzd_t);
 
-  A->rows = (word**) (buffer + buffer_size);
+  A->rows = (word**)(buffer + buffer_size);
   for (rci_t i = 0; i < r; ++i) {
-    A->rows[i] = (word*) (buffer + i * rowstride * sizeof(word));
+    A->rows[i] = (word*)(buffer + i * rowstride * sizeof(word));
   }
 
-  A->nrows = r;
-  A->ncols = c;
-  A->width = width;
-  A->rowstride = rowstride;
+  A->nrows        = r;
+  A->ncols        = c;
+  A->width        = width;
+  A->rowstride    = rowstride;
   A->high_bitmask = high_bitmask;
-  A->flags = flags;
+  A->flags        = flags;
 
   return A;
 }
@@ -45,13 +45,13 @@ void mzd_local_free(mzd_t* v) {
 }
 
 void mzd_local_init_multiple(mzd_t** dst, size_t n, rci_t r, rci_t c) {
-  const rci_t width = (c + m4ri_radix - 1) / m4ri_radix;
-  const rci_t rowstride = (width < mzd_paddingwidth || (width & 1) == 0) ? width : width + 1;
-  const word high_bitmask  = __M4RI_LEFT_BITMASK(c % m4ri_radix);
-  const uint8_t flags = (high_bitmask != m4ri_ffff) ? mzd_flag_nonzero_excess : 0;
+  const rci_t width       = (c + m4ri_radix - 1) / m4ri_radix;
+  const rci_t rowstride   = (width < mzd_paddingwidth || (width & 1) == 0) ? width : width + 1;
+  const word high_bitmask = __M4RI_LEFT_BITMASK(c % m4ri_radix);
+  const uint8_t flags     = (high_bitmask != m4ri_ffff) ? mzd_flag_nonzero_excess : 0;
 
-  const size_t buffer_size = r * rowstride * sizeof(word);
-  const size_t rows_size = r * sizeof(word*);
+  const size_t buffer_size   = r * rowstride * sizeof(word);
+  const size_t rows_size     = r * sizeof(word*);
   const size_t size_per_elem = (sizeof(mzd_t) + buffer_size + rows_size + 31) & ~31;
 
   unsigned char* full_buffer = aligned_alloc(32, size_per_elem * n);
@@ -59,20 +59,20 @@ void mzd_local_init_multiple(mzd_t** dst, size_t n, rci_t r, rci_t c) {
 
   for (size_t s = 0; s < n; ++s, full_buffer += size_per_elem) {
     unsigned char* buffer = full_buffer;
-    mzd_t* A = (mzd_t*) buffer;
+    mzd_t* A              = (mzd_t*)buffer;
     buffer += sizeof(mzd_t);
 
-    A->rows = (word**) (buffer + buffer_size);
+    A->rows = (word**)(buffer + buffer_size);
     for (rci_t i = 0; i < r; ++i) {
-      A->rows[i] = (word*) (buffer + i * rowstride * sizeof(word));
+      A->rows[i] = (word*)(buffer + i * rowstride * sizeof(word));
     }
 
-    A->nrows = r;
-    A->ncols = c;
-    A->width = width;
-    A->rowstride = rowstride;
+    A->nrows        = r;
+    A->ncols        = c;
+    A->width        = width;
+    A->rowstride    = rowstride;
     A->high_bitmask = high_bitmask;
-    A->flags = flags;
+    A->flags        = flags;
 
     dst[s] = A;
   }
@@ -94,7 +94,8 @@ mzd_t* mzd_local_copy(mzd_t* dst, mzd_t const* src) {
   }
 
   if (dst->nrows >= src->nrows || dst->ncols == src->ncols) {
-    memcpy(((unsigned char*) dst) + sizeof(mzd_t), ((const unsigned char*) src) + sizeof(mzd_t), src->nrows * src->rowstride * sizeof(word));
+    memcpy(((unsigned char*)dst) + sizeof(mzd_t), ((const unsigned char*)src) + sizeof(mzd_t),
+           src->nrows * src->rowstride * sizeof(word));
     return dst;
   } else {
     return mzd_copy(dst, src);
@@ -119,7 +120,6 @@ static void mzd_randomize_aes_prng(mzd_t* v, aes_prng_t* aes_prng) {
     v->rows[i][v->width - 1] &= mask_end;
   }
 }
-
 
 void mzd_randomize_upper_triangular(mzd_t* val) {
   const word mask_end = val->high_bitmask;
@@ -151,7 +151,8 @@ static mzd_t* mzd_init_random_vector_prng(rci_t n, aes_prng_t* aes_prng) {
   return v;
 }
 
-mzd_t** mzd_init_random_vectors_from_seed(const unsigned char key[16], rci_t n, unsigned int count) {
+mzd_t** mzd_init_random_vectors_from_seed(const unsigned char key[16], rci_t n,
+                                          unsigned int count) {
   aes_prng_t aes_prng;
   aes_prng_init(&aes_prng, key);
 

@@ -39,8 +39,7 @@ mzd_t** mpc_xor(mzd_t** res, mzd_t** first, mzd_t** second, unsigned sc) {
 }
 
 __attribute__((target("sse2"))) int mpc_and_sse(mzd_t** res, mzd_t** first, mzd_t** second,
-                                                mzd_t** r, view_t* view,
-                                                unsigned viewshift) {
+                                                mzd_t** r, view_t* view, unsigned viewshift) {
   for (unsigned m = 0; m < 3; ++m) {
     const unsigned j = (m + 1) % 3;
 
@@ -69,10 +68,8 @@ __attribute__((target("sse2"))) int mpc_and_sse(mzd_t** res, mzd_t** first, mzd_
   return 0;
 }
 
-
 __attribute__((target("avx2"))) int mpc_and_avx(mzd_t** res, mzd_t** first, mzd_t** second,
-                                                mzd_t** r, view_t* view,
-                                                unsigned viewshift) {
+                                                mzd_t** r, view_t* view, unsigned viewshift) {
   for (unsigned m = 0; m < 3; ++m) {
     const unsigned j = (m + 1) % 3;
 
@@ -101,7 +98,8 @@ __attribute__((target("avx2"))) int mpc_and_avx(mzd_t** res, mzd_t** first, mzd_
   return 0;
 }
 
-int mpc_and(mzd_t** res, mzd_t** first, mzd_t** second, mzd_t** r, view_t* view, unsigned viewshift, mzd_t** buffer) {
+int mpc_and(mzd_t** res, mzd_t** first, mzd_t** second, mzd_t** r, view_t* view, unsigned viewshift,
+            mzd_t** buffer) {
   mzd_t* b = buffer[0];
 
   for (unsigned m = 0; m < 3; ++m) {
@@ -125,8 +123,8 @@ int mpc_and(mzd_t** res, mzd_t** first, mzd_t** second, mzd_t** r, view_t* view,
 }
 
 __attribute__((target("sse2"))) int mpc_and_verify_sse(mzd_t** res, mzd_t** first, mzd_t** second,
-                                                       mzd_t** r, view_t const* view, mzd_t const* mask,
-                                                       unsigned viewshift) {
+                                                       mzd_t** r, view_t const* view,
+                                                       mzd_t const* mask, unsigned viewshift) {
   for (unsigned m = 0; m < 1; ++m) {
     const unsigned j = (m + 1);
 
@@ -165,8 +163,8 @@ __attribute__((target("sse2"))) int mpc_and_verify_sse(mzd_t** res, mzd_t** firs
 }
 
 __attribute__((target("avx2"))) int mpc_and_verify_avx(mzd_t** res, mzd_t** first, mzd_t** second,
-                                                       mzd_t** r, view_t const* view, mzd_t const* mask,
-                                                       unsigned viewshift) {
+                                                       mzd_t** r, view_t const* view,
+                                                       mzd_t const* mask, unsigned viewshift) {
   for (unsigned m = 0; m < 1; ++m) {
     const unsigned j = (m + 1);
 
@@ -204,8 +202,8 @@ __attribute__((target("avx2"))) int mpc_and_verify_avx(mzd_t** res, mzd_t** firs
   return 0;
 }
 
-int mpc_and_verify(mzd_t** res, mzd_t** first, mzd_t** second, mzd_t** r, view_t const* view, mzd_t const* mask,
-                   unsigned viewshift) {
+int mpc_and_verify(mzd_t** res, mzd_t** first, mzd_t** second, mzd_t** r, view_t const* view,
+                   mzd_t const* mask, unsigned viewshift) {
   mzd_t* b = mzd_local_init(first[0]->nrows, first[0]->ncols);
 
   for (unsigned m = 0; m < 1; ++m) {
@@ -246,7 +244,7 @@ int mpc_and_bit(BIT* a, BIT* b, BIT* r, view_t* views, int* i, unsigned bp, unsi
     wp[m]      = (a[m] & b[m]) ^ (a[j] & b[m]) ^ (a[m] & b[j]) ^ r[m] ^ r[j];
   }
   for (unsigned m = 0; m < sc; ++m) {
-    a[m]          = wp[m];
+    a[m] = wp[m];
   }
   mpc_write_bit(views[*i].s, bp, a, sc);
   free(wp);
@@ -350,7 +348,7 @@ mzd_t** mpc_init_empty_share_vector(rci_t n, unsigned sc) {
 mzd_t** mpc_init_random_vector(rci_t n, unsigned sc) {
   mzd_t** s = calloc(sc, sizeof(mzd_t*));
   for (unsigned i = 0; i < sc; ++i) {
-    s[i]  = mzd_init_random_vector(n);
+    s[i] = mzd_init_random_vector(n);
   }
   return s;
 }

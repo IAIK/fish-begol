@@ -197,11 +197,11 @@ static bg_signature_t* bg_prove(public_parameters_t* pp, bg_private_key_t* priva
   return signature;
 }
 
-static int verify_views(mpc_lowmc_t const* lowmc, mzd_t const* p,
-                        proof_t const* proof_p, proof_t const* proof_s, unsigned char ch[BG_NUM_ROUNDS]) {
+static int verify_views(mpc_lowmc_t const* lowmc, mzd_t const* p, proof_t const* proof_p,
+                        proof_t const* proof_s, unsigned char ch[BG_NUM_ROUNDS]) {
   int view_verify_status = 0;
 
-  #pragma omp parallel for reduction(| : view_verify_status)
+#pragma omp parallel for reduction(| : view_verify_status)
   for (unsigned int i = 0; i < BG_NUM_ROUNDS; i++) {
     mzd_shared_t shared_s = {0, NULL};
     mzd_shared_from_shares(&shared_s, proof_p->views[i][0].s, 2);
@@ -244,7 +244,7 @@ static int bg_proof_verify(public_parameters_t* pp, bg_public_key_t* pk, mzd_t* 
   unsigned char hash_p[BG_NUM_ROUNDS][2][COMMITMENT_LENGTH];
   unsigned char hash_s[BG_NUM_ROUNDS][2][COMMITMENT_LENGTH];
 
-  #pragma omp parallel for
+#pragma omp parallel for
   for (unsigned i = 0; i < BG_NUM_ROUNDS; i++) {
     H(proof_p->keys[i][0], proof_p->y[i], proof_p->views[i], 0, view_count, proof_p->r[i][0],
       hash_p[i][0]);
@@ -261,12 +261,12 @@ static int bg_proof_verify(public_parameters_t* pp, bg_public_key_t* pk, mzd_t* 
 
   END_TIMING(timing_and_size->verify.challenge);
 
-  int reconstruct_status = 0;
+  int reconstruct_status  = 0;
   int output_share_status = 0;
-  int view_verify_status = 0;
+  int view_verify_status  = 0;
 
   START_TIMING;
-  #pragma omp parallel for reduction(| : reconstruct_status) reduction(| : output_share_status)
+#pragma omp parallel for reduction(| : reconstruct_status) reduction(| : output_share_status)
   for (unsigned int i = 0; i < BG_NUM_ROUNDS; i++) {
     mzd_t* c_mpcr = mpc_reconstruct_from_share(proof_p->y[i]);
     if (mzd_equal(signature->c, c_mpcr) != 0) {
@@ -284,7 +284,7 @@ static int bg_proof_verify(public_parameters_t* pp, bg_public_key_t* pk, mzd_t* 
 
   START_TIMING;
 
-  #pragma omp parallel for reduction(| : output_share_status)
+#pragma omp parallel for reduction(| : output_share_status)
   for (unsigned int i = 0; i < BG_NUM_ROUNDS; i++) {
     const unsigned int a = ch[i];
     const unsigned int b = (a + 1) % 3;
