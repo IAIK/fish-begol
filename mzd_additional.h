@@ -5,10 +5,27 @@
 #include <m4ri/m4ri.h>
 
 // #ifdef WITH_OPENMP
+
+/**
+ * Modified mzd_init calling malloc less often. Do not pass mzd_t instances
+ * initialized with this function to mzd_free.
+ */
 mzd_t* mzd_local_init(rci_t r, rci_t c) __attribute__((assume_aligned(32)));
+/**
+ * Modified mzd_free for mzd_local_init.
+ */
 void mzd_local_free(mzd_t* v);
+/**
+ * Initialize multiple mzd_t instances using one large enough memory block.
+ */
 void mzd_local_init_multiple(mzd_t** dst, size_t n, rci_t r, rci_t c);
+/**
+ * mzd_free for mzd_local_init_multiple.
+ */
 void mzd_local_free_multiple(mzd_t** vs);
+/**
+ * Improved mzd_copy for specific memory layouts.
+ */
 mzd_t* mzd_local_copy(mzd_t* dst, mzd_t const* src);
 // #else
 // #define mzd_local_init mzd_init
