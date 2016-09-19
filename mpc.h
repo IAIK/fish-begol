@@ -30,7 +30,7 @@ int mpc_and_verify_avx(mzd_t **res, mzd_t **first, mzd_t **second, mzd_t **r, vi
 #endif
 
 /**
- * Linearly secret shares the vector v 
+ * Linearly secret shares the vector v.
  * 
  * \param  v the vector to be secret shared
  * \return the vector v represented as three shares

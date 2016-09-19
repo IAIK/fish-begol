@@ -78,12 +78,14 @@ mzd_t* mzd_addmul_v(mzd_t* c, mzd_t const* v, mzd_t const* At);
 
 typedef struct {
   unsigned int share_count;
-  mzd_t** shared;
+  mzd_t* shared[3];
 } mzd_shared_t;
 
-void mzd_shared_init(mzd_shared_t* shared_value, mzd_t* value);
-void mzd_shared_copy(mzd_shared_t* dst, mzd_shared_t* src);
-void mzd_shared_from_shares(mzd_shared_t* shared_value, mzd_t** shares, unsigned int share_count);
+#define MZD_SHARED_EMPTY {0, { NULL }}
+
+void mzd_shared_init(mzd_shared_t* shared_value, mzd_t const* value);
+void mzd_shared_copy(mzd_shared_t* dst, mzd_shared_t const* src);
+void mzd_shared_from_shares(mzd_shared_t* shared_value, mzd_t* const* shares, unsigned int share_count);
 void mzd_shared_share(mzd_shared_t* shared_value);
 void mzd_shared_share_prng(mzd_shared_t* shared_value, aes_prng_t* aes_prng);
 void mzd_shared_clear(mzd_shared_t* shared_value);
