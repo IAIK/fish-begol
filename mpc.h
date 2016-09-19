@@ -4,29 +4,34 @@
 #include "m4ri/m4ri.h"
 #include "mpc_lowmc.h"
 
-void mpc_shift_right(mzd_t**res, mzd_t * const* val, unsigned count, unsigned sc);
+void mpc_shift_right(mzd_t* const* res, mzd_t* const* val, unsigned count, unsigned sc);
 
-void mpc_shift_left(mzd_t **res, mzd_t * const* val, unsigned count, unsigned sc);
+void mpc_shift_left(mzd_t* const* res, mzd_t* const* val, unsigned count, unsigned sc);
 
-mzd_t **mpc_and_const(mzd_t **res, mzd_t * const* first, mzd_t const *second, unsigned sc);
+void mpc_and_const(mzd_t* const* res, mzd_t* const* first, mzd_t const* second, unsigned sc);
 
-mzd_t **mpc_xor(mzd_t **res, mzd_t * const* first, mzd_t *const *second, unsigned sc);
+void mpc_xor(mzd_t* const* res, mzd_t* const* first, mzd_t* const* second, unsigned sc);
 
-void mpc_clear(mzd_t **res, unsigned sc);
+void mpc_clear(mzd_t** res, unsigned sc);
 
-int mpc_and(mzd_t **res, mzd_t **first, mzd_t ** second, mzd_t **r, view_t *view, unsigned viewshift, mzd_t **buffer);
+int mpc_and(mzd_t* const* res, mzd_t* const* first, mzd_t* const* second, mzd_t* const* r,
+            view_t* view, unsigned viewshift, mzd_t* const* buffer);
 
-int mpc_and_verify(mzd_t **res, mzd_t **first, mzd_t **second, mzd_t **r, view_t const *view, mzd_t const *mask, unsigned viewshift, mzd_t **buffer);
-
+int mpc_and_verify(mzd_t* const* res, mzd_t* const* first, mzd_t* const* second, mzd_t* const* r,
+                   view_t const* view, mzd_t const* mask, unsigned viewshift, mzd_t* const* buffer);
 
 #ifdef WITH_OPT
-int mpc_and_sse(mzd_t **res, mzd_t **first, mzd_t **second, mzd_t **r, view_t *view, unsigned viewshift);
+int mpc_and_sse(mzd_t* const* res, mzd_t* const* first, mzd_t* const* second, mzd_t* const* r,
+                view_t* view, unsigned viewshift);
 
-int mpc_and_avx(mzd_t **res, mzd_t **first, mzd_t **second, mzd_t **r, view_t *view, unsigned viewshift);
+int mpc_and_avx(mzd_t* const* res, mzd_t* const* first, mzd_t* const* second, mzd_t* const* r,
+                view_t* view, unsigned viewshift);
 
-int mpc_and_verify_sse(mzd_t **res, mzd_t **first, mzd_t **second, mzd_t **r, view_t const *view, mzd_t const *mask, unsigned viewshift);
+int mpc_and_verify_sse(mzd_t* const* res, mzd_t* const* first, mzd_t* const* second,
+                       mzd_t* const* r, view_t const* view, mzd_t const* mask, unsigned viewshift);
 
-int mpc_and_verify_avx(mzd_t **res, mzd_t **first, mzd_t **second, mzd_t **r, view_t const *view, mzd_t const *mask, unsigned viewshift);
+int mpc_and_verify_avx(mzd_t* const* res, mzd_t* const* first, mzd_t* const* second,
+                       mzd_t* const* r, view_t const* view, mzd_t const* mask, unsigned viewshift);
 #endif
 
 /**

@@ -11,17 +11,19 @@
 #endif
 
 typedef struct {
-  mzd_t** x0m;
-  mzd_t** x1m;
-  mzd_t** x2m;
-  mzd_t** r0m;
-  mzd_t** r1m;
-  mzd_t** r2m;
-  mzd_t** x0s;
-  mzd_t** r0s;
-  mzd_t** x1s;
-  mzd_t** r1s;
-  mzd_t** v;
+  mzd_t* x0m[3];
+  mzd_t* x1m[3];
+  mzd_t* x2m[3];
+  mzd_t* r0m[3];
+  mzd_t* r1m[3];
+  mzd_t* r2m[3];
+  mzd_t* x0s[3];
+  mzd_t* r0s[3];
+  mzd_t* x1s[3];
+  mzd_t* r1s[3];
+  mzd_t* v[3];
+
+  mzd_t** storage;
 } sbox_vars_t;
 
 static sbox_vars_t* sbox_vars_init(sbox_vars_t* vars, rci_t n, unsigned sc);
@@ -531,7 +533,7 @@ static mzd_t** _mpc_lowmc_call(mpc_lowmc_t const* lowmc, mpc_lowmc_key_t* lowmc_
 }
 
 static mzd_t** _mpc_lowmc_call_bitsliced(mpc_lowmc_t const* lowmc, mpc_lowmc_key_t* lowmc_key,
-                                         mzd_t const* p, mzd_t** shared_p, view_t* views,
+                                         mzd_t const* p, mzd_t* const* shared_p, view_t* views,
                                          mzd_t*** rvec, unsigned ch) {
   mpc_copy(views->s, lowmc_key->shared, 3);
   ++views;
@@ -540,7 +542,8 @@ static mzd_t** _mpc_lowmc_call_bitsliced(mpc_lowmc_t const* lowmc, mpc_lowmc_key
   sbox_vars_init(&vars, lowmc->n, 3);
 
   mzd_t** x = mpc_init_empty_share_vector(lowmc->n, 3);
-  mzd_t** y = mpc_init_empty_share_vector(lowmc->n, 3);
+  mzd_t* y[3];
+  mzd_local_init_multiple(y, 3, 1, lowmc->n);
 
   mpc_const_mat_mul(x, lowmc->k0_matrix, lowmc_key->shared, 3);
   if (p) {
@@ -575,13 +578,13 @@ static mzd_t** _mpc_lowmc_call_bitsliced(mpc_lowmc_t const* lowmc, mpc_lowmc_key
   mpc_copy(views->s, x, 3);
   sbox_vars_clear(&vars, 3);
 
-  mpc_free(y, 3);
+  mzd_local_free_multiple(y);
   return x;
 }
 
 static mzd_t** _mpc_lowmc_call_bitsliced_verify(mpc_lowmc_t const* lowmc,
                                                 mpc_lowmc_key_t* lowmc_key, mzd_t const* p,
-                                                mzd_t** shared_p, view_t const* views,
+                                                mzd_t* const* shared_p, view_t const* views,
                                                 mzd_t*** rvec, unsigned ch, int* status) {
   ++views;
 
@@ -589,7 +592,8 @@ static mzd_t** _mpc_lowmc_call_bitsliced_verify(mpc_lowmc_t const* lowmc,
   sbox_vars_init(&vars, lowmc->n, 2);
 
   mzd_t** x = mpc_init_empty_share_vector(lowmc->n, 2);
-  mzd_t** y = mpc_init_empty_share_vector(lowmc->n, 2);
+  mzd_t* y[2];
+  mzd_local_init_multiple(y, 2, 1, lowmc->n);
 
   mpc_const_mat_mul(x, lowmc->k0_matrix, lowmc_key->shared, 2);
   if (p) {
@@ -629,7 +633,7 @@ static mzd_t** _mpc_lowmc_call_bitsliced_verify(mpc_lowmc_t const* lowmc,
   }
 
   sbox_vars_clear(&vars, 2);
-  mpc_free(y, 2);
+  mzd_local_free_multiple(y);
   return x;
 }
 
@@ -687,31 +691,27 @@ int mpc_lowmc_verify_shared_p(mpc_lowmc_t const* lowmc, mzd_shared_t const* p, v
 }
 
 void sbox_vars_clear(sbox_vars_t* vars, unsigned int sc) {
-  mpc_free(vars->x0m, sc);
-  mpc_free(vars->x1m, sc);
-  mpc_free(vars->x2m, sc);
-  mpc_free(vars->r0m, sc);
-  mpc_free(vars->r1m, sc);
-  mpc_free(vars->r2m, sc);
-  mpc_free(vars->x0s, sc);
-  mpc_free(vars->r0s, sc);
-  mpc_free(vars->x1s, sc);
-  mpc_free(vars->r1s, sc);
-  mpc_free(vars->v, sc);
+  mzd_local_free_multiple(vars->storage);
+  free(vars->storage);
 }
 
 sbox_vars_t* sbox_vars_init(sbox_vars_t* vars, rci_t n, unsigned sc) {
-  vars->x0m = mpc_init_empty_share_vector(n, sc);
-  vars->x1m = mpc_init_empty_share_vector(n, sc);
-  vars->x2m = mpc_init_empty_share_vector(n, sc);
-  vars->r0m = mpc_init_empty_share_vector(n, sc);
-  vars->r1m = mpc_init_empty_share_vector(n, sc);
-  vars->r2m = mpc_init_empty_share_vector(n, sc);
-  vars->x0s = mpc_init_empty_share_vector(n, sc);
-  vars->x1s = mpc_init_empty_share_vector(n, sc);
-  vars->r0s = mpc_init_empty_share_vector(n, sc);
-  vars->r1s = mpc_init_empty_share_vector(n, sc);
-  vars->v   = mpc_init_empty_share_vector(n, sc);
+  vars->storage = calloc(11 * sc, sizeof(mzd_t*));
+  mzd_local_init_multiple(vars->storage, 11 * sc, 1, n);
+
+  for (unsigned int i = 0; i < sc; ++i) {
+    vars->x0m[i] = vars->storage[11 * i + 0];
+    vars->x1m[i] = vars->storage[11 * i + 1];
+    vars->x2m[i] = vars->storage[11 * i + 2];
+    vars->r0m[i] = vars->storage[11 * i + 3];
+    vars->r1m[i] = vars->storage[11 * i + 4];
+    vars->r2m[i] = vars->storage[11 * i + 5];
+    vars->x0s[i] = vars->storage[11 * i + 6];
+    vars->x1s[i] = vars->storage[11 * i + 7];
+    vars->r0s[i] = vars->storage[11 * i + 8];
+    vars->r1s[i] = vars->storage[11 * i + 9];
+    vars->v[i]   = vars->storage[11 * i + 10];
+  }
 
   return vars;
 }
