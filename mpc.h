@@ -14,17 +14,20 @@ mzd_t **mpc_xor(mzd_t **res, mzd_t **first, mzd_t **second, unsigned sc);
 
 void mpc_clear(mzd_t **res, unsigned sc);
 
-int mpc_and(mzd_t **res, mzd_t **first, mzd_t **second, mzd_t **r, view_t *view, unsigned viewshift, mzd_t **buffer);
+int mpc_and(mzd_t **res, mzd_t **first, mzd_t ** second, mzd_t **r, view_t *view, unsigned viewshift, mzd_t **buffer);
 
+int mpc_and_verify(mzd_t **res, mzd_t **first, mzd_t **second, mzd_t **r, view_t const *view, mzd_t const *mask, unsigned viewshift, mzd_t **buffer);
+
+
+#ifdef WITH_OPT
 int mpc_and_sse(mzd_t **res, mzd_t **first, mzd_t **second, mzd_t **r, view_t *view, unsigned viewshift);
 
 int mpc_and_avx(mzd_t **res, mzd_t **first, mzd_t **second, mzd_t **r, view_t *view, unsigned viewshift);
 
-int mpc_and_verify(mzd_t **res, mzd_t **first, mzd_t **second, mzd_t **r, view_t const *view, mzd_t const *mask, unsigned viewshift);
-
 int mpc_and_verify_sse(mzd_t **res, mzd_t **first, mzd_t **second, mzd_t **r, view_t const *view, mzd_t const *mask, unsigned viewshift);
 
 int mpc_and_verify_avx(mzd_t **res, mzd_t **first, mzd_t **second, mzd_t **r, view_t const *view, mzd_t const *mask, unsigned viewshift);
+#endif
 
 /**
  * Linearly secret shares the vector v 

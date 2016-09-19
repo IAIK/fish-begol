@@ -291,9 +291,9 @@ static int _mpc_sbox_layer_bitsliced_verify(mzd_t** out, mzd_t** in, view_t cons
                                             sbox_vars_t const* vars) {
   bitsliced_step_1(2);
 
-  if (mpc_and_verify(vars->r0m, vars->x0s, vars->x1s, vars->r2m, view, mask->x2, 0) ||
-      mpc_and_verify(vars->r2m, vars->x1s, vars->x2m, vars->r0s, view, mask->x2, 2) ||
-      mpc_and_verify(vars->r1m, vars->x0s, vars->x2m, vars->r1s, view, mask->x2, 1)) {
+  if (mpc_and_verify(vars->r0m, vars->x0s, vars->x1s, vars->r2m, view, mask->x2, 0, vars->v) ||
+      mpc_and_verify(vars->r2m, vars->x1s, vars->x2m, vars->r0s, view, mask->x2, 2, vars->v) ||
+      mpc_and_verify(vars->r1m, vars->x0s, vars->x2m, vars->r1s, view, mask->x2, 1, vars->v)) {
     return -1;
   }
 

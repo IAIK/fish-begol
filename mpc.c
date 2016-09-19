@@ -203,8 +203,8 @@ __attribute__((target("avx2"))) int mpc_and_verify_avx(mzd_t** res, mzd_t** firs
 }
 
 int mpc_and_verify(mzd_t** res, mzd_t** first, mzd_t** second, mzd_t** r, view_t const* view,
-                   mzd_t const* mask, unsigned viewshift) {
-  mzd_t* b = mzd_local_init(first[0]->nrows, first[0]->ncols);
+                   mzd_t const* mask, unsigned viewshift, mzd_t** buffer) {
+  mzd_t* b = buffer[0];
 
   for (unsigned m = 0; m < 1; ++m) {
     const unsigned j = m + 1;
@@ -228,8 +228,6 @@ int mpc_and_verify(mzd_t** res, mzd_t** first, mzd_t** second, mzd_t** r, view_t
       return -1;
     }
   }
-
-  mzd_local_free(b);
 
   mzd_shift_left(res[2 - 1], view->s[2 - 1], viewshift);
   mzd_and(res[2 - 1], res[2 - 1], mask);
