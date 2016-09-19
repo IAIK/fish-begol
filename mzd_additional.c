@@ -20,22 +20,27 @@ mzd_t* mzd_local_init(rci_t r, rci_t c) {
   const size_t rows_size   = r * sizeof(word*);
 
   unsigned char* buffer = aligned_alloc(32, (sizeof(mzd_t) + buffer_size + rows_size + 31) & ~31);
-  memset(buffer, 0, sizeof(mzd_t) + buffer_size + rows_size);
 
   mzd_t* A = (mzd_t*)buffer;
   buffer += sizeof(mzd_t);
 
+  memset(buffer, 0, buffer_size);
+
   A->rows = (word**)(buffer + buffer_size);
-  for (rci_t i = 0; i < r; ++i) {
-    A->rows[i] = (word*)(buffer + i * rowstride * sizeof(word));
+  for (rci_t i = 0; i < r; ++i, buffer += rowstride * sizeof(word)) {
+    A->rows[i] = (word*)(buffer);
   }
 
-  A->nrows        = r;
-  A->ncols        = c;
-  A->width        = width;
-  A->rowstride    = rowstride;
-  A->high_bitmask = high_bitmask;
-  A->flags        = flags;
+  A->nrows         = r;
+  A->ncols         = c;
+  A->width         = width;
+  A->rowstride     = rowstride;
+  A->offset_vector = 0;
+  A->row_offset    = 0;
+  A->flags         = flags;
+  A->blockrows_log = 0;
+  A->high_bitmask  = high_bitmask;
+  A->blocks        = NULL;
 
   return A;
 }
@@ -55,24 +60,29 @@ void mzd_local_init_multiple(mzd_t** dst, size_t n, rci_t r, rci_t c) {
   const size_t size_per_elem = (sizeof(mzd_t) + buffer_size + rows_size + 31) & ~31;
 
   unsigned char* full_buffer = aligned_alloc(32, size_per_elem * n);
-  memset(full_buffer, 0, size_per_elem * n);
 
   for (size_t s = 0; s < n; ++s, full_buffer += size_per_elem) {
     unsigned char* buffer = full_buffer;
     mzd_t* A              = (mzd_t*)buffer;
     buffer += sizeof(mzd_t);
 
+    memset(buffer, 0, buffer_size);
+
     A->rows = (word**)(buffer + buffer_size);
-    for (rci_t i = 0; i < r; ++i) {
-      A->rows[i] = (word*)(buffer + i * rowstride * sizeof(word));
+    for (rci_t i = 0; i < r; ++i, buffer += rowstride * sizeof(word)) {
+      A->rows[i] = (word*)(buffer);
     }
 
-    A->nrows        = r;
-    A->ncols        = c;
-    A->width        = width;
-    A->rowstride    = rowstride;
-    A->high_bitmask = high_bitmask;
-    A->flags        = flags;
+    A->nrows         = r;
+    A->ncols         = c;
+    A->width         = width;
+    A->rowstride     = rowstride;
+    A->offset_vector = 0;
+    A->row_offset    = 0;
+    A->flags         = flags;
+    A->blockrows_log = 0;
+    A->high_bitmask  = high_bitmask;
+    A->blocks        = NULL;
 
     dst[s] = A;
   }
