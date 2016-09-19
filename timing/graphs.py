@@ -89,44 +89,69 @@ def create_graph(prefix, ns, k, fis_data, bg_data, labels):
   bg_verify = []
   bg_labels = []
 
+  dataframes = {}
+  annotate = {}
+
   for i in range(len(ns)):
+    n = ns[i]
     t_fis_size, t_fis_sign, t_fis_verify, t_fis_labels = prepare_data(fis_data[i], labels[i])
     t_bg_size, t_bg_sign, t_bg_verify, t_bg_labels = prepare_data(bg_data[i], labels[i])
 
-    t_fis_labels = ["{0}-{1}-{2}".format(ns[i], k, l) for l in t_fis_labels]
-    t_bg_labels = ["{0}-{1}-{2}".format(ns[i], k, l) for l in t_bg_labels]
+    t_fis_labels = ["{0}-{1}-{2}".format(n, k, l) for l in t_fis_labels]
+    t_bg_labels = ["{0}-{1}-{2}".format(n, k, l) for l in t_bg_labels]
+
+    dataframes['fis_sign_{0}'.format(n)] = pd.Series(t_fis_sign, index=t_fis_labels)
+    dataframes['fis_verify_{0}'.format(n)] = pd.Series(t_fis_verify, index=t_fis_labels)
+    dataframes['fis_size_{0}'.format(n)] = pd.Series(t_fis_size, index=t_fis_labels)
+    dataframes['bg_sign_{0}'.format(n)] = pd.Series(t_bg_sign, index=t_bg_labels)
+    dataframes['bg_verify_{0}'.format(n)] = pd.Series(t_bg_verify, index=t_bg_labels)
+    dataframes['bg_size_{0}'.format(n)] = pd.Series(t_bg_size, index=t_bg_labels)
+
+    annotate[t_fis_labels[2]] = ((t_fis_size[2], max(t_fis_sign[2],
+        t_fis_verify[2])), (t_bg_size[2], max(t_bg_sign[2], t_bg_verify[2])))
 
     fis_size.extend(t_fis_size)
     fis_sign.extend(t_fis_sign)
     fis_verify.extend(t_fis_verify)
-    fis_labels.extend(t_fis_labels)
     bg_size.extend(t_bg_size)
     bg_sign.extend(t_bg_sign)
     bg_verify.extend(t_bg_verify)
-    bg_labels.extend(t_bg_labels)
 
   ylim = (0, round_up(max(fis_sign + fis_verify + bg_sign + bg_verify)))
   xlim = (round_down(min(fis_size + bg_size)), round_up(max(fis_size + bg_size)))
 
-  df = pd.DataFrame({
-      'fis_sign': pd.Series(fis_sign, index=fis_labels),
-      'fis_verify': pd.Series(fis_verify, index=fis_labels),
-      'fis_size': pd.Series(fis_size, index=fis_labels),
-      'bg_sign': pd.Series(bg_sign, index=bg_labels),
-      'bg_verify': pd.Series(bg_verify, index=bg_labels),
-      'bg_size': pd.Series(bg_size, index=bg_labels)
-  })
+  df = pd.DataFrame(dataframes)
 
   plt.figure(figsize=(10, 10 * 3 / 4.0))
 
-  ax = df.plot.scatter(x='fis_size', y='fis_sign', label='Sign (FS)', ylim=ylim, xlim=xlim,
-          color='b', marker='*')
-  df.plot.scatter(x='fis_size', y='fis_verify', label='Verify (FS)', ylim=ylim, xlim=xlim,
-                  ax=ax, color='b', marker='.')
-  df.plot.scatter(x='bg_size', y='bg_sign', label='Sign (BG)', ylim=ylim, xlim=xlim,
-          color='g', marker='*', ax=ax)
-  df.plot.scatter(x='bg_size', y='bg_verify', label='Verify (BG)', ylim=ylim, xlim=xlim,
-                  ax=ax, color='g', marker='.')
+  colors = sns.color_palette(n_colors=len(ns) * 2)
+  i = 0
+  ax = None
+  for n in ns:
+    ax = df.plot.scatter(x='fis_size_{0}'.format(n), y='fis_sign_{0}'.format(n),
+            label='Sign (FS) n={0}'.format(n), ylim=ylim, xlim=xlim,
+            color=colors[i], marker='*', ax=ax)
+    df.plot.scatter(x='fis_size_{0}'.format(n), y='fis_verify_{0}'.format(n), label='Verify (FS) n={0}'.format(n), ylim=ylim, xlim=xlim,
+                    ax=ax, color=colors[i], marker='.')
+    df.plot.scatter(x='bg_size_{0}'.format(n), y='bg_sign_{0}'.format(n), label='Sign (BG) n={0}'.format(n), ylim=ylim, xlim=xlim,
+            color=colors[i + 1], marker='*', ax=ax)
+    df.plot.scatter(x='bg_size_{0}'.format(n), y='bg_verify_{0}'.format(n), label='Verify (BG) n={0}'.format(n), ylim=ylim, xlim=xlim,
+                    ax=ax, color=colors[i + 1], marker='.')
+    i += 2
+
+  def annotate_df(row):
+    arrow = {'facecolor': 'r', 'connectionstyle': 'arc3', 'arrowstyle': '->',
+             'shrinkB': 5, 'shrinkA': 10}
+
+    if row.name in annotate:
+      ax.annotate(row.name, xy=annotate[row.name][0],
+              xytext=(annotate[row.name][0][0], ylim[1] - 20), fontsize=5,
+              arrowprops=arrow)
+      ax.annotate(row.name, xy=annotate[row.name][1],
+              xytext=(annotate[row.name][0][0], ylim[1] - 20), fontsize=5,
+              arrowprops=arrow)
+
+  df.apply(annotate_df, axis=1)
 
   # title and labels
   ax.set_title('Signature Scheme Timing')

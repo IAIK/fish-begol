@@ -20,12 +20,10 @@ timings-omp:
 timings: timings-plain timings-pq timings-omp
 
 graphs-plain:
-	python graphs.py -k 128 -p timings 128 256; \
+	python graphs.py -k 128 -p timings 128 256
 
 graphs-pq:
-	set -e && for n in 256 384 512 ; do \
-		python graphs.py $$n -k 128 -p pq-timings; \
-	done
+	python graphs.py -k 128 -p pq-timings 256 384 512
 
 graphs-omp:
 	python graphs.py 256 -k 128 -p omp-timings -o -t $(MAXTHREADS)

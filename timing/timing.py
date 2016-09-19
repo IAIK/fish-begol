@@ -37,8 +37,8 @@ def main():
         fs = np.array(mat[:len(mat) / 2])
         bg = np.array(mat[len(mat) / 2:])
 
-        all_timings_fs.append(np.sum(fs, axis=0) / float(args.iterations))
-        all_timings_bg.append(np.sum(bg, axis=0) / float(args.iterations))
+        all_timings_fs.append(np.mean(fs, axis=0))
+        all_timings_bg.append(np.mean(bg, axis=0))
 
     with h5py.File('{0}-{1}-{2}.mat'.format(args.prefix, n, k), 'w') as timings:
         timings.create_dataset("fis_sum", data=np.array(all_timings_fs))
