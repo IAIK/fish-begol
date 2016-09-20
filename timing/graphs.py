@@ -81,13 +81,6 @@ def prepare_data(data, labels):
 
 
 def create_graph(prefix, fis_n, bg_n, fis_k, bg_k, fis_data, bg_data, fis_labels, bg_labels):
-  fis_size = []
-  fis_sign = []
-  fis_verify = []
-  bg_size = []
-  bg_sign = []
-  bg_verify = []
-
   dataframes = {}
   annotate = []
 
@@ -104,27 +97,16 @@ def create_graph(prefix, fis_n, bg_n, fis_k, bg_k, fis_data, bg_data, fis_labels
   dataframes['bg_verify_{0}'.format(bg_n)] = pd.Series(t_bg_verify, index=t_bg_labels)
   dataframes['bg_size_{0}'.format(bg_n)] = pd.Series(t_bg_size, index=t_bg_labels)
 
-  print dataframes
-
-  fis_index = max(enumerate(np.gradient(np.array(t_fis_sign) / np.array(t_fis_size))),
-      key=itemgetter(1))[0]
-  bg_index = max(enumerate(np.gradient(np.array(t_bg_sign) / np.array(t_bg_size))),
-      key=itemgetter(1))[0]
+  fis_index = len(t_fis_labels) / 2
+  bg_index = len(t_bg_labels) / 2
 
   annotate.append((t_fis_labels[fis_index], (t_fis_size[fis_index], t_fis_sign[fis_index]),
     (t_fis_size[fis_index], t_fis_verify[fis_index])))
   annotate.append((t_bg_labels[bg_index], (t_bg_size[bg_index], t_bg_sign[bg_index]),
     (t_bg_size[bg_index], t_bg_verify[bg_index])))
 
-  fis_size.extend(t_fis_size)
-  fis_sign.extend(t_fis_sign)
-  fis_verify.extend(t_fis_verify)
-  bg_size.extend(t_bg_size)
-  bg_sign.extend(t_bg_sign)
-  bg_verify.extend(t_bg_verify)
-
-  ylim = (0, round_up(max(fis_sign + fis_verify + bg_sign + bg_verify)))
-  xlim = (round_down(min(fis_size + bg_size)), round_up(max(fis_size + bg_size)))
+  ylim = (0, round_up(max(t_fis_sign + t_fis_verify + t_bg_sign + t_bg_verify)))
+  xlim = (round_down(min(t_fis_size + t_bg_size)), round_up(max(t_fis_size + t_bg_size)))
 
   df = pd.DataFrame(dataframes)
   df.sort_values(by=[k for k in dataframes.keys() if '_size_' in k], inplace=True)
@@ -150,17 +132,6 @@ def create_graph(prefix, fis_n, bg_n, fis_k, bg_k, fis_data, bg_data, fis_labels
         markersize=3)
     ax.annotate(label, xy=p1, textcoords='offset points', xytext=(0,5), fontsize=5,
         horizontalalignment='center')
-
-  def annotate_df(row):
-    if row.name in annotate:
-      ax.annotate(row.name, xy=annotate[row.name][0],
-              xytext=(annotate[row.name][0][0], ylim[1] - 20), fontsize=3,
-              arrowprops=arrow)
-      ax.annotate(row.name, xy=annotate[row.name][1],
-              xytext=(annotate[row.name][0][0], ylim[1] - 20), fontsize=3,
-              arrowprops=arrow)
-
-  df.apply(annotate_df, axis=1)
 
   # title and labels
   ax.set_title('Runtime vs. Signature size, [n]-[k]-[m]-[r]'.format(k))

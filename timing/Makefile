@@ -19,9 +19,13 @@ timings: timings-plain timings-pq timings-omp
 
 graphs-plain:
 	python graphs.py -p timings --fs-blocksize 256 --fs-keysize 256 --bg-blocksize 128 --bg-keysize 128
+	mv timings.eps timings-w-reduction-loss.eps
+	python graphs.py -p timings --fs-blocksize 128 --fs-keysize 128 --bg-blocksize 128 --bg-keysize 128
 
 graphs-pq:
 	python graphs.py -p pq-timings --fs-blocksize 384 --fs-keysize 256 --bg-blocksize 256 --bg-keysize 256
+	mv pq-timings.eps pq-timings-w-reduction-loss.eps
+	python graphs.py -p pq-timings --fs-blocksize 256 --fs-keysize 256 --bg-blocksize 256 --bg-keysize 256
 
 graphs-omp:
 	python graphs.py 256 -k 128 -p omp-timings -o -t $(MAXTHREADS)
