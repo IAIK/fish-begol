@@ -6,6 +6,7 @@ import matplotlib.pyplot as plt
 import pandas as pd
 import seaborn as sns
 import math
+from operator import itemgetter
 
 
 def compute_size(data):
@@ -69,7 +70,7 @@ def pick_interesting(size, sign, verify, labels):
     new_verify.append(verify[i])
     new_labels.append(labels[i])
 
-  return pick_5(new_size, new_sign, new_verify, new_labels)
+  return new_size, new_sign, new_verify, new_labels
 
 
 def prepare_data(data, labels):
@@ -79,82 +80,90 @@ def prepare_data(data, labels):
   return pick_interesting(size, sign, verify, labels)
 
 
-def create_graph(prefix, ns, k, fis_data, bg_data, labels):
+def create_graph(prefix, fis_n, bg_n, fis_k, bg_k, fis_data, bg_data, fis_labels, bg_labels):
   fis_size = []
   fis_sign = []
   fis_verify = []
-  fis_labels = []
   bg_size = []
   bg_sign = []
   bg_verify = []
-  bg_labels = []
 
   dataframes = {}
-  annotate = {}
+  annotate = []
 
-  for i in range(len(ns)):
-    n = ns[i]
-    t_fis_size, t_fis_sign, t_fis_verify, t_fis_labels = prepare_data(fis_data[i], labels[i])
-    t_bg_size, t_bg_sign, t_bg_verify, t_bg_labels = prepare_data(bg_data[i], labels[i])
+  t_fis_size, t_fis_sign, t_fis_verify, t_fis_labels = prepare_data(fis_data, fis_labels)
+  t_bg_size, t_bg_sign, t_bg_verify, t_bg_labels = prepare_data(bg_data, bg_labels)
 
-    t_fis_labels = ["{0}-{1}-{2}".format(n, k, l) for l in t_fis_labels]
-    t_bg_labels = ["{0}-{1}-{2}".format(n, k, l) for l in t_bg_labels]
+  t_fis_labels = ["{0}-{1}-{2}".format(fis_n, fis_k, l) for l in t_fis_labels]
+  t_bg_labels = ["{0}-{1}-{2}".format(bg_n, bg_k, l) for l in t_bg_labels]
 
-    dataframes['fis_sign_{0}'.format(n)] = pd.Series(t_fis_sign, index=t_fis_labels)
-    dataframes['fis_verify_{0}'.format(n)] = pd.Series(t_fis_verify, index=t_fis_labels)
-    dataframes['fis_size_{0}'.format(n)] = pd.Series(t_fis_size, index=t_fis_labels)
-    dataframes['bg_sign_{0}'.format(n)] = pd.Series(t_bg_sign, index=t_bg_labels)
-    dataframes['bg_verify_{0}'.format(n)] = pd.Series(t_bg_verify, index=t_bg_labels)
-    dataframes['bg_size_{0}'.format(n)] = pd.Series(t_bg_size, index=t_bg_labels)
+  dataframes['fis_sign_{0}'.format(fis_n)] = pd.Series(t_fis_sign, index=t_fis_labels)
+  dataframes['fis_verify_{0}'.format(fis_n)] = pd.Series(t_fis_verify, index=t_fis_labels)
+  dataframes['fis_size_{0}'.format(fis_n)] = pd.Series(t_fis_size, index=t_fis_labels)
+  dataframes['bg_sign_{0}'.format(bg_n)] = pd.Series(t_bg_sign, index=t_bg_labels)
+  dataframes['bg_verify_{0}'.format(bg_n)] = pd.Series(t_bg_verify, index=t_bg_labels)
+  dataframes['bg_size_{0}'.format(bg_n)] = pd.Series(t_bg_size, index=t_bg_labels)
 
-    annotate[t_fis_labels[2]] = ((t_fis_size[2], max(t_fis_sign[2],
-        t_fis_verify[2])), (t_bg_size[2], max(t_bg_sign[2], t_bg_verify[2])))
+  print dataframes
 
-    fis_size.extend(t_fis_size)
-    fis_sign.extend(t_fis_sign)
-    fis_verify.extend(t_fis_verify)
-    bg_size.extend(t_bg_size)
-    bg_sign.extend(t_bg_sign)
-    bg_verify.extend(t_bg_verify)
+  fis_index = max(enumerate(np.gradient(np.array(t_fis_sign) / np.array(t_fis_size))),
+      key=itemgetter(1))[0]
+  bg_index = max(enumerate(np.gradient(np.array(t_bg_sign) / np.array(t_bg_size))),
+      key=itemgetter(1))[0]
+
+  annotate.append((t_fis_labels[fis_index], (t_fis_size[fis_index], t_fis_sign[fis_index]),
+    (t_fis_size[fis_index], t_fis_verify[fis_index])))
+  annotate.append((t_bg_labels[bg_index], (t_bg_size[bg_index], t_bg_sign[bg_index]),
+    (t_bg_size[bg_index], t_bg_verify[bg_index])))
+
+  fis_size.extend(t_fis_size)
+  fis_sign.extend(t_fis_sign)
+  fis_verify.extend(t_fis_verify)
+  bg_size.extend(t_bg_size)
+  bg_sign.extend(t_bg_sign)
+  bg_verify.extend(t_bg_verify)
 
   ylim = (0, round_up(max(fis_sign + fis_verify + bg_sign + bg_verify)))
   xlim = (round_down(min(fis_size + bg_size)), round_up(max(fis_size + bg_size)))
 
   df = pd.DataFrame(dataframes)
+  df.sort_values(by=[k for k in dataframes.keys() if '_size_' in k], inplace=True)
 
   plt.figure(figsize=(10, 10 * 3 / 4.0))
 
-  colors = sns.color_palette(n_colors=len(ns) * 2)
-  i = 0
+  colors = sns.color_palette(n_colors=5)
+  annotation_color = colors[0]
+
   ax = None
-  for n in ns:
-    ax = df.plot.scatter(x='fis_size_{0}'.format(n), y='fis_sign_{0}'.format(n),
-            label='Sign (FS) n={0}'.format(n), ylim=ylim, xlim=xlim,
-            color=colors[i], marker='*', ax=ax)
-    df.plot.scatter(x='fis_size_{0}'.format(n), y='fis_verify_{0}'.format(n), label='Verify (FS) n={0}'.format(n), ylim=ylim, xlim=xlim,
-                    ax=ax, color=colors[i], marker='.')
-    df.plot.scatter(x='bg_size_{0}'.format(n), y='bg_sign_{0}'.format(n), label='Sign (BG) n={0}'.format(n), ylim=ylim, xlim=xlim,
-            color=colors[i + 1], marker='*', ax=ax)
-    df.plot.scatter(x='bg_size_{0}'.format(n), y='bg_verify_{0}'.format(n), label='Verify (BG) n={0}'.format(n), ylim=ylim, xlim=xlim,
-                    ax=ax, color=colors[i + 1], marker='.')
-    i += 2
+  ax = df.plot(x='fis_size_{0}'.format(fis_n), y='fis_sign_{0}'.format(fis_n),
+          label='Sign (FS) n={0}'.format(fis_n), ylim=ylim, xlim=xlim,
+          color=colors[1], linestyle='--', ax=ax)
+  df.plot(x='fis_size_{0}'.format(fis_n), y='fis_verify_{0}'.format(fis_n), label='Verify (FS) n={0}'.format(fis_n), ylim=ylim, xlim=xlim,
+          ax=ax, color=colors[2], linestyle=':')
+  df.plot(x='bg_size_{0}'.format(bg_n), y='bg_sign_{0}'.format(bg_n), label='Sign (BG) n={0}'.format(bg_n), ylim=ylim, xlim=xlim,
+          color=colors[3], linestyle='--', ax=ax)
+  df.plot(x='bg_size_{0}'.format(bg_n), y='bg_verify_{0}'.format(bg_n), label='Verify (BG) n={0}'.format(bg_n), ylim=ylim, xlim=xlim,
+          ax=ax, color=colors[4], linestyle=':')
+
+  for (label, p1, p2) in annotate:
+    ax.plot([p1[0], p2[0]], [p1[1], p2[1]], marker='o', color=annotation_color, linestyle='',
+        markersize=3)
+    ax.annotate(label, xy=p1, textcoords='offset points', xytext=(0,5), fontsize=5,
+        horizontalalignment='center')
 
   def annotate_df(row):
-    arrow = {'facecolor': 'r', 'connectionstyle': 'arc3', 'arrowstyle': '->',
-             'shrinkB': 5, 'shrinkA': 10}
-
     if row.name in annotate:
       ax.annotate(row.name, xy=annotate[row.name][0],
-              xytext=(annotate[row.name][0][0], ylim[1] - 20), fontsize=5,
+              xytext=(annotate[row.name][0][0], ylim[1] - 20), fontsize=3,
               arrowprops=arrow)
       ax.annotate(row.name, xy=annotate[row.name][1],
-              xytext=(annotate[row.name][0][0], ylim[1] - 20), fontsize=5,
+              xytext=(annotate[row.name][0][0], ylim[1] - 20), fontsize=3,
               arrowprops=arrow)
 
   df.apply(annotate_df, axis=1)
 
   # title and labels
-  ax.set_title('Signature Scheme Timing')
+  ax.set_title('Runtime vs. Signature size, [n]-[k]-[m]-[r]'.format(k))
   ax.set_ylabel('Time [ms]')
   ax.set_xlabel('Size [kB]')
 
@@ -218,37 +227,39 @@ def main(args):
   sns.set(style='white', context='paper', color_codes=True)
   sns.set_style('white', {'legend.frameon': True})
 
-  k = args.keysize
   prefix = args.prefix
 
   if args.omp:
     n = args.blocksize[0]
     return create_omp_graphs(n, k, prefix, args.threads)
 
-  all_labels = []
-  all_fis_sums = []
-  all_bg_sums = []
+  fis_n = args.fs_blocksize
+  fis_k = args.fs_keysize
+  bg_n = args.bg_blocksize
+  bg_k = args.bg_keysize
 
-  for n in args.blocksize:
-    with h5py.File('{0}-{1}-{2}.mat'.format(prefix, n, k), 'r') as timings:
-      labels = list(timings.get("labels"))
-      fis_sum = np.array(timings.get("fis_median"))
-      bg_sum = np.array(timings.get("bg_median"))
+  with h5py.File('{0}-{1}-{2}.mat'.format(prefix, fis_n, fis_k), 'r') as timings:
+    fis_labels = list(timings.get("labels"))
+    fis_sum = np.array(timings.get("fis_median"))
 
-      all_labels.append(labels)
-      all_fis_sums.append(fis_sum)
-      all_bg_sums.append(bg_sum)
+  with h5py.File('{0}-{1}-{2}.mat'.format(prefix, bg_n, bg_k), 'r') as timings:
+    bg_labels = list(timings.get("labels"))
+    bg_sum = np.array(timings.get("bg_median"))
 
-  create_graph("{0}".format(prefix), args.blocksize, k, all_fis_sums,
-               all_bg_sums, all_labels)
+  create_graph("{0}".format(prefix), fis_n, bg_n, fis_k, bg_k, fis_sum, bg_sum, fis_labels,
+      bg_labels)
 
 
 if __name__ == "__main__":
   parser = argparse.ArgumentParser(description='Create graphs')
-  parser.add_argument("-k", "--keysize", help="the LowMC keysize", type=int,
-                      choices=[128, 192, 256, 384, 448, 512], default=128)
-  parser.add_argument("blocksize", help="the LowMC blocksize", type=int,
-                      nargs='+')
+  parser.add_argument("--bg-keysize", help="LowMC key size for BG",
+                      choices=[128, 192, 256, 384, 448, 512], required=True, type=int)
+  parser.add_argument("--fs-keysize", help="LowMC key size for FS",
+                      choices=[128, 192, 256, 384, 448, 512], required=True, type=int)
+  parser.add_argument("--bg-blocksize", help="LowMC key size for BG",
+                      choices=[128, 192, 256, 384, 448, 512], required=True, type=int)
+  parser.add_argument("--fs-blocksize", help="LowMC key size for FS",
+                      choices=[128, 192, 256, 384, 448, 512], required=True, type=int)
   parser.add_argument("-p", "--prefix", help="prefix of mat files",
                       default="timings")
   parser.add_argument("-o", "--omp", help="produce graphs for omp runs",
@@ -260,3 +271,4 @@ if __name__ == "__main__":
 
   main(args)
 
+# vim: tw=100 sts=2 sw=2 et

@@ -2,14 +2,12 @@ ITER?=10
 MAXTHREADS?=8
 
 timings-plain:
-	set -e && for n in 128 192 256 ; do \
-		python timing.py lowmc-inst-$$n.txt -i $(ITER); \
-	done
+	python timing.py lowmc-inst-128.txt -k 128 -i $(ITER)
+	python timing.py lowmc-inst-256.txt -k 256 -i $(ITER)
 
 timings-pq:
-	set -e && for n in 256 384 512 ; do \
-		python timing.py pq-lowmc-inst-$$n.txt -i $(ITER) -p pq-timings; \
-	done
+	python timing.py pq-lowmc-inst-384.txt -k 256 -i $(ITER) -p pq-timings
+	python timing.py pq-lowmc-inst-256.txt -k 256 -i $(ITER) -p pq-timings
 
 timings-omp:
 	set -e && for n in $(shell seq 1 $(MAXTHREADS)) ; do \
@@ -20,10 +18,10 @@ timings-omp:
 timings: timings-plain timings-pq timings-omp
 
 graphs-plain:
-	python graphs.py -k 128 -p timings 128 256
+	python graphs.py -p timings --fs-blocksize 256 --fs-keysize 256 --bg-blocksize 128 --bg-keysize 128
 
 graphs-pq:
-	python graphs.py -k 128 -p pq-timings 256 384 512
+	python graphs.py -p pq-timings --fs-blocksize 384 --fs-keysize 256 --bg-blocksize 256 --bg-keysize 256
 
 graphs-omp:
 	python graphs.py 256 -k 128 -p omp-timings -o -t $(MAXTHREADS)
