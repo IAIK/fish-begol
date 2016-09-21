@@ -129,9 +129,9 @@ def create_graph(prefix, fis_n, bg_n, fis_k, bg_k, fis_data, bg_data, fis_labels
 
   for (label, p1, p2) in annotate:
     ax.plot([p1[0], p2[0]], [p1[1], p2[1]], marker='o', color=annotation_color, linestyle='',
-        markersize=3)
-    ax.annotate(label, xy=p1, textcoords='offset points', xytext=(0,5), fontsize=5,
-        horizontalalignment='center')
+            markersize=3)
+    ax.annotate(label, xy=p1, textcoords='offset points', xytext=(0,5), fontsize=8,
+                horizontalalignment='center')
 
   # title and labels
   ax.set_title('Runtime vs. Signature size, [n]-[k]-[m]-[r]'.format(k))
@@ -145,21 +145,25 @@ def create_graph(prefix, fis_n, bg_n, fis_k, bg_k, fis_data, bg_data, fis_labels
   plt.savefig('{0}.png'.format(prefix))
 
 
-def create_omp_graph(prefix, n, k, data, labels, max_num_threads):
+def create_omp_graph(prefix, n, k, data, size, labels, max_num_threads):
   datadict = {'1 thread' if not i else '{0} threads'.format(i + 1):
               pd.Series(data[i], index=labels) for i in xrange(max_num_threads)}
-  df = pd.DataFrame(datadict)
+  datadict['size'] = pd.Series(size, index=labels)
 
-  plt.figure(figsize=(6, 6 * 3 / 4.0))
-  ax = df.plot(marker='>', markersize=5, linewidth=2.5, legend=True)
+  df = pd.DataFrame(datadict)
+  df.sort_values(by='size', inplace=True)
+
+  plt.figure(figsize=(10, 10 * 3 / 4.0))
+
+  colors = sns.color_palette(n_colors=max_num_threads)
+  ax = None
+  for i in xrange(max_num_threads):
+    ax = df.plot(y='1 thread' if not i else '{0} threads'.format(i + 1), x='size', legend=True, ax=ax)
 
   # title and labels
-  ax.set_title('LowMC Timing n={0} k={1} - Parameters [m]-[r]'.format(n, k))
+  ax.set_title('Parallel Execution'.format(n, k))
   ax.set_ylabel('Time [ms]')
-  ax.set_xlabel('')
-
-  ax.set_xticks(range(len(labels)))
-  ax.set_xticklabels(labels, rotation=45, fontsize=8)
+  ax.set_xlabel('Size [kB]')
 
   # grid
   ax.grid(True, axis='y')
@@ -174,24 +178,33 @@ def create_omp_graphs(n, k, prefix, max_num_threads):
   all_fis_verify = []
   all_bg_sign = []
   all_bg_verify = []
+  all_fis_size = []
+  all_bg_size = []
 
   for threads in range(1, 1 + max_num_threads):
     with h5py.File('{0}-{1}-{2}-{3}.mat'.format(prefix, threads, n, k), 'r') as timings:
+      ol = list(timings.get("labels"))
+
+      fis_sum = np.array(timings.get("fis_median"))
+      bg_sum = np.array(timings.get("bg_median"))
+
+      size, sign, verify, l =  prepare_data(fis_sum[2:], ol[2:])
+      all_fis_sign.append(sign)
+      all_fis_verify.append(verify)
+      all_fis_size.append(size)
+
+      size, sign, verify, l =  prepare_data(bg_sum[2:], ol[2:])
+      all_bg_sign.append(sign)
+      all_bg_verify.append(verify)
+      all_bg_size.append(size)
+
       if labels is None:
-        labels = list(timings.get("labels"))[5:]
+        labels = l
 
-      fis_sum = np.array(timings.get("fis_sum"))
-      bg_sum = np.array(timings.get("bg_sum"))
-
-      all_fis_sign.append(compute_sign(fis_sum)[5:])
-      all_fis_verify.append(compute_verify(fis_sum)[5:])
-      all_bg_sign.append(compute_sign(bg_sum)[5:])
-      all_bg_verify.append(compute_verify(bg_sum)[5:])
-
-  create_omp_graph('{0}-fis-sign'.format(prefix), n, k, all_fis_sign, labels, max_num_threads)
-  create_omp_graph('{0}-fis-verify'.format(prefix), n, k, all_fis_verify, labels, max_num_threads)
-  create_omp_graph('{0}-bg-sign'.format(prefix), n, k, all_bg_sign, labels, max_num_threads)
-  create_omp_graph('{0}-bg-verify'.format(prefix), n, k, all_bg_verify, labels, max_num_threads)
+  create_omp_graph('{0}-fis-sign'.format(prefix), n, k, all_fis_sign, all_fis_size[0], labels, max_num_threads)
+  create_omp_graph('{0}-fis-verify'.format(prefix), n, k, all_fis_verify, all_fis_size[0], labels, max_num_threads)
+  create_omp_graph('{0}-bg-sign'.format(prefix), n, k, all_bg_sign, all_bg_size[0], labels, max_num_threads)
+  create_omp_graph('{0}-bg-verify'.format(prefix), n, k, all_bg_verify, all_bg_size[0], labels, max_num_threads)
 
 
 def main(args):
@@ -201,7 +214,8 @@ def main(args):
   prefix = args.prefix
 
   if args.omp:
-    n = args.blocksize[0]
+    n = args.bg_blocksize
+    k = args.bg_keysize
     return create_omp_graphs(n, k, prefix, args.threads)
 
   fis_n = args.fs_blocksize
