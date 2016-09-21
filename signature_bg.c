@@ -130,8 +130,8 @@ static bg_signature_t* bg_prove(public_parameters_t* pp, bg_private_key_t* priva
   init_view(lowmc, views_p);
   init_view(lowmc, views_s);
 
-  mpc_lowmc_key_t lowmc_key_k[BG_NUM_ROUNDS] = { MZD_SHARED_EMPTY };
-  mpc_lowmc_key_t lowmc_key_s[BG_NUM_ROUNDS] = { MZD_SHARED_EMPTY };
+  mpc_lowmc_key_t lowmc_key_k[BG_NUM_ROUNDS] = {MZD_SHARED_EMPTY};
+  mpc_lowmc_key_t lowmc_key_s[BG_NUM_ROUNDS] = {MZD_SHARED_EMPTY};
 
   START_TIMING;
   aes_prng_t aes_prng;
@@ -245,7 +245,7 @@ static int bg_proof_verify(public_parameters_t* pp, bg_public_key_t* pk, mzd_t* 
   unsigned char hash_s[BG_NUM_ROUNDS][2][COMMITMENT_LENGTH];
 
 #pragma omp parallel for
-  for (unsigned i = 0; i < BG_NUM_ROUNDS; i++) {
+  for (unsigned i = 0; i < BG_NUM_ROUNDS; ++i) {
     H(proof_p->keys[i][0], proof_p->y[i], proof_p->views[i], 0, view_count, proof_p->r[i][0],
       hash_p[i][0]);
     H(proof_p->keys[i][1], proof_p->y[i], proof_p->views[i], 1, view_count, proof_p->r[i][1],

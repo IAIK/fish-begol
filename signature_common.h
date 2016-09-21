@@ -21,4 +21,3 @@ void init_view(mpc_lowmc_t const* lowmc, view_t* views[NUM_ROUNDS]);
 void free_view(mpc_lowmc_t const* lowmc, view_t* views[NUM_ROUNDS]);
 
 #endif
-
