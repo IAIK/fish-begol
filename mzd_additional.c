@@ -189,7 +189,7 @@ void mzd_shift_right(mzd_t* res, mzd_t const* val, unsigned count) {
   word* resptr       = res->rows[0];
   word const* valptr = val->rows[0];
 
-  for (unsigned int i = 0; i < nwords - 1; ++i, ++resptr) {
+  for (unsigned int i = nwords - 1; i; --i, ++resptr) {
     const word tmp = *valptr >> count;
     *resptr        = tmp | (*++valptr << left_count);
   }
@@ -208,7 +208,7 @@ void mzd_shift_left(mzd_t* res, mzd_t const* val, unsigned count) {
   word* resptr       = res->rows[0] + nwords - 1;
   word const* valptr = val->rows[0] + nwords - 1;
 
-  for (unsigned int i = nwords - 1; i > 0; --i, --resptr) {
+  for (unsigned int i = nwords - 1; i; --i, --resptr) {
     const word tmp = *valptr << count;
     *resptr        = tmp | (*--valptr >> right_count);
   }
