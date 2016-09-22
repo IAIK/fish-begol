@@ -23,11 +23,11 @@ def compute_verify(data):
 
 
 def round_up(x):
-  return math.ceil(x / 10.0) * 10 + 5
+  return math.ceil(x / 5.0) * 5 + 2.5
 
 
 def round_down(x):
-  return max(math.floor(x / 10.0) * 10 - 5, 0)
+  return max(math.floor(x / 5.0) * 5 - 2.5, 0)
 
 
 def pick_5(size, sign, verify, labels):
@@ -163,7 +163,7 @@ def create_omp_graph(prefix, n, k, data, size, labels, max_num_threads):
     ax = df.plot(y='1 thread' if not i else '{0} threads'.format(i + 1), x='size', legend=True, ax=ax)
 
   # title and labels
-  ax.set_title('Parallel Execution'.format(n, k))
+  ax.set_title('Parallel Execution with OpenMP')
   ax.set_ylabel('Time [ms]')
   ax.set_xlabel('Size [kB]')
 
