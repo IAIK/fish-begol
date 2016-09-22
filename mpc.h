@@ -1,8 +1,8 @@
 #ifndef MPC_H
 #define MPC_H
 
-#include "m4ri/m4ri.h"
 #include "mpc_lowmc.h"
+#include <m4ri/m4ri.h>
 
 void mpc_shift_right(mzd_t* const* res, mzd_t* const* val, unsigned count, unsigned sc);
 
@@ -22,10 +22,10 @@ int mpc_and_verify(mzd_t* const* res, mzd_t* const* first, mzd_t* const* second,
 
 #ifdef WITH_OPT
 int mpc_and_sse(mzd_t* const* res, mzd_t* const* first, mzd_t* const* second, mzd_t* const* r,
-                view_t* view, unsigned viewshift);
+                view_t const* view, unsigned viewshift);
 
 int mpc_and_avx(mzd_t* const* res, mzd_t* const* first, mzd_t* const* second, mzd_t* const* r,
-                view_t* view, unsigned viewshift);
+                view_t const* view, unsigned viewshift);
 
 int mpc_and_verify_sse(mzd_t* const* res, mzd_t* const* first, mzd_t* const* second,
                        mzd_t* const* r, view_t const* view, mzd_t const* mask, unsigned viewshift);

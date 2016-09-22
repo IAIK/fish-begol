@@ -372,7 +372,7 @@ static int _mpc_sbox_layer_bitsliced_verify(mzd_t** out, mzd_t* const* in, view_
   } while (0)
 
 __attribute__((target("sse2"))) static void
-_mpc_sbox_layer_bitsliced_sse(mzd_t** out, mzd_t* const* in, view_t* view, mzd_t* const* rvec,
+_mpc_sbox_layer_bitsliced_sse(mzd_t** out, mzd_t* const* in, view_t const* view, mzd_t* const* rvec,
                               mask_t const* mask, sbox_vars_t const* vars) {
   bitsliced_mm_step_1(3, __m128i, _mm_load_si128, _mm_store_si128, _mm_and_si128, mm128_shift_left);
 
@@ -402,7 +402,7 @@ _mpc_sbox_layer_bitsliced_sse_verify(mzd_t** out, mzd_t* const* in, view_t const
 }
 
 __attribute__((target("avx2"))) static void
-_mpc_sbox_layer_bitsliced_avx(mzd_t** out, mzd_t* const* in, view_t* view, mzd_t* const* rvec,
+_mpc_sbox_layer_bitsliced_avx(mzd_t** out, mzd_t* const* in, view_t const* view, mzd_t* const* rvec,
                               mask_t const* mask, sbox_vars_t const* vars) {
   bitsliced_mm_step_1(3, __m256i, _mm256_load_si256, _mm256_store_si256, _mm256_and_si256,
                       mm256_shift_left);

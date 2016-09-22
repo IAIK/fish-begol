@@ -32,8 +32,8 @@ void mpc_xor(mzd_t* const* res, mzd_t* const* first, mzd_t* const* second, unsig
 
 #ifdef WITH_OPT
 __attribute__((target("sse2"))) int mpc_and_sse(mzd_t* const* res, mzd_t* const* first,
-                                                mzd_t* const* second, mzd_t* const* r, view_t* view,
-                                                unsigned viewshift) {
+                                                mzd_t* const* second, mzd_t* const* r,
+                                                view_t const* view, unsigned viewshift) {
   for (unsigned m = 0; m < 3; ++m) {
     const unsigned j = (m + 1) % 3;
 
@@ -63,8 +63,8 @@ __attribute__((target("sse2"))) int mpc_and_sse(mzd_t* const* res, mzd_t* const*
 }
 
 __attribute__((target("avx2"))) int mpc_and_avx(mzd_t* const* res, mzd_t* const* first,
-                                                mzd_t* const* second, mzd_t* const* r, view_t* view,
-                                                unsigned viewshift) {
+                                                mzd_t* const* second, mzd_t* const* r,
+                                                view_t const* view, unsigned viewshift) {
   for (unsigned m = 0; m < 3; ++m) {
     const unsigned j = (m + 1) % 3;
 
