@@ -10,7 +10,9 @@ timings-pq:
 	python timing.py pq-lowmc-inst-256.txt -k 256 -i $(ITER) -p pq-timings
 
 timings-omp:
-	set -e && for n in $(shell seq 1 $(MAXTHREADS)) ; do \
+	# before running this benchmark, make sure to disable HyperThreading as it
+	# adds a lot of noise.
+	set -ex && for n in $(shell seq 1 $(MAXTHREADS)) ; do \
 		env OMP_NUM_THREADS=$$n \
 			python timing.py lowmc-inst-128.txt -i $(ITER) -p omp-timings-$$n -x ../mpc_lowmc_openmp; \
 	done
@@ -28,8 +30,6 @@ graphs-pq:
 	python graphs.py -p pq-timings --fs-blocksize 256 --fs-keysize 256 --bg-blocksize 256 --bg-keysize 256
 
 graphs-omp:
-	# before running this benchmark, make sure to disable HyperThreading as it
-	# adds a lot of noise.
 	python graphs.py --fs-blocksize 128 --fs-keysize 128 --bg-blocksize 128 --bg-keysize 128 -p omp-timings -o -t $(MAXTHREADS)
 
 all: timings-plain graphs-plain

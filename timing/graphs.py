@@ -27,7 +27,7 @@ def round_up(x):
 
 
 def round_down(x):
-  return math.floor(x / 10.0) * 10 - 5
+  return max(math.floor(x / 10.0) * 10 - 5, 0)
 
 
 def pick_5(size, sign, verify, labels):
@@ -106,7 +106,7 @@ def create_graph(prefix, fis_n, bg_n, fis_k, bg_k, fis_data, bg_data, fis_labels
   annotate.append((t_bg_labels[bg_index], (t_bg_size[bg_index], t_bg_sign[bg_index]),
     (t_bg_size[bg_index], t_bg_verify[bg_index])))
 
-  ylim = (0, round_up(max(t_fis_sign + t_fis_verify + t_bg_sign + t_bg_verify)))
+  ylim = (round_down(min(t_fis_sign + t_fis_verify + t_bg_sign + t_bg_verify)), round_up(max(t_fis_sign + t_fis_verify + t_bg_sign + t_bg_verify)))
   xlim = (round_down(min(t_fis_size + t_bg_size)), round_up(max(t_fis_size + t_bg_size)))
 
   df = pd.DataFrame(dataframes)
