@@ -10,10 +10,13 @@ unsigned bg_compute_sig_size(unsigned m, unsigned n, unsigned r, unsigned k) {
   unsigned first_view_size = k;
   unsigned full_view_size  = n;
   unsigned int_view_size   = 3 * m;
+  // views for mpc_and in sbox, intial view and last view + shared ciphertexts
   unsigned views = 2 * (r * int_view_size + first_view_size + full_view_size) + 3 * full_view_size;
-  return (2 * BG_NUM_ROUNDS * (8 * COMMITMENT_LENGTH + 8 * 40 + views) + full_view_size +
-          ((BG_NUM_ROUNDS + 3) / 4) + 7) /
-         8;
+  // commitment and r and seed
+  unsigned int commitment = 8 * (COMMITMENT_LENGTH + COMMITMENT_RAND_LENGTH + 16);
+  unsigned int challenge  = (BG_NUM_ROUNDS + 3) / 4;
+
+  return (2 * BG_NUM_ROUNDS * (commitment + views) + full_view_size + challenge + 7) / 8;
 }
 
 unsigned char* bg_sig_to_char_array(public_parameters_t* pp, bg_signature_t* sig, unsigned* len) {
@@ -92,9 +95,9 @@ static bg_signature_t* bg_prove(public_parameters_t* pp, bg_private_key_t* priva
   lowmc_t const* lowmc          = pp->lowmc;
   const unsigned int view_count = lowmc->r + 2;
 
-  unsigned char r_p[BG_NUM_ROUNDS][3][4];
+  unsigned char r_p[BG_NUM_ROUNDS][3][COMMITMENT_RAND_LENGTH];
   unsigned char keys_p[BG_NUM_ROUNDS][3][16];
-  unsigned char r_s[BG_NUM_ROUNDS][3][4];
+  unsigned char r_s[BG_NUM_ROUNDS][3][COMMITMENT_RAND_LENGTH];
   unsigned char keys_s[BG_NUM_ROUNDS][3][16];
   unsigned char secret_sharing_key[16];
 

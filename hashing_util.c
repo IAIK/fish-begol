@@ -40,7 +40,7 @@ static void hash_mzd(commitment_ctx* ctx, mzd_t const* v) {
  * https://github.com/Sobuno/ZKBoo/blob/master/MPC_SHA256/shared.h)
  */
 void H(const unsigned char k[16], mzd_t* y[3], const view_t* v, unsigned vidx, unsigned vcnt,
-       const unsigned char r[4], unsigned char hash[COMMITMENT_LENGTH]) {
+       const unsigned char r[COMMITMENT_RAND_LENGTH], unsigned char hash[COMMITMENT_LENGTH]) {
   commitment_ctx ctx;
   commitment_init(&ctx);
   commitment_update(&ctx, k, 16);
@@ -52,7 +52,7 @@ void H(const unsigned char k[16], mzd_t* y[3], const view_t* v, unsigned vidx, u
     hash_mzd(&ctx, v[i].s[vidx]);
   }
 
-  commitment_update(&ctx, r, 4);
+  commitment_update(&ctx, r, COMMITMENT_RAND_LENGTH);
   commitment_final(hash, &ctx);
 }
 

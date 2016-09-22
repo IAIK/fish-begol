@@ -40,7 +40,7 @@ unsigned char* proof_to_char_array(mpc_lowmc_t* lowmc, proof_t* proof, unsigned*
   unsigned mzd_bytes =
       2 * (lowmc->r * single_mzd_bytes + first_view_bytes + full_mzd_size) + 3 * full_mzd_size;
   *len =
-      NUM_ROUNDS * (COMMITMENT_LENGTH + 40 + mzd_bytes) + (store_ch ? ((NUM_ROUNDS + 3) / 4) : 0);
+      NUM_ROUNDS * (COMMITMENT_LENGTH + 2 * (COMMITMENT_RAND_LENGTH + 16) + mzd_bytes) + (store_ch ? ((NUM_ROUNDS + 3) / 4) : 0);
   unsigned char* result = (unsigned char*)malloc(*len * sizeof(unsigned char));
 
   unsigned char* temp = result;
@@ -48,10 +48,10 @@ unsigned char* proof_to_char_array(mpc_lowmc_t* lowmc, proof_t* proof, unsigned*
   temp += NUM_ROUNDS * COMMITMENT_LENGTH;
 
   for (unsigned i = 0; i < NUM_ROUNDS; i++) {
-    memcpy(temp, proof->r[i][0], 4 * sizeof(unsigned char));
-    temp += 4;
-    memcpy(temp, proof->r[i][1], 4 * sizeof(unsigned char));
-    temp += 4;
+    memcpy(temp, proof->r[i][0], COMMITMENT_RAND_LENGTH * sizeof(unsigned char));
+    temp += COMMITMENT_RAND_LENGTH;
+    memcpy(temp, proof->r[i][1], COMMITMENT_RAND_LENGTH * sizeof(unsigned char));
+    temp += COMMITMENT_RAND_LENGTH;
 
     memcpy(temp, proof->keys[i][0], 16 * sizeof(unsigned char));
     temp += 16;

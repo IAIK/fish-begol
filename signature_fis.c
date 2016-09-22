@@ -1,6 +1,6 @@
 #include "signature_fis.h"
-#include "lowmc.h"
 #include "hashing_util.h"
+#include "lowmc.h"
 #include "mpc.h"
 #include "mpc_lowmc.h"
 #include "randomness.h"
@@ -10,10 +10,13 @@ unsigned fis_compute_sig_size(unsigned m, unsigned n, unsigned r, unsigned k) {
   unsigned first_view_size = k;
   unsigned full_view_size  = n;
   unsigned int_view_size   = 3 * m;
-  unsigned views           = 2 * (r * int_view_size + first_view_size + 
-                             full_view_size) + 3 * full_view_size;
-  return (FIS_NUM_ROUNDS * (8 * COMMITMENT_LENGTH + 8 * 40 + views) + 
-         ((FIS_NUM_ROUNDS + 3) / 4) + 7) / 8;
+  // views for mpc_and in sbox, intial view and last view + shared ciphertexts
+  unsigned views = 2 * (r * int_view_size + first_view_size + full_view_size) + 3 * full_view_size;
+  // commitment and r and seed
+  unsigned int commitment = 8 * (COMMITMENT_LENGTH + COMMITMENT_RAND_LENGTH + 16);
+  unsigned int challenge  = (FIS_NUM_ROUNDS + 3) / 4;
+
+  return (FIS_NUM_ROUNDS * (commitment + views) + full_view_size + challenge + 7) / 8;
 }
 
 unsigned char* fis_sig_to_char_array(public_parameters_t* pp, fis_signature_t* sig, unsigned* len) {
@@ -56,7 +59,7 @@ static proof_t* fis_prove(mpc_lowmc_t* lowmc, lowmc_key_t* lowmc_key, mzd_t* p, 
 
   const unsigned int view_count = lowmc->r + 2;
 
-  unsigned char r[FIS_NUM_ROUNDS][3][4];
+  unsigned char r[FIS_NUM_ROUNDS][3][COMMITMENT_RAND_LENGTH];
   unsigned char keys[FIS_NUM_ROUNDS][3][16];
   unsigned char secret_sharing_key[16];
 

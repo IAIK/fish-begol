@@ -1,11 +1,11 @@
 #ifndef RANDOMNESS_H
 #define RANDOMNESS_H
 
-#include <stdint.h>
-#include <openssl/conf.h>
-#include <openssl/evp.h>
-#include <openssl/err.h>
 #include <m4ri/m4ri.h>
+#include <openssl/conf.h>
+#include <openssl/err.h>
+#include <openssl/evp.h>
+#include <stdint.h>
 
 void init_EVP();
 

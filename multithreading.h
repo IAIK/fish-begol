@@ -5,4 +5,4 @@ void openmp_thread_setup(void);
 
 void openmp_thread_cleanup(void);
 
-#endif 
+#endif
