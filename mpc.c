@@ -259,6 +259,7 @@ int mpc_and_bit_verify(BIT* a, BIT* b, BIT* r, view_t* views, int* i, unsigned b
   for (unsigned m = 0; m < sc - 1; m++) {
     a[m] = wp[m];
     if (a[m] != mzd_read_bit(views[*i].s[m], 0, bp)) {
+      free(wp);
       return -1;
     }
   }
