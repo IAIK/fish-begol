@@ -2,6 +2,7 @@ import argparse
 import h5py
 import numpy as np
 import matplotlib
+import matplotlib.ticker as plticker
 import matplotlib.pyplot as plt
 import pandas as pd
 import seaborn as sns
@@ -139,7 +140,8 @@ def create_graph(prefix, fis_n, bg_n, fis_k, bg_k, fis_data, bg_data, fis_labels
   ax.set_xlabel('Size [kB]')
 
   # grid
-  ax.grid(True, axis='y')
+  ax.yaxis.set_minor_locator(plticker.AutoMinorLocator(4))
+  ax.grid(True, axis='y', which='both')
 
   plt.savefig('{0}.eps'.format(prefix))
   plt.savefig('{0}.png'.format(prefix))
@@ -166,7 +168,8 @@ def create_omp_graph(prefix, n, k, data, size, labels, max_num_threads):
   ax.set_xlabel('Size [kB]')
 
   # grid
-  ax.grid(True, axis='y')
+  ax.yaxis.set_minor_locator(plticker.AutoMinorLocator(4))
+  ax.grid(True, axis='y', which='both')
 
   plt.savefig('{0}-{1}-{2}.eps'.format(prefix, n, k))
   plt.savefig('{0}-{1}-{2}.png'.format(prefix, n, k))
