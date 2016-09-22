@@ -86,6 +86,7 @@ void bg_destroy_key(bg_private_key_t* private_key, bg_public_key_t* public_key) 
 void bg_free_signature(public_parameters_t* pp, bg_signature_t* signature) {
   clear_proof(pp->lowmc, &signature->proof_p);
   clear_proof(pp->lowmc, &signature->proof_s);
+  mzd_local_free(signature->c);
 
   free(signature);
 }
@@ -189,8 +190,10 @@ static bg_signature_t* bg_prove(public_parameters_t* pp, bg_private_key_t* priva
 
   for (unsigned j = 0; j < BG_NUM_ROUNDS; ++j) {
     for (unsigned i = 0; i < 3; ++i) {
-      mzd_local_free_multiple(rvec_p[j][i]);
       mzd_local_free_multiple(rvec_s[j][i]);
+      free(rvec_s[j][i]);
+      mzd_local_free_multiple(rvec_p[j][i]);
+      free(rvec_p[j][i]);
     }
   }
 
@@ -222,9 +225,13 @@ static int verify_views(mpc_lowmc_t const* lowmc, mzd_t const* p, proof_t const*
     }
 
     mzd_local_free_multiple(rv_s[1]);
+    free(rv_s[1]);
     mzd_local_free_multiple(rv_s[0]);
+    free(rv_s[0]);
     mzd_local_free_multiple(rv_p[1]);
+    free(rv_p[1]);
     mzd_local_free_multiple(rv_p[0]);
+    free(rv_p[0]);
 
     mzd_shared_clear(&shared_s);
   }
