@@ -277,8 +277,9 @@ proof_t* create_proof(proof_t* proof, mpc_lowmc_t const* lowmc,
   mpc_xor(out, out, vars->x0s, sc);                                                                \
   mpc_xor(out, out, vars->x1s, sc)
 
-static void _mpc_sbox_layer_bitsliced(mzd_t** out, mzd_t** in, view_t* view, mzd_t** rvec,
-                                      mask_t const* mask, sbox_vars_t const* vars) {
+static void _mpc_sbox_layer_bitsliced(mzd_t** out, mzd_t* const* in, view_t* view,
+                                      mzd_t* const* rvec, mask_t const* mask,
+                                      sbox_vars_t const* vars) {
   bitsliced_step_1(3);
 
   mpc_and(vars->r0m, vars->x0s, vars->x1s, vars->r2m, view, 0, vars->v);
@@ -288,8 +289,8 @@ static void _mpc_sbox_layer_bitsliced(mzd_t** out, mzd_t** in, view_t* view, mzd
   bitsliced_step_2(3);
 }
 
-static int _mpc_sbox_layer_bitsliced_verify(mzd_t** out, mzd_t** in, view_t const* view,
-                                            mzd_t** rvec, mask_t const* mask,
+static int _mpc_sbox_layer_bitsliced_verify(mzd_t** out, mzd_t* const* in, view_t const* view,
+                                            mzd_t* const* rvec, mask_t const* mask,
                                             sbox_vars_t const* vars) {
   bitsliced_step_1(2);
 
@@ -306,9 +307,9 @@ static int _mpc_sbox_layer_bitsliced_verify(mzd_t** out, mzd_t** in, view_t cons
 #ifdef WITH_OPT
 #define bitsliced_mm_step_1(sc, type, load, store, and, shift_left)                                \
   do {                                                                                             \
-    type mx0 = (load)((type*)mask->x0->rows[0]);                                                   \
-    type mx1 = (load)((type*)mask->x1->rows[0]);                                                   \
-    type mx2 = (load)((type*)mask->x2->rows[0]);                                                   \
+    const type mx0 = (load)((type*)mask->x0->rows[0]);                                             \
+    const type mx1 = (load)((type*)mask->x1->rows[0]);                                             \
+    const type mx2 = (load)((type*)mask->x2->rows[0]);                                             \
                                                                                                    \
     for (unsigned int m = 0; m < (sc); ++m) {                                                      \
       type min = (load)((type*)in[m]->rows[0]);                                                    \
@@ -344,7 +345,7 @@ static int _mpc_sbox_layer_bitsliced_verify(mzd_t** out, mzd_t** in, view_t cons
 
 #define bitsliced_mm_step_2(sc, type, load, store, and, xor, shift_right)                          \
   do {                                                                                             \
-    type mmask = (load)((type*)mask->mask->rows[0]);                                               \
+    const type mmask = (load)((type*)mask->mask->rows[0]);                                         \
     for (unsigned int m = 0; m < sc; ++m) {                                                        \
       type x0s = (load)((type*)vars->x0s[m]->rows[0]);                                             \
       type r2m = (load)((type*)vars->r2m[m]->rows[0]);                                             \
@@ -371,7 +372,7 @@ static int _mpc_sbox_layer_bitsliced_verify(mzd_t** out, mzd_t** in, view_t cons
   } while (0)
 
 __attribute__((target("sse2"))) static void
-_mpc_sbox_layer_bitsliced_sse(mzd_t** out, mzd_t** in, view_t* view, mzd_t** rvec,
+_mpc_sbox_layer_bitsliced_sse(mzd_t** out, mzd_t* const* in, view_t* view, mzd_t* const* rvec,
                               mask_t const* mask, sbox_vars_t const* vars) {
   bitsliced_mm_step_1(3, __m128i, _mm_load_si128, _mm_store_si128, _mm_and_si128, mm128_shift_left);
 
@@ -384,8 +385,8 @@ _mpc_sbox_layer_bitsliced_sse(mzd_t** out, mzd_t** in, view_t* view, mzd_t** rve
 }
 
 __attribute__((target("sse2"))) static int
-_mpc_sbox_layer_bitsliced_sse_verify(mzd_t** out, mzd_t** in, view_t const* view, mzd_t** rvec,
-                                     mask_t const* mask, sbox_vars_t const* vars) {
+_mpc_sbox_layer_bitsliced_sse_verify(mzd_t** out, mzd_t* const* in, view_t const* view,
+                                     mzd_t** rvec, mask_t const* mask, sbox_vars_t const* vars) {
   bitsliced_mm_step_1(2, __m128i, _mm_load_si128, _mm_store_si128, _mm_and_si128, mm128_shift_left);
 
   if (mpc_and_verify_sse(vars->r0m, vars->x0s, vars->x1s, vars->r2m, view, mask->x2, 0) ||
@@ -401,7 +402,7 @@ _mpc_sbox_layer_bitsliced_sse_verify(mzd_t** out, mzd_t** in, view_t const* view
 }
 
 __attribute__((target("avx2"))) static void
-_mpc_sbox_layer_bitsliced_avx(mzd_t** out, mzd_t** in, view_t* view, mzd_t** rvec,
+_mpc_sbox_layer_bitsliced_avx(mzd_t** out, mzd_t* const* in, view_t* view, mzd_t* const* rvec,
                               mask_t const* mask, sbox_vars_t const* vars) {
   bitsliced_mm_step_1(3, __m256i, _mm256_load_si256, _mm256_store_si256, _mm256_and_si256,
                       mm256_shift_left);
@@ -415,8 +416,9 @@ _mpc_sbox_layer_bitsliced_avx(mzd_t** out, mzd_t** in, view_t* view, mzd_t** rve
 }
 
 __attribute__((target("avx2"))) static int
-_mpc_sbox_layer_bitsliced_avx_verify(mzd_t** out, mzd_t** in, view_t const* view, mzd_t** rvec,
-                                     mask_t const* mask, sbox_vars_t const* vars) {
+_mpc_sbox_layer_bitsliced_avx_verify(mzd_t** out, mzd_t** in, view_t const* view,
+                                     mzd_t* const* rvec, mask_t const* mask,
+                                     sbox_vars_t const* vars) {
   bitsliced_mm_step_1(2, __m256i, _mm256_load_si256, _mm256_store_si256, _mm256_and_si256,
                       mm256_shift_left);
 
@@ -553,7 +555,7 @@ static mzd_t** _mpc_lowmc_call_bitsliced(mpc_lowmc_t const* lowmc, mpc_lowmc_key
     mpc_add(x, x, y, 3);
   }
 
-  lowmc_round_t* round = lowmc->rounds;
+  lowmc_round_t const* round = lowmc->rounds;
   for (unsigned i = 0; i < lowmc->r; ++i, ++views, ++round) {
     mzd_t* r[3] = {rvec[0][i], rvec[1][i], rvec[2][i]};
 
@@ -603,7 +605,7 @@ static mzd_t** _mpc_lowmc_call_bitsliced_verify(mpc_lowmc_t const* lowmc,
     mpc_add(x, x, y, 2);
   }
 
-  lowmc_round_t* round = lowmc->rounds;
+  lowmc_round_t const* round = lowmc->rounds;
   for (unsigned i = 0; i < lowmc->r; ++i, ++views, ++round) {
     mzd_t* r[2] = {rvec[0][i], rvec[1][i]};
 

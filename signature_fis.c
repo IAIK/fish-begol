@@ -234,4 +234,3 @@ void fis_free_signature(public_parameters_t* pp, fis_signature_t* signature) {
   free_proof(pp->lowmc, signature->proof);
   free(signature);
 }
-
