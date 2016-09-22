@@ -31,28 +31,21 @@ void mpc_xor(mzd_t* const* res, mzd_t* const* first, mzd_t* const* second, unsig
 }
 
 #ifdef WITH_OPT
-__attribute__((target("sse2"))) int mpc_and_sse(mzd_t* const* res, mzd_t* const* first,
-                                                mzd_t* const* second, mzd_t* const* r,
+__attribute__((target("sse2"))) int mpc_and_sse(__m128i* res, __m128i const* first,
+                                                __m128i const* second, __m128i const* r,
                                                 view_t const* view, unsigned viewshift) {
   for (unsigned m = 0; m < 3; ++m) {
     const unsigned j = (m + 1) % 3;
 
-    __m128i const* firstm  = __builtin_assume_aligned(first[m]->rows[0], 16);
-    __m128i const* secondm = __builtin_assume_aligned(second[m]->rows[0], 16);
-    __m128i const* firstj  = __builtin_assume_aligned(first[j]->rows[0], 16);
-    __m128i const* secondj = __builtin_assume_aligned(second[j]->rows[0], 16);
-    __m128i const* rm      = __builtin_assume_aligned(r[m]->rows[0], 16);
-    __m128i const* rj      = __builtin_assume_aligned(r[j]->rows[0], 16);
-    __m128i* resm          = __builtin_assume_aligned(res[m]->rows[0], 16);
-    __m128i* sm            = __builtin_assume_aligned(view->s[m]->rows[0], 16);
+    __m128i* sm = __builtin_assume_aligned(view->s[m]->rows[0], 16);
 
-    __m128i tmp1 = _mm_xor_si128(*secondm, *secondj);
-    __m128i tmp2 = _mm_and_si128(*firstj, *secondm);
-    tmp1         = _mm_and_si128(tmp1, *firstm);
+    __m128i tmp1 = _mm_xor_si128(second[m], second[j]);
+    __m128i tmp2 = _mm_and_si128(first[j], second[m]);
+    tmp1         = _mm_and_si128(tmp1, first[m]);
     tmp1         = _mm_xor_si128(tmp1, tmp2);
 
-    tmp2  = _mm_xor_si128(*rm, *rj);
-    *resm = tmp1 = _mm_xor_si128(tmp1, tmp2);
+    tmp2   = _mm_xor_si128(r[m], r[j]);
+    res[m] = tmp1 = _mm_xor_si128(tmp1, tmp2);
 
     tmp1 = mm128_shift_right(tmp1, viewshift);
     *sm  = _mm_xor_si128(tmp1, *sm);
@@ -61,28 +54,21 @@ __attribute__((target("sse2"))) int mpc_and_sse(mzd_t* const* res, mzd_t* const*
   return 0;
 }
 
-__attribute__((target("avx2"))) int mpc_and_avx(mzd_t* const* res, mzd_t* const* first,
-                                                mzd_t* const* second, mzd_t* const* r,
+__attribute__((target("avx2"))) int mpc_and_avx(__m256i* res, __m256i const* first,
+                                                __m256i const* second, __m256i const* r,
                                                 view_t const* view, unsigned viewshift) {
   for (unsigned m = 0; m < 3; ++m) {
     const unsigned j = (m + 1) % 3;
 
-    __m256i const* firstm  = __builtin_assume_aligned(first[m]->rows[0], 32);
-    __m256i const* secondm = __builtin_assume_aligned(second[m]->rows[0], 32);
-    __m256i const* firstj  = __builtin_assume_aligned(first[j]->rows[0], 32);
-    __m256i const* secondj = __builtin_assume_aligned(second[j]->rows[0], 32);
-    __m256i const* rm      = __builtin_assume_aligned(r[m]->rows[0], 32);
-    __m256i const* rj      = __builtin_assume_aligned(r[j]->rows[0], 32);
-    __m256i* resm          = __builtin_assume_aligned(res[m]->rows[0], 32);
-    __m256i* sm            = __builtin_assume_aligned(view->s[m]->rows[0], 32);
+    __m256i* sm = __builtin_assume_aligned(view->s[m]->rows[0], 32);
 
-    __m256i tmp1 = _mm256_xor_si256(*secondm, *secondj);
-    __m256i tmp2 = _mm256_and_si256(*firstj, *secondm);
-    tmp1         = _mm256_and_si256(tmp1, *firstm);
+    __m256i tmp1 = _mm256_xor_si256(second[m], second[j]);
+    __m256i tmp2 = _mm256_and_si256(first[j], second[m]);
+    tmp1         = _mm256_and_si256(tmp1, first[m]);
     tmp1         = _mm256_xor_si256(tmp1, tmp2);
 
-    tmp2  = _mm256_xor_si256(*rm, *rj);
-    *resm = tmp1 = _mm256_xor_si256(tmp1, tmp2);
+    tmp2   = _mm256_xor_si256(r[m], r[j]);
+    res[m] = tmp1 = _mm256_xor_si256(tmp1, tmp2);
 
     tmp1 = mm256_shift_right(tmp1, viewshift);
     *sm  = _mm256_xor_si256(tmp1, *sm);
@@ -117,29 +103,22 @@ int mpc_and(mzd_t* const* res, mzd_t* const* first, mzd_t* const* second, mzd_t*
 }
 
 #ifdef WITH_OPT
-__attribute__((target("sse2"))) int mpc_and_verify_sse(mzd_t* const* res, mzd_t* const* first,
-                                                       mzd_t* const* second, mzd_t* const* r,
+__attribute__((target("sse2"))) int mpc_and_verify_sse(__m128i* res, __m128i const* first,
+                                                       __m128i const* second, __m128i const* r,
                                                        view_t const* view, mzd_t const* mask,
                                                        unsigned viewshift) {
   for (unsigned m = 0; m < 1; ++m) {
     const unsigned j = (m + 1);
 
-    __m128i const* firstm  = __builtin_assume_aligned(first[m]->rows[0], 16);
-    __m128i const* secondm = __builtin_assume_aligned(second[m]->rows[0], 16);
-    __m128i const* firstj  = __builtin_assume_aligned(first[j]->rows[0], 16);
-    __m128i const* secondj = __builtin_assume_aligned(second[j]->rows[0], 16);
-    __m128i const* rm      = __builtin_assume_aligned(r[m]->rows[0], 16);
-    __m128i const* rj      = __builtin_assume_aligned(r[j]->rows[0], 16);
-    __m128i* resm          = __builtin_assume_aligned(res[m]->rows[0], 16);
-    __m128i const* sm      = __builtin_assume_aligned(view->s[m]->rows[0], 16);
+    __m128i const* sm = __builtin_assume_aligned(view->s[m]->rows[0], 16);
 
-    __m128i tmp1 = _mm_xor_si128(*secondm, *secondj);
-    __m128i tmp2 = _mm_and_si128(*firstj, *secondm);
-    tmp1         = _mm_and_si128(tmp1, *firstm);
+    __m128i tmp1 = _mm_xor_si128(second[m], second[j]);
+    __m128i tmp2 = _mm_and_si128(first[j], second[m]);
+    tmp1         = _mm_and_si128(tmp1, first[m]);
     tmp1         = _mm_xor_si128(tmp1, tmp2);
 
-    tmp2  = _mm_xor_si128(*rm, *rj);
-    *resm = tmp1 = _mm_xor_si128(tmp1, tmp2);
+    tmp2   = _mm_xor_si128(r[m], r[j]);
+    res[m] = tmp1 = _mm_xor_si128(tmp1, tmp2);
 
     tmp2 = mm128_shift_left(*sm, viewshift);
     tmp2 = _mm_and_si128(tmp2, tmp1);
@@ -152,37 +131,29 @@ __attribute__((target("sse2"))) int mpc_and_verify_sse(mzd_t* const* res, mzd_t*
 
   __m128i const* s1 = __builtin_assume_aligned(view->s[2 - 1]->rows[0], 16);
   __m128i const* m  = __builtin_assume_aligned(mask->rows[0], 16);
-  __m128i* res1     = __builtin_assume_aligned(res[2 - 1]->rows[0], 16);
 
   __m128i rsc = mm128_shift_left(*s1, viewshift);
-  *res1       = _mm_and_si128(rsc, *m);
+  res[2 - 1]  = _mm_and_si128(rsc, *m);
 
   return 0;
 }
 
-__attribute__((target("avx2"))) int mpc_and_verify_avx(mzd_t* const* res, mzd_t* const* first,
-                                                       mzd_t* const* second, mzd_t* const* r,
+__attribute__((target("avx2"))) int mpc_and_verify_avx(__m256i* res, __m256i const* first,
+                                                       __m256i const* second, __m256i const* r,
                                                        view_t const* view, mzd_t const* mask,
                                                        unsigned viewshift) {
   for (unsigned m = 0; m < 1; ++m) {
     const unsigned j = (m + 1);
 
-    __m256i const* firstm  = __builtin_assume_aligned(first[m]->rows[0], 32);
-    __m256i const* secondm = __builtin_assume_aligned(second[m]->rows[0], 32);
-    __m256i const* firstj  = __builtin_assume_aligned(first[j]->rows[0], 32);
-    __m256i const* secondj = __builtin_assume_aligned(second[j]->rows[0], 32);
-    __m256i const* rm      = __builtin_assume_aligned(r[m]->rows[0], 32);
-    __m256i const* rj      = __builtin_assume_aligned(r[j]->rows[0], 32);
-    __m256i* resm          = __builtin_assume_aligned(res[m]->rows[0], 32);
-    __m256i const* sm      = __builtin_assume_aligned(view->s[m]->rows[0], 32);
+    __m256i const* sm = __builtin_assume_aligned(view->s[m]->rows[0], 32);
 
-    __m256i tmp1 = _mm256_xor_si256(*secondm, *secondj);
-    __m256i tmp2 = _mm256_and_si256(*firstj, *secondm);
-    tmp1         = _mm256_and_si256(tmp1, *firstm);
+    __m256i tmp1 = _mm256_xor_si256(second[m], second[j]);
+    __m256i tmp2 = _mm256_and_si256(first[j], second[m]);
+    tmp1         = _mm256_and_si256(tmp1, first[m]);
     tmp1         = _mm256_xor_si256(tmp1, tmp2);
 
-    tmp2  = _mm256_xor_si256(*rm, *rj);
-    *resm = tmp1 = _mm256_xor_si256(tmp1, tmp2);
+    tmp2   = _mm256_xor_si256(r[m], r[j]);
+    res[m] = tmp1 = _mm256_xor_si256(tmp1, tmp2);
 
     tmp2 = mm256_shift_left(*sm, viewshift);
     tmp2 = _mm256_and_si256(tmp2, tmp1);
@@ -195,10 +166,9 @@ __attribute__((target("avx2"))) int mpc_and_verify_avx(mzd_t* const* res, mzd_t*
 
   __m256i const* s1 = __builtin_assume_aligned(view->s[2 - 1]->rows[0], 32);
   __m256i const* m  = __builtin_assume_aligned(mask->rows[0], 32);
-  __m256i* res1     = __builtin_assume_aligned(res[2 - 1]->rows[0], 32);
 
   __m256i rsc = mm256_shift_left(*s1, viewshift);
-  *res1       = _mm256_and_si256(rsc, *m);
+  res[2 - 1]  = _mm256_and_si256(rsc, *m);
 
   return 0;
 }

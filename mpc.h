@@ -21,17 +21,19 @@ int mpc_and_verify(mzd_t* const* res, mzd_t* const* first, mzd_t* const* second,
                    view_t const* view, mzd_t const* mask, unsigned viewshift, mzd_t* const* buffer);
 
 #ifdef WITH_OPT
-int mpc_and_sse(mzd_t* const* res, mzd_t* const* first, mzd_t* const* second, mzd_t* const* r,
+#include "avx.h"
+
+int mpc_and_sse(__m128i* res, __m128i const* first, __m128i const* second, __m128i const* r,
                 view_t const* view, unsigned viewshift);
 
-int mpc_and_avx(mzd_t* const* res, mzd_t* const* first, mzd_t* const* second, mzd_t* const* r,
+int mpc_and_avx(__m256i* res, __m256i const* first, __m256i const* second, __m256i const* r,
                 view_t const* view, unsigned viewshift);
 
-int mpc_and_verify_sse(mzd_t* const* res, mzd_t* const* first, mzd_t* const* second,
-                       mzd_t* const* r, view_t const* view, mzd_t const* mask, unsigned viewshift);
+int mpc_and_verify_sse(__m128i* res, __m128i const* first, __m128i const* second, __m128i const* r,
+                       view_t const* view, mzd_t const* mask, unsigned viewshift);
 
-int mpc_and_verify_avx(mzd_t* const* res, mzd_t* const* first, mzd_t* const* second,
-                       mzd_t* const* r, view_t const* view, mzd_t const* mask, unsigned viewshift);
+int mpc_and_verify_avx(__m256i* res, __m256i const* first, __m256i const* second, __m256i const* r,
+                       view_t const* view, mzd_t const* mask, unsigned viewshift);
 #endif
 
 /**
