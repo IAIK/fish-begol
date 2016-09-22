@@ -19,6 +19,14 @@ static rci_t calculate_rowstride(rci_t width) {
   }
 }
 
+// Notes on the memory layout: mzd_init allocates multiple memory blocks (one
+// for mzd_t, one for rows and multiple for the buffers). We use one memory
+// block for mzd_t, rows and the buffer. This improves memory locality and
+// requires less calls to malloc.
+//
+// In mzd_local_init_multiple we do the same, but store n mzd_t instances in one
+// memory block.
+
 mzd_t* mzd_local_init(rci_t r, rci_t c) {
   const rci_t width       = (c + m4ri_radix - 1) / m4ri_radix;
   const rci_t rowstride   = calculate_rowstride(width);
@@ -115,8 +123,10 @@ mzd_t* mzd_local_copy(mzd_t* dst, mzd_t const* src) {
   }
 
   if (dst->nrows >= src->nrows || dst->ncols == src->ncols) {
-    memcpy(((unsigned char*)dst) + sizeof(mzd_t), ((const unsigned char*)src) + sizeof(mzd_t),
-           src->nrows * src->rowstride * sizeof(word));
+    unsigned char* d = __builtin_assume_aligned(dst->rows[0], 16);
+    unsigned char const* s = __builtin_assume_aligned(src->rows[0], 16);
+
+    memcpy(d, s, src->nrows * src->rowstride * sizeof(word));
     return dst;
   } else {
     return mzd_copy(dst, src);
