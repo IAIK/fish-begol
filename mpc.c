@@ -37,26 +37,25 @@ __attribute__((target("sse2"))) int mpc_and_sse(mzd_t* const* res, mzd_t* const*
   for (unsigned m = 0; m < 3; ++m) {
     const unsigned j = (m + 1) % 3;
 
-    __m128i firstm  = _mm_load_si128((__m128i*)first[m]->rows[0]);
-    __m128i secondm = _mm_load_si128((__m128i*)second[m]->rows[0]);
+    __m128i const* firstm  = __builtin_assume_aligned(first[m]->rows[0], 16);
+    __m128i const* secondm = __builtin_assume_aligned(second[m]->rows[0], 16);
+    __m128i const* firstj  = __builtin_assume_aligned(first[j]->rows[0], 16);
+    __m128i const* secondj = __builtin_assume_aligned(second[j]->rows[0], 16);
+    __m128i const* rm      = __builtin_assume_aligned(r[m]->rows[0], 16);
+    __m128i const* rj      = __builtin_assume_aligned(r[j]->rows[0], 16);
+    __m128i* resm          = __builtin_assume_aligned(res[m]->rows[0], 16);
+    __m128i* sm            = __builtin_assume_aligned(view->s[m]->rows[0], 16);
 
-    __m128i resm = _mm_and_si128(firstm, secondm);
+    __m128i tmp1 = _mm_xor_si128(*secondm, *secondj);
+    __m128i tmp2 = _mm_and_si128(*firstj, *secondm);
+    tmp1         = _mm_and_si128(tmp1, *firstm);
+    tmp1         = _mm_xor_si128(tmp1, tmp2);
 
-    __m128i b = _mm_and_si128(secondm, _mm_load_si128((__m128i*)first[j]->rows[0]));
-    resm      = _mm_xor_si128(resm, b);
+    tmp2  = _mm_xor_si128(*rm, *rj);
+    *resm = tmp1 = _mm_xor_si128(tmp1, tmp2);
 
-    b    = _mm_and_si128(firstm, _mm_load_si128((__m128i*)second[j]->rows[0]));
-    resm = _mm_xor_si128(resm, b);
-
-    resm = _mm_xor_si128(resm, _mm_load_si128((__m128i*)r[m]->rows[0]));
-    resm = _mm_xor_si128(resm, _mm_load_si128((__m128i*)r[j]->rows[0]));
-
-    _mm_store_si128((__m128i*)res[m]->rows[0], resm);
-
-    resm = mm128_shift_right(resm, viewshift);
-    resm = _mm_xor_si128(resm, _mm_load_si128((__m128i*)view->s[m]->rows[0]));
-
-    _mm_store_si128((__m128i*)view->s[m]->rows[0], resm);
+    tmp1 = mm128_shift_right(tmp1, viewshift);
+    *sm  = _mm_xor_si128(tmp1, *sm);
   }
 
   return 0;
@@ -68,26 +67,25 @@ __attribute__((target("avx2"))) int mpc_and_avx(mzd_t* const* res, mzd_t* const*
   for (unsigned m = 0; m < 3; ++m) {
     const unsigned j = (m + 1) % 3;
 
-    __m256i firstm  = _mm256_load_si256((__m256i*)first[m]->rows[0]);
-    __m256i secondm = _mm256_load_si256((__m256i*)second[m]->rows[0]);
+    __m256i const* firstm  = __builtin_assume_aligned(first[m]->rows[0], 32);
+    __m256i const* secondm = __builtin_assume_aligned(second[m]->rows[0], 32);
+    __m256i const* firstj  = __builtin_assume_aligned(first[j]->rows[0], 32);
+    __m256i const* secondj = __builtin_assume_aligned(second[j]->rows[0], 32);
+    __m256i const* rm      = __builtin_assume_aligned(r[m]->rows[0], 32);
+    __m256i const* rj      = __builtin_assume_aligned(r[j]->rows[0], 32);
+    __m256i* resm          = __builtin_assume_aligned(res[m]->rows[0], 32);
+    __m256i* sm            = __builtin_assume_aligned(view->s[m]->rows[0], 32);
 
-    __m256i resm = _mm256_and_si256(firstm, secondm);
+    __m256i tmp1 = _mm256_xor_si256(*secondm, *secondj);
+    __m256i tmp2 = _mm256_and_si256(*firstj, *secondm);
+    tmp1         = _mm256_and_si256(tmp1, *firstm);
+    tmp1         = _mm256_xor_si256(tmp1, tmp2);
 
-    __m256i b = _mm256_and_si256(secondm, _mm256_load_si256((__m256i*)first[j]->rows[0]));
-    resm      = _mm256_xor_si256(resm, b);
+    tmp2  = _mm256_xor_si256(*rm, *rj);
+    *resm = tmp1 = _mm256_xor_si256(tmp1, tmp2);
 
-    b    = _mm256_and_si256(firstm, _mm256_load_si256((__m256i*)second[j]->rows[0]));
-    resm = _mm256_xor_si256(resm, b);
-
-    resm = _mm256_xor_si256(resm, _mm256_load_si256((__m256i*)r[m]->rows[0]));
-    resm = _mm256_xor_si256(resm, _mm256_load_si256((__m256i*)r[j]->rows[0]));
-
-    _mm256_store_si256((__m256i*)res[m]->rows[0], resm);
-
-    resm = mm256_shift_right(resm, viewshift);
-    resm = _mm256_xor_si256(resm, _mm256_load_si256((__m256i*)view->s[m]->rows[0]));
-
-    _mm256_store_si256((__m256i*)view->s[m]->rows[0], resm);
+    tmp1 = mm256_shift_right(tmp1, viewshift);
+    *sm  = _mm256_xor_si256(tmp1, *sm);
   }
 
   return 0;
@@ -126,36 +124,38 @@ __attribute__((target("sse2"))) int mpc_and_verify_sse(mzd_t* const* res, mzd_t*
   for (unsigned m = 0; m < 1; ++m) {
     const unsigned j = (m + 1);
 
-    __m128i firstm  = _mm_load_si128((__m128i*)first[m]->rows[0]);
-    __m128i secondm = _mm_load_si128((__m128i*)second[m]->rows[0]);
+    __m128i const* firstm  = __builtin_assume_aligned(first[m]->rows[0], 16);
+    __m128i const* secondm = __builtin_assume_aligned(second[m]->rows[0], 16);
+    __m128i const* firstj  = __builtin_assume_aligned(first[j]->rows[0], 16);
+    __m128i const* secondj = __builtin_assume_aligned(second[j]->rows[0], 16);
+    __m128i const* rm      = __builtin_assume_aligned(r[m]->rows[0], 16);
+    __m128i const* rj      = __builtin_assume_aligned(r[j]->rows[0], 16);
+    __m128i* resm          = __builtin_assume_aligned(res[m]->rows[0], 16);
+    __m128i const* sm      = __builtin_assume_aligned(view->s[m]->rows[0], 16);
 
-    __m128i resm = _mm_and_si128(firstm, secondm);
+    __m128i tmp1 = _mm_xor_si128(*secondm, *secondj);
+    __m128i tmp2 = _mm_and_si128(*firstj, *secondm);
+    tmp1         = _mm_and_si128(tmp1, *firstm);
+    tmp1         = _mm_xor_si128(tmp1, tmp2);
 
-    __m128i b = _mm_and_si128(secondm, _mm_load_si128((__m128i*)first[j]->rows[0]));
-    resm      = _mm_xor_si128(resm, b);
+    tmp2  = _mm_xor_si128(*rm, *rj);
+    *resm = tmp1 = _mm_xor_si128(tmp1, tmp2);
 
-    b    = _mm_and_si128(firstm, _mm_load_si128((__m128i*)second[j]->rows[0]));
-    resm = _mm_xor_si128(resm, b);
+    tmp2 = mm128_shift_left(*sm, viewshift);
+    tmp2 = _mm_and_si128(tmp2, tmp1);
 
-    resm = _mm_xor_si128(resm, _mm_load_si128((__m128i*)r[m]->rows[0]));
-    resm = _mm_xor_si128(resm, _mm_load_si128((__m128i*)r[j]->rows[0]));
-
-    _mm_store_si128((__m128i*)res[m]->rows[0], resm);
-
-    __m128i sm = _mm_load_si128((__m128i*)view->s[m]->rows[0]);
-    sm         = mm128_shift_left(sm, viewshift);
-    sm         = _mm_and_si128(sm, resm);
-
-    const unsigned int same = _mm_movemask_epi8(_mm_cmpeq_epi8(sm, resm));
+    const unsigned int same = _mm_movemask_epi8(_mm_cmpeq_epi8(tmp2, tmp1));
     if (same != 0xffff) {
       return 1;
     }
   }
 
-  __m128i rsc = _mm_load_si128((__m128i*)view->s[2 - 1]->rows[0]);
-  rsc         = mm128_shift_left(rsc, viewshift);
-  rsc         = _mm_and_si128(rsc, _mm_load_si128((__m128i*)mask->rows[0]));
-  _mm_store_si128((__m128i*)res[2 - 1]->rows[0], rsc);
+  __m128i const* s1 = __builtin_assume_aligned(view->s[2 - 1]->rows[0], 16);
+  __m128i const* m  = __builtin_assume_aligned(mask->rows[0], 16);
+  __m128i* res1     = __builtin_assume_aligned(res[2 - 1]->rows[0], 16);
+
+  __m128i rsc = mm128_shift_left(*s1, viewshift);
+  *res1       = _mm_and_si128(rsc, *m);
 
   return 0;
 }
@@ -167,36 +167,38 @@ __attribute__((target("avx2"))) int mpc_and_verify_avx(mzd_t* const* res, mzd_t*
   for (unsigned m = 0; m < 1; ++m) {
     const unsigned j = (m + 1);
 
-    __m256i firstm  = _mm256_load_si256((__m256i*)first[m]->rows[0]);
-    __m256i secondm = _mm256_load_si256((__m256i*)second[m]->rows[0]);
+    __m256i const* firstm  = __builtin_assume_aligned(first[m]->rows[0], 32);
+    __m256i const* secondm = __builtin_assume_aligned(second[m]->rows[0], 32);
+    __m256i const* firstj  = __builtin_assume_aligned(first[j]->rows[0], 32);
+    __m256i const* secondj = __builtin_assume_aligned(second[j]->rows[0], 32);
+    __m256i const* rm      = __builtin_assume_aligned(r[m]->rows[0], 32);
+    __m256i const* rj      = __builtin_assume_aligned(r[j]->rows[0], 32);
+    __m256i* resm          = __builtin_assume_aligned(res[m]->rows[0], 32);
+    __m256i const* sm      = __builtin_assume_aligned(view->s[m]->rows[0], 32);
 
-    __m256i resm = _mm256_and_si256(firstm, secondm);
+    __m256i tmp1 = _mm256_xor_si256(*secondm, *secondj);
+    __m256i tmp2 = _mm256_and_si256(*firstj, *secondm);
+    tmp1         = _mm256_and_si256(tmp1, *firstm);
+    tmp1         = _mm256_xor_si256(tmp1, tmp2);
 
-    __m256i b = _mm256_and_si256(secondm, _mm256_load_si256((__m256i*)first[j]->rows[0]));
-    resm      = _mm256_xor_si256(resm, b);
+    tmp2  = _mm256_xor_si256(*rm, *rj);
+    *resm = tmp1 = _mm256_xor_si256(tmp1, tmp2);
 
-    b    = _mm256_and_si256(firstm, _mm256_load_si256((__m256i*)second[j]->rows[0]));
-    resm = _mm256_xor_si256(resm, b);
+    tmp2 = mm256_shift_left(*sm, viewshift);
+    tmp2 = _mm256_and_si256(tmp2, tmp1);
 
-    resm = _mm256_xor_si256(resm, _mm256_load_si256((__m256i*)r[m]->rows[0]));
-    resm = _mm256_xor_si256(resm, _mm256_load_si256((__m256i*)r[j]->rows[0]));
-
-    _mm256_store_si256((__m256i*)res[m]->rows[0], resm);
-
-    __m256i sm = _mm256_load_si256((__m256i*)view->s[m]->rows[0]);
-    sm         = mm256_shift_left(sm, viewshift);
-    sm         = _mm256_and_si256(sm, resm);
-
-    sm = _mm256_xor_si256(sm, resm);
-    if (!_mm256_testz_si256(sm, sm)) {
+    tmp2 = _mm256_xor_si256(tmp2, tmp1);
+    if (!_mm256_testz_si256(tmp2, tmp2)) {
       return 1;
     }
   }
 
-  __m256i rsc = _mm256_load_si256((__m256i*)view->s[2 - 1]->rows[0]);
-  rsc         = mm256_shift_left(rsc, viewshift);
-  rsc         = _mm256_and_si256(rsc, _mm256_load_si256((__m256i*)mask->rows[0]));
-  _mm256_store_si256((__m256i*)res[2 - 1]->rows[0], rsc);
+  __m256i const* s1 = __builtin_assume_aligned(view->s[2 - 1]->rows[0], 32);
+  __m256i const* m  = __builtin_assume_aligned(mask->rows[0], 32);
+  __m256i* res1     = __builtin_assume_aligned(res[2 - 1]->rows[0], 32);
+
+  __m256i rsc = mm256_shift_left(*s1, viewshift);
+  *res1       = _mm256_and_si256(rsc, *m);
 
   return 0;
 }
