@@ -79,6 +79,12 @@ def pick_interesting(size, sign, verify, labels):
       continue
 
     rounds.add(r)
+    """
+    indices = [j for (j, x) in enumerate(labels) if x.split('-')[1] == r]
+    new_size.append(sum(size[j] for j in indices) / len(indices))
+    new_sign.append(sum(sign[j] for j in indices) / len(indices))
+    new_verify.append(sum(verify[j] for j in indices) / len(indices))
+    """
     new_size.append(size[i])
     new_sign.append(sign[i])
     new_verify.append(verify[i])
@@ -193,6 +199,9 @@ def create_graph(prefix, fis_n, bg_n, fis_k, bg_k, fis_data, bg_data, fis_labels
   # legend
   handles, labels = ax.get_legend_handles_labels()
   plt.legend(handles, labels, loc='upper center')
+
+  # TODO: add better ticks!
+  # TODO: fix xlim and ylim
 
   # grid
   # ax.yaxis.set_minor_locator(plticker.AutoMinorLocator(4))
