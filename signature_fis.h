@@ -18,19 +18,20 @@ typedef struct {
 
 unsigned fis_compute_sig_size(unsigned m, unsigned n, unsigned r, unsigned k);
 
-unsigned char *fis_sig_to_char_array(public_parameters_t *pp, fis_signature_t *sig, unsigned *len);
+unsigned char* fis_sig_to_char_array(public_parameters_t* pp, fis_signature_t* sig, unsigned* len);
 
-fis_signature_t *fis_sig_from_char_array(public_parameters_t *pp, unsigned char *data);
+fis_signature_t* fis_sig_from_char_array(public_parameters_t* pp, unsigned char* data);
 
 void fis_create_key(public_parameters_t* pp, fis_private_key_t* private_key,
                     fis_public_key_t* public_key);
 
 void fis_destroy_key(fis_private_key_t* private_key, fis_public_key_t* public_key);
 
-fis_signature_t *fis_sign(public_parameters_t* pp, fis_private_key_t* private_key, char *m);
+fis_signature_t* fis_sign(public_parameters_t* pp, fis_private_key_t* private_key, char* m);
 
-int fis_verify(public_parameters_t* pp, fis_public_key_t *public_key, char *m, fis_signature_t *sig);
+int fis_verify(public_parameters_t* pp, fis_public_key_t* public_key, char* m,
+               fis_signature_t* sig);
 
-void fis_free_signature(public_parameters_t *pp, fis_signature_t *signature);
+void fis_free_signature(public_parameters_t* pp, fis_signature_t* signature);
 
 #endif

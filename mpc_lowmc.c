@@ -40,8 +40,8 @@ unsigned char* proof_to_char_array(mpc_lowmc_t* lowmc, proof_t* proof, unsigned*
   unsigned single_mzd_bytes = ((3 * lowmc->m) + 7) / 8;
   unsigned mzd_bytes =
       2 * (lowmc->r * single_mzd_bytes + first_view_bytes + full_mzd_size) + 3 * full_mzd_size;
-  *len =
-      NUM_ROUNDS * (COMMITMENT_LENGTH + 2 * (COMMITMENT_RAND_LENGTH + 16) + mzd_bytes) + (store_ch ? ((NUM_ROUNDS + 3) / 4) : 0);
+  *len = NUM_ROUNDS * (COMMITMENT_LENGTH + 2 * (COMMITMENT_RAND_LENGTH + 16) + mzd_bytes) +
+         (store_ch ? ((NUM_ROUNDS + 3) / 4) : 0);
   unsigned char* result = (unsigned char*)malloc(*len * sizeof(unsigned char));
 
   unsigned char* temp = result;
@@ -126,14 +126,13 @@ proof_t* proof_from_char_array(mpc_lowmc_t* lowmc, proof_t* proof, unsigned char
   unsigned single_mzd_bytes = ((3 * lowmc->m) + 7) / 8;
   unsigned mzd_bytes =
       2 * (lowmc->r * single_mzd_bytes + first_view_bytes + full_mzd_size) + 3 * full_mzd_size;
-  *len = NUM_ROUNDS * (COMMITMENT_LENGTH + 40 + mzd_bytes) +
+  *len = NUM_ROUNDS * (COMMITMENT_LENGTH + 2 * (COMMITMENT_RAND_LENGTH + 16) + mzd_bytes) +
          (contains_ch ? ((NUM_ROUNDS + 3) / 4) : 0);
 
   unsigned char* temp = data;
 
   proof->views = (view_t**)malloc(NUM_ROUNDS * sizeof(view_t*));
 
-  proof->r    = (unsigned char***)malloc(NUM_ROUNDS * sizeof(unsigned char**));
   proof->keys = (unsigned char***)malloc(NUM_ROUNDS * sizeof(unsigned char**));
   memcpy(proof->hashes, temp, NUM_ROUNDS * COMMITMENT_LENGTH * sizeof(unsigned char));
   temp += NUM_ROUNDS * COMMITMENT_LENGTH;
@@ -141,13 +140,10 @@ proof_t* proof_from_char_array(mpc_lowmc_t* lowmc, proof_t* proof, unsigned char
   proof->y = (mzd_t***)malloc(NUM_ROUNDS * sizeof(mzd_t**));
 
   for (unsigned int i = 0; i < NUM_ROUNDS; i++) {
-    proof->r[i]    = (unsigned char**)malloc(2 * sizeof(unsigned char*));
-    proof->r[i][0] = (unsigned char*)malloc(4 * sizeof(unsigned char));
-    proof->r[i][1] = (unsigned char*)malloc(4 * sizeof(unsigned char));
-    memcpy(proof->r[i][0], temp, 4 * sizeof(unsigned char));
-    temp += 4;
-    memcpy(proof->r[i][1], temp, 4 * sizeof(unsigned char));
-    temp += 4;
+    memcpy(proof->r[i][0], temp, COMMITMENT_RAND_LENGTH * sizeof(unsigned char));
+    temp += COMMITMENT_RAND_LENGTH;
+    memcpy(proof->r[i][1], temp, COMMITMENT_RAND_LENGTH * sizeof(unsigned char));
+    temp += COMMITMENT_RAND_LENGTH;
 
     proof->keys[i]    = (unsigned char**)malloc(2 * sizeof(unsigned char*));
     proof->keys[i][0] = (unsigned char*)malloc(16 * sizeof(unsigned char));
@@ -193,7 +189,7 @@ proof_t* proof_from_char_array(mpc_lowmc_t* lowmc, proof_t* proof, unsigned char
 
 proof_t* create_proof(proof_t* proof, mpc_lowmc_t const* lowmc,
                       unsigned char hashes[NUM_ROUNDS][3][COMMITMENT_LENGTH],
-                      unsigned char ch[NUM_ROUNDS], unsigned char r[NUM_ROUNDS][3][4],
+                      unsigned char ch[NUM_ROUNDS], unsigned char r[NUM_ROUNDS][3][COMMITMENT_RAND_LENGTH],
                       unsigned char keys[NUM_ROUNDS][3][16], mzd_t*** c_mpc,
                       view_t* const views[NUM_ROUNDS]) {
   if (!proof)
@@ -201,7 +197,6 @@ proof_t* create_proof(proof_t* proof, mpc_lowmc_t const* lowmc,
 
   proof->views = (view_t**)malloc(NUM_ROUNDS * sizeof(view_t*));
 
-  proof->r    = (unsigned char***)malloc(NUM_ROUNDS * sizeof(unsigned char**));
   proof->keys = (unsigned char***)malloc(NUM_ROUNDS * sizeof(unsigned char**));
   // memcpy(proof->hashes, hashes, NUM_ROUNDS * 3 * SHA256_DIGEST_LENGTH * sizeof(char));
 
@@ -212,11 +207,8 @@ proof_t* create_proof(proof_t* proof, mpc_lowmc_t const* lowmc,
 
     memcpy(proof->hashes[i], hashes[i][c], COMMITMENT_LENGTH * sizeof(char));
 
-    proof->r[i]    = (unsigned char**)malloc(2 * sizeof(unsigned char*));
-    proof->r[i][0] = (unsigned char*)malloc(4 * sizeof(unsigned char));
-    proof->r[i][1] = (unsigned char*)malloc(4 * sizeof(unsigned char));
-    memcpy(proof->r[i][0], r[i][a], 4 * sizeof(char));
-    memcpy(proof->r[i][1], r[i][b], 4 * sizeof(char));
+    memcpy(proof->r[i][0], r[i][a], COMMITMENT_RAND_LENGTH * sizeof(char));
+    memcpy(proof->r[i][1], r[i][b], COMMITMENT_RAND_LENGTH * sizeof(char));
 
     proof->keys[i]    = (unsigned char**)malloc(2 * sizeof(unsigned char*));
     proof->keys[i][0] = (unsigned char*)malloc(16 * sizeof(unsigned char));
@@ -730,15 +722,10 @@ void clear_proof(mpc_lowmc_t const* lowmc, proof_t const* proof) {
     free(proof->keys[i][0]);
     free(proof->keys[i][1]);
     free(proof->keys[i]);
-
-    free(proof->r[i][0]);
-    free(proof->r[i][1]);
-    free(proof->r[i]);
   }
   free(proof->y);
   free(proof->views);
   free(proof->keys);
-  free(proof->r);
 }
 
 void free_proof(mpc_lowmc_t const* mpc_lowmc, proof_t* proof) {

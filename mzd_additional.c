@@ -123,7 +123,7 @@ mzd_t* mzd_local_copy(mzd_t* dst, mzd_t const* src) {
   }
 
   if (dst->nrows >= src->nrows || dst->ncols == src->ncols) {
-    unsigned char* d = __builtin_assume_aligned(dst->rows[0], 16);
+    unsigned char* d       = __builtin_assume_aligned(dst->rows[0], 16);
     unsigned char const* s = __builtin_assume_aligned(src->rows[0], 16);
 
     memcpy(d, s, src->nrows * src->rowstride * sizeof(word));
