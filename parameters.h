@@ -5,7 +5,8 @@
 
 // Output of size of the random oracle (\gamma')
 #define COMMITMENT_LENGTH SHA256_DIGEST_LENGTH
-#define COMMITMENT_RAND_LENGTH 4
+// Size of the randomness for the commitment (\nu)
+#define COMMITMENT_RAND_LENGTH 17
 
 // Repetition count (\gamma)
 #define NUM_ROUNDS 219
