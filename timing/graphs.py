@@ -10,6 +10,11 @@ import math
 from operator import itemgetter
 
 
+mpc_sha256_proof = 187
+mpc_sha256_verify = 31
+mpc_sha256_size = 830
+
+
 def compute_size(data):
   return data[:, 12] / 1024
 
@@ -22,12 +27,20 @@ def compute_verify(data):
   return np.sum(data[:, 8:12] / 1000, axis=1)
 
 
-def round_up(x):
-  return math.ceil(x / 5.0) * 5 + 2.5
+def round_up(x, f=5.0):
+  return max(math.ceil(x / f) * f + f / 2.0, 0)
 
 
-def round_down(x):
-  return max(math.floor(x / 5.0) * 5 - 2.5, 0)
+def round_down(x, f=5.0):
+  return max(math.floor(x / f) * f - f / 2.0, 0)
+
+
+def round_up_log(x):
+  return round_up(2**(math.ceil(math.log(x, 2))), f=4.0)
+
+
+def round_down_log(x):
+  return 2**(math.floor(math.log(x, 2)))
 
 
 def pick_5(size, sign, verify, labels):
@@ -81,7 +94,28 @@ def prepare_data(data, labels):
   return pick_interesting(size, sign, verify, labels)
 
 
+class Annotation(object):
+  def __init__(self, label, point, color, **style):
+    self.label = label
+    self.point = point
+    self.style = {'horizontalalignment': 'center', 'xytext': (0,5), 'textcoords': 'offset points',
+        'fontsize': 8}
+    self.color = color
+
+    if style is not None:
+      self.style.update(style)
+
+  def plot(self, ax):
+    ax.plot([self.point[0]], [self.point[1]], marker='o', color=self.color, linestyle='',
+            markersize=3)
+    if self.label is not None:
+      ax.annotate(self.label, xy=self.point, **self.style)
+
+
 def create_graph(prefix, fis_n, bg_n, fis_k, bg_k, fis_data, bg_data, fis_labels, bg_labels):
+  colors = sns.color_palette(n_colors=5)
+  annotation_color = colors[0]
+
   dataframes = {}
   annotate = []
 
@@ -98,56 +132,77 @@ def create_graph(prefix, fis_n, bg_n, fis_k, bg_k, fis_data, bg_data, fis_labels
   dataframes['bg_verify_{0}'.format(bg_n)] = pd.Series(t_bg_verify, index=t_bg_labels)
   dataframes['bg_size_{0}'.format(bg_n)] = pd.Series(t_bg_size, index=t_bg_labels)
 
-  fis_index = len(t_fis_labels) / 2
-  bg_index = len(t_bg_labels) / 2
+  fis_index = len(t_fis_labels) / 2 - 1
+  bg_index = len(t_bg_labels) / 2 - 1
 
-  annotate.append((t_fis_labels[fis_index], (t_fis_size[fis_index], t_fis_sign[fis_index]),
-    (t_fis_size[fis_index], t_fis_verify[fis_index])))
-  annotate.append((t_bg_labels[bg_index], (t_bg_size[bg_index], t_bg_sign[bg_index]),
-    (t_bg_size[bg_index], t_bg_verify[bg_index])))
+  annotate.append(Annotation(t_fis_labels[fis_index],
+                             (t_fis_size[fis_index], t_fis_sign[fis_index]),
+                             annotation_color))
+  annotate.append(Annotation(None,
+                             (t_fis_size[fis_index], t_fis_verify[fis_index]),
+                             annotation_color))
+  annotate.append(Annotation(t_bg_labels[bg_index],
+                             (t_bg_size[bg_index], t_bg_sign[bg_index]),
+                             annotation_color))
+  annotate.append(Annotation(None,
+                             (t_bg_size[bg_index], t_bg_verify[bg_index]),
+                             annotation_color))
 
-  ylim = (round_down(min(t_fis_sign + t_fis_verify + t_bg_sign + t_bg_verify)), round_up(max(t_fis_sign + t_fis_verify + t_bg_sign + t_bg_verify)))
-  xlim = (round_down(min(t_fis_size + t_bg_size)), round_up(max(t_fis_size + t_bg_size)))
+  annotate.append(Annotation('SHA256 proof',
+                             (mpc_sha256_size, mpc_sha256_proof),
+                             annotation_color, horizontalalignment='right'))
+  annotate.append(Annotation('SHA256 verify',
+                             (mpc_sha256_size, mpc_sha256_verify),
+                             annotation_color, horizontalalignment='right'))
+
+  combined_time = t_fis_sign + t_fis_verify + t_bg_sign + t_bg_verify + [mpc_sha256_proof,
+      mpc_sha256_verify]
+  combined_size = t_fis_size + t_bg_size + [mpc_sha256_size]
+
+  ylim = (round_down_log(min(combined_time)), round_up_log(max(combined_time)))
+  xlim = (round_down_log(min(combined_size)), round_up_log(max(combined_size)))
 
   df = pd.DataFrame(dataframes)
   df.sort_values(by=[k for k in dataframes.keys() if '_size_' in k], inplace=True)
 
   plt.figure(figsize=(10, 10 * 3 / 4.0))
 
-  colors = sns.color_palette(n_colors=5)
-  annotation_color = colors[0]
-
   ax = None
   ax = df.plot(x='fis_size_{0}'.format(fis_n), y='fis_sign_{0}'.format(fis_n),
-          label='Sign (FS) n={0}'.format(fis_n), ylim=ylim, xlim=xlim,
-          color=colors[1], linestyle='--', ax=ax)
-  df.plot(x='fis_size_{0}'.format(fis_n), y='fis_verify_{0}'.format(fis_n), label='Verify (FS) n={0}'.format(fis_n), ylim=ylim, xlim=xlim,
-          ax=ax, color=colors[2], linestyle=':')
-  df.plot(x='bg_size_{0}'.format(bg_n), y='bg_sign_{0}'.format(bg_n), label='Sign (BG) n={0}'.format(bg_n), ylim=ylim, xlim=xlim,
-          color=colors[3], linestyle='--', ax=ax)
-  df.plot(x='bg_size_{0}'.format(bg_n), y='bg_verify_{0}'.format(bg_n), label='Verify (BG) n={0}'.format(bg_n), ylim=ylim, xlim=xlim,
-          ax=ax, color=colors[4], linestyle=':')
+          label='Sign (FS) n={0}'.format(fis_n),
+          ylim=ylim, xlim=xlim,
+          color=colors[1], linestyle='--', ax=ax, logy=True, logx=True)
+  df.plot(x='fis_size_{0}'.format(fis_n), y='fis_verify_{0}'.format(fis_n), label='Verify (FS) n={0}'.format(fis_n),
+          ylim=ylim, xlim=xlim,
+          ax=ax, color=colors[2], linestyle=':', logy=True, logx=True)
+  df.plot(x='bg_size_{0}'.format(bg_n), y='bg_sign_{0}'.format(bg_n), label='Sign (BG) n={0}'.format(bg_n),
+          ylim=ylim, xlim=xlim,
+          color=colors[3], linestyle='--', ax=ax, logy=True, logx=True)
+  df.plot(x='bg_size_{0}'.format(bg_n), y='bg_verify_{0}'.format(bg_n), label='Verify (BG) n={0}'.format(bg_n),
+          ylim=ylim, xlim=xlim,
+          ax=ax, color=colors[4], linestyle=':', logy=True, logx=True)
 
-  for (label, p1, p2) in annotate:
-    ax.plot([p1[0], p2[0]], [p1[1], p2[1]], marker='o', color=annotation_color, linestyle='',
-            markersize=3)
-    ax.annotate(label, xy=p1, textcoords='offset points', xytext=(0,5), fontsize=8,
-                horizontalalignment='center')
+  for a in annotate:
+    a.plot(ax)
 
   # title and labels
   ax.set_title('Runtime vs. Signature size, [n]-[k]-[m]-[r]'.format(k))
   ax.set_ylabel('Time [ms]')
   ax.set_xlabel('Size [kB]')
 
+  # legend
+  handles, labels = ax.get_legend_handles_labels()
+  plt.legend(handles, labels, loc='upper center')
+
   # grid
-  ax.yaxis.set_minor_locator(plticker.AutoMinorLocator(4))
+  # ax.yaxis.set_minor_locator(plticker.AutoMinorLocator(4))
   ax.grid(True, axis='y', which='both')
 
   plt.savefig('{0}.eps'.format(prefix))
   plt.savefig('{0}.png'.format(prefix))
 
 
-def create_omp_graph(prefix, n, k, data, size, labels, max_num_threads):
+def create_omp_graph(prefix, n, k, data, size, labels, max_num_threads, title=''):
   datadict = {'1 thread' if not i else '{0} threads'.format(i + 1):
               pd.Series(data[i], index=labels) for i in xrange(max_num_threads)}
   datadict['size'] = pd.Series(size, index=labels)
@@ -163,7 +218,7 @@ def create_omp_graph(prefix, n, k, data, size, labels, max_num_threads):
     ax = df.plot(y='1 thread' if not i else '{0} threads'.format(i + 1), x='size', legend=True, ax=ax)
 
   # title and labels
-  ax.set_title('Parallel Execution with OpenMP')
+  # ax.set_title('Parallel Execution with OpenMP {0}'.format(title))
   ax.set_ylabel('Time [ms]')
   ax.set_xlabel('Size [kB]')
 
@@ -204,10 +259,14 @@ def create_omp_graphs(n, k, prefix, max_num_threads):
       if labels is None:
         labels = l
 
-  create_omp_graph('{0}-fis-sign'.format(prefix), n, k, all_fis_sign, all_fis_size[0], labels, max_num_threads)
-  create_omp_graph('{0}-fis-verify'.format(prefix), n, k, all_fis_verify, all_fis_size[0], labels, max_num_threads)
-  create_omp_graph('{0}-bg-sign'.format(prefix), n, k, all_bg_sign, all_bg_size[0], labels, max_num_threads)
-  create_omp_graph('{0}-bg-verify'.format(prefix), n, k, all_bg_verify, all_bg_size[0], labels, max_num_threads)
+  create_omp_graph('{0}-fis-sign'.format(prefix), n, k, all_fis_sign, all_fis_size[0], labels,
+      max_num_threads, title='(Sign)')
+  create_omp_graph('{0}-fis-verify'.format(prefix), n, k, all_fis_verify, all_fis_size[0], labels,
+      max_num_threads, title='(Verify)')
+  create_omp_graph('{0}-bg-sign'.format(prefix), n, k, all_bg_sign, all_bg_size[0], labels,
+      max_num_threads, title='(Sign)')
+  create_omp_graph('{0}-bg-verify'.format(prefix), n, k, all_bg_verify, all_bg_size[0], labels,
+      max_num_threads, title='(Verify)')
 
 
 def main(args):
