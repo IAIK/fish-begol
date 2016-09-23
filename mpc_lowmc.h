@@ -17,7 +17,7 @@ typedef struct {
 
 typedef struct {
   view_t** views;
-  unsigned char*** keys;
+  unsigned char keys[NUM_ROUNDS][2][16];
   unsigned char r[NUM_ROUNDS][2][COMMITMENT_RAND_LENGTH];
   unsigned char hashes[NUM_ROUNDS][COMMITMENT_LENGTH];
   unsigned char ch[(NUM_ROUNDS + 3) / 4];

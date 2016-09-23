@@ -40,7 +40,7 @@ def round_up_log(x):
 
 
 def round_down_log(x):
-  return 2**(math.floor(math.log(x, 2)))
+  return round_down(x, 10.0)
 
 
 def pick_5(size, sign, verify, labels):

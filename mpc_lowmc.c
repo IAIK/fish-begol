@@ -133,7 +133,6 @@ proof_t* proof_from_char_array(mpc_lowmc_t* lowmc, proof_t* proof, unsigned char
 
   proof->views = (view_t**)malloc(NUM_ROUNDS * sizeof(view_t*));
 
-  proof->keys = (unsigned char***)malloc(NUM_ROUNDS * sizeof(unsigned char**));
   memcpy(proof->hashes, temp, NUM_ROUNDS * COMMITMENT_LENGTH * sizeof(unsigned char));
   temp += NUM_ROUNDS * COMMITMENT_LENGTH;
 
@@ -145,9 +144,6 @@ proof_t* proof_from_char_array(mpc_lowmc_t* lowmc, proof_t* proof, unsigned char
     memcpy(proof->r[i][1], temp, COMMITMENT_RAND_LENGTH * sizeof(unsigned char));
     temp += COMMITMENT_RAND_LENGTH;
 
-    proof->keys[i]    = (unsigned char**)malloc(2 * sizeof(unsigned char*));
-    proof->keys[i][0] = (unsigned char*)malloc(16 * sizeof(unsigned char));
-    proof->keys[i][1] = (unsigned char*)malloc(16 * sizeof(unsigned char));
     memcpy(proof->keys[i][0], temp, 16 * sizeof(char));
     temp += 16;
     memcpy(proof->keys[i][1], temp, 16 * sizeof(char));
@@ -197,7 +193,6 @@ proof_t* create_proof(proof_t* proof, mpc_lowmc_t const* lowmc,
 
   proof->views = (view_t**)malloc(NUM_ROUNDS * sizeof(view_t*));
 
-  proof->keys = (unsigned char***)malloc(NUM_ROUNDS * sizeof(unsigned char**));
   // memcpy(proof->hashes, hashes, NUM_ROUNDS * 3 * SHA256_DIGEST_LENGTH * sizeof(char));
 
   for (unsigned int i = 0; i < NUM_ROUNDS; i++) {
@@ -210,9 +205,6 @@ proof_t* create_proof(proof_t* proof, mpc_lowmc_t const* lowmc,
     memcpy(proof->r[i][0], r[i][a], COMMITMENT_RAND_LENGTH * sizeof(char));
     memcpy(proof->r[i][1], r[i][b], COMMITMENT_RAND_LENGTH * sizeof(char));
 
-    proof->keys[i]    = (unsigned char**)malloc(2 * sizeof(unsigned char*));
-    proof->keys[i][0] = (unsigned char*)malloc(16 * sizeof(unsigned char));
-    proof->keys[i][1] = (unsigned char*)malloc(16 * sizeof(unsigned char));
     memcpy(proof->keys[i][0], keys[i][a], 16 * sizeof(char));
     memcpy(proof->keys[i][1], keys[i][b], 16 * sizeof(char));
 
@@ -719,13 +711,9 @@ void clear_proof(mpc_lowmc_t const* lowmc, proof_t const* proof) {
     }
     free(proof->views[i]);
 
-    free(proof->keys[i][0]);
-    free(proof->keys[i][1]);
-    free(proof->keys[i]);
   }
   free(proof->y);
   free(proof->views);
-  free(proof->keys);
 }
 
 void free_proof(mpc_lowmc_t const* mpc_lowmc, proof_t* proof) {
