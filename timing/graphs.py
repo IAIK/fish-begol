@@ -12,7 +12,7 @@ from operator import itemgetter
 
 # from ZKBoo
 mpc_sha256_proof = 187
-mpc_sha256_verify = 31
+mpc_sha256_verify = 71
 mpc_sha256_size = 830
 
 
