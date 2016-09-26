@@ -13,7 +13,7 @@ unsigned bg_compute_sig_size(unsigned m, unsigned n, unsigned r, unsigned k) {
   // views for mpc_and in sbox, intial view and last view + shared ciphertexts
   unsigned views = 2 * (r * int_view_size + first_view_size + full_view_size) + 3 * full_view_size;
   // commitment and r and seed
-  unsigned int commitment = 8 * (COMMITMENT_LENGTH + COMMITMENT_RAND_LENGTH + 16);
+  unsigned int commitment = 8 * (COMMITMENT_LENGTH + 2 * (COMMITMENT_RAND_LENGTH + 16));
   unsigned int challenge  = (BG_NUM_ROUNDS + 3) / 4;
 
   return (2 * BG_NUM_ROUNDS * (commitment + views) + full_view_size + challenge + 7) / 8;
