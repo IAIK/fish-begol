@@ -55,7 +55,7 @@ void aes_prng_clear(aes_prng_t* aes_prng) {
 
 #define unlikely(p) __builtin_expect(!!(p), 0)
 
-void aes_prng_get_randomness(aes_prng_t* aes_prng, unsigned char* dst, unsigned int count) {
+void aes_prng_get_randomness(aes_prng_t* aes_prng, unsigned char* dst, size_t count) {
   static const unsigned char plaintext[16] = {'0'};
 
   EVP_CIPHER_CTX* ctx = aes_prng->ctx;
