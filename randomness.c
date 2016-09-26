@@ -76,10 +76,20 @@ void aes_prng_get_randomness(aes_prng_t* aes_prng, unsigned char* dst, unsigned 
 
 // maybe seed with data from /dev/urandom
 
-void init_rand_bytes(void) {}
+static aes_prng_t aes_prng;
 
-int rand_bytes(unsigned char* dst, size_t len) {
-  return RAND_bytes(dst, len);
+void init_rand_bytes(void) {
+  unsigned char key[16];
+  RAND_bytes(key, sizeof(key));
+
+  aes_prng_init(&aes_prng, key);
 }
 
-void deinit_rand_bytes(void) {}
+int rand_bytes(unsigned char* dst, size_t len) {
+  aes_prng_get_randomness(&aes_prng, dst, len);
+  return 1;
+}
+
+void deinit_rand_bytes(void) {
+  aes_prng_clear(&aes_prng);
+}
