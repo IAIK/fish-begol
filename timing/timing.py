@@ -67,19 +67,19 @@ def main():
         fs_gen = compute_gen(fs)
         fs_sign = compute_sign(fs)
         fs_verify = compute_verify(fs)
-        all_timings_fs_median.append(map(np.median, [fs_gen, fs_sign, fs_verify,
-            fs_size]))
-        all_timings_fs_mean.append(map(np.mean, [fs_gen, fs_sign, fs_verify,
-            fs_size]))
+        all_timings_fs_median.append(list(map(np.median, [fs_gen, fs_sign, fs_verify,
+            fs_size])))
+        all_timings_fs_mean.append(list(map(np.mean, [fs_gen, fs_sign, fs_verify,
+            fs_size])))
 
         bg_size = compute_size(bg)
         bg_gen = compute_gen(bg)
         bg_sign = compute_sign(bg)
         bg_verify = compute_verify(bg)
-        all_timings_bg_median.append(map(np.median, [bg_gen, bg_sign, bg_verify,
-            bg_size]))
-        all_timings_bg_mean.append(map(np.mean, [bg_gen, bg_sign, bg_verify,
-            bg_size]))
+        all_timings_bg_median.append(list(map(np.median, [bg_gen, bg_sign, bg_verify,
+            bg_size])))
+        all_timings_bg_mean.append(list(map(np.mean, [bg_gen, bg_sign, bg_verify,
+            bg_size])))
 
     with h5py.File('{0}-{1}-{2}.mat'.format(args.prefix, n, k), 'w') as timings:
         timings.create_dataset("fis_sum", data=np.array(all_timings_fs))
@@ -90,6 +90,7 @@ def main():
         timings.create_dataset("bg_mean", data=np.array(all_timings_bg_mean))
         timings.create_dataset('labels', data=labels)
 
+
 def get_params(line):
   l = line.split()
   d = dict(zip(l[::2], l[1::2]))
@@ -97,6 +98,7 @@ def get_params(line):
   n = d['blocksize:']
   r = d['ANDdepth:']
   return m, n, r
+
 
 def parse_args():
   parser = argparse.ArgumentParser(description='Process LowMC Timing Args.')

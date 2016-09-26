@@ -323,11 +323,11 @@ def main(args):
 
   with h5py.File('{0}-{1}-{2}.mat'.format(prefix, fis_n, fis_k), 'r') as timings:
     fis_labels = list(timings.get("labels"))
-    fis_sum = np.array(timings.get("fis_median"))
+    fis_sum = np.array(timings.get("fis_mean"))
 
   with h5py.File('{0}-{1}-{2}.mat'.format(prefix, bg_n, bg_k), 'r') as timings:
     bg_labels = list(timings.get("labels"))
-    bg_sum = np.array(timings.get("bg_median"))
+    bg_sum = np.array(timings.get("bg_mean"))
 
   create_graph("{0}".format(prefix), fis_n, bg_n, fis_k, bg_k, fis_sum, bg_sum, fis_labels,
       bg_labels)
