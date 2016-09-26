@@ -279,8 +279,8 @@ def create_omp_graphs(n, k, prefix, max_num_threads):
     with h5py.File('{0}-{1}-{2}-{3}.mat'.format(prefix, threads, n, k), 'r') as timings:
       ol = list(timings.get("labels"))
 
-      fis_sum = np.array(timings.get("fis_median"))
-      bg_sum = np.array(timings.get("bg_median"))
+      fis_sum = np.array(timings.get("fis_mean"))
+      bg_sum = np.array(timings.get("bg_mean"))
 
       size, sign, verify, l =  prepare_data(fis_sum[2:], ol[2:])
       all_fis_sign.append(sign)

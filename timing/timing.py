@@ -29,6 +29,9 @@ def main():
     all_timings_bg = []
     all_timings_fs_median = []
     all_timings_bg_median = []
+    all_timings_fs_mean = []
+    all_timings_bg_mean = []
+
     labels = []
 
     for line in f.readlines():
@@ -60,23 +63,31 @@ def main():
         all_timings_fs.append(np.mean(fs, axis=0))
         all_timings_bg.append(np.mean(bg, axis=0))
 
-        fs_size = np.median(compute_size(fs))
-        fs_gen = np.median(compute_gen(fs))
-        fs_sign = np.median(compute_sign(fs))
-        fs_verify = np.median(compute_verify(fs))
-        all_timings_fs_median.append([fs_gen, fs_sign, fs_verify, fs_size])
+        fs_size = compute_size(fs)
+        fs_gen = compute_gen(fs)
+        fs_sign = compute_sign(fs)
+        fs_verify = compute_verify(fs)
+        all_timings_fs_median.append(map(np.median, [fs_gen, fs_sign, fs_verify,
+            fs_size]))
+        all_timings_fs_mean.append(map(np.mean, [fs_gen, fs_sign, fs_verify,
+            fs_size]))
 
-        bg_size = np.median(compute_size(bg))
-        bg_gen = np.median(compute_gen(bg))
-        bg_sign = np.median(compute_sign(bg))
-        bg_verify = np.median(compute_verify(bg))
-        all_timings_bg_median.append([bg_gen, bg_sign, bg_verify, bg_size])
+        bg_size = compute_size(bg)
+        bg_gen = compute_gen(bg)
+        bg_sign = compute_sign(bg)
+        bg_verify = compute_verify(bg)
+        all_timings_bg_median.append(map(np.median, [bg_gen, bg_sign, bg_verify,
+            bg_size]))
+        all_timings_bg_mean.append(map(np.mean, [bg_gen, bg_sign, bg_verify,
+            bg_size]))
 
     with h5py.File('{0}-{1}-{2}.mat'.format(args.prefix, n, k), 'w') as timings:
         timings.create_dataset("fis_sum", data=np.array(all_timings_fs))
         timings.create_dataset("bg_sum", data=np.array(all_timings_bg))
         timings.create_dataset("fis_median", data=np.array(all_timings_fs_median))
         timings.create_dataset("bg_median", data=np.array(all_timings_bg_median))
+        timings.create_dataset("fis_mean", data=np.array(all_timings_fs_mean))
+        timings.create_dataset("bg_mean", data=np.array(all_timings_bg_mean))
         timings.create_dataset('labels', data=labels)
 
 def get_params(line):
