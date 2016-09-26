@@ -105,7 +105,7 @@ class Annotation(object):
   def __init__(self, label, point, color, **style):
     self.label = label
     self.point = point
-    self.style = {'horizontalalignment': 'center', 'xytext': (0,5), 'textcoords': 'offset points',
+    self.style = {'horizontalalignment': 'left', 'xytext': (0,5), 'textcoords': 'offset points',
         'fontsize': 8}
     self.color = color
 
