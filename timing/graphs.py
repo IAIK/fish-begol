@@ -142,6 +142,32 @@ def create_graph(prefix, fis_n, bg_n, fis_k, bg_k, fis_data, bg_data, fis_labels
   fis_index = len(t_fis_labels) / 2 - 1
   bg_index = len(t_bg_labels) / 2 - 1
 
+  annotate.append(Annotation(t_fis_labels[0],
+                             (t_fis_size[0], t_fis_sign[0]),
+                             annotation_color))
+  annotate.append(Annotation(None,
+                             (t_fis_size[0], t_fis_verify[0]),
+                             annotation_color))
+  annotate.append(Annotation(t_bg_labels[0],
+                             (t_bg_size[0], t_bg_sign[0]),
+                             annotation_color))
+  annotate.append(Annotation(None,
+                             (t_bg_size[0], t_bg_verify[0]),
+                             annotation_color))
+
+  annotate.append(Annotation(t_fis_labels[-1],
+                             (t_fis_size[-1], t_fis_sign[-1]),
+                             annotation_color))
+  annotate.append(Annotation(None,
+                             (t_fis_size[-1], t_fis_verify[-1]),
+                             annotation_color))
+  annotate.append(Annotation(t_bg_labels[-1],
+                             (t_bg_size[-1], t_bg_sign[-1]),
+                             annotation_color))
+  annotate.append(Annotation(None,
+                             (t_bg_size[-1], t_bg_verify[-1]),
+                             annotation_color))
+
   annotate.append(Annotation(t_fis_labels[fis_index],
                              (t_fis_size[fis_index], t_fis_sign[fis_index]),
                              annotation_color))
