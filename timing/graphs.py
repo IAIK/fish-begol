@@ -123,7 +123,7 @@ class Annotation(object):
 
 def create_graph(prefix, fis_n, bg_n, fis_k, bg_k, fis_data, bg_data, fis_labels, bg_labels,
                  fis_annotate=None, bg_annotate=None, include_sha=True):
-  colors = sns.color_palette(n_colors=5)
+  colors = sns.color_palette('Greys_d', n_colors=3)
   annotation_color = colors[0]
   annotation_color_e = 'r'
   annotation_color_b = 'g'
@@ -225,17 +225,17 @@ def create_graph(prefix, fis_n, bg_n, fis_k, bg_k, fis_data, bg_data, fis_labels
   ax = None
   ax = df.plot(x='fis_size_{0}'.format(fis_n), y='fis_sign_{0}'.format(fis_n),
           label='Sign (FS) n={0}'.format(fis_n),
-          ylim=ylim, xlim=xlim,
-          color=colors[1], linestyle='--', ax=ax, logy=True, logx=True)
+          ylim=ylim, xlim=xlim, linewidth=1,
+          color=colors[2], linestyle='--', ax=ax, logy=True, logx=True)
   df.plot(x='fis_size_{0}'.format(fis_n), y='fis_verify_{0}'.format(fis_n), label='Verify (FS) n={0}'.format(fis_n),
-          ylim=ylim, xlim=xlim,
+          ylim=ylim, xlim=xlim, linewidth=1,
           ax=ax, color=colors[2], linestyle=':', logy=True, logx=True)
   df.plot(x='bg_size_{0}'.format(bg_n), y='bg_sign_{0}'.format(bg_n), label='Sign (BG) n={0}'.format(bg_n),
-          ylim=ylim, xlim=xlim,
-          color=colors[3], linestyle='--', ax=ax, logy=True, logx=True)
+          ylim=ylim, xlim=xlim, linewidth=1,
+          color=colors[0], linestyle='--', ax=ax, logy=True, logx=True)
   df.plot(x='bg_size_{0}'.format(bg_n), y='bg_verify_{0}'.format(bg_n), label='Verify (BG) n={0}'.format(bg_n),
-          ylim=ylim, xlim=xlim,
-          ax=ax, color=colors[4], linestyle=':', logy=True, logx=True)
+          ylim=ylim, xlim=xlim, linewidth=1,
+          ax=ax, color=colors[0], linestyle=':', logy=True, logx=True)
 
   for a in annotate:
     a.plot(ax)
@@ -390,8 +390,8 @@ def create_qh_graphs(args):
     bg_sign = sign[idx]
     bg_label = label[idx]
 
-  colors = sns.color_palette(n_colors=3)
-  annotation_color = colors[0]
+  colors = sns.color_palette('Greys_d', n_colors=3)
+  annotation_color = 'g'
 
   dataframes = {}
   annotate = []
@@ -415,7 +415,7 @@ def create_qh_graphs(args):
   ax = None
   ax = df.plot(x='fis_size', y='fis_sign',
           label='Sign (FS)',
-          color=colors[1], linestyle='--', ax=ax)
+          color=colors[0], linestyle='-.', ax=ax)
   df.plot(x='fis_size', y='fis_verify', label='Verify (FS)',
           ax=ax, color=colors[2], linestyle=':')
 
@@ -443,7 +443,6 @@ def create_qh_graphs(args):
 
 
 def main():
-  sns.set(style='white', context='paper', color_codes=True)
   sns.set(style='white', context='paper', font='CMU Serif')
   sns.set_style('white', {
     'legend.frameon': True,
