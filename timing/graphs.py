@@ -116,20 +116,33 @@ class Annotation(object):
 
   def plot(self, ax):
     ax.plot([self.point[0]], [self.point[1]], marker='o', color=self.color, linestyle='',
-            markersize=3)
+            markersize=4)
     if self.label is not None:
       ax.annotate(self.label, xy=self.point, **self.style)
 
 
-def create_graph(prefix, fis_n, bg_n, fis_k, bg_k, fis_data, bg_data, fis_labels, bg_labels):
+def create_graph(prefix, fis_n, bg_n, fis_k, bg_k, fis_data, bg_data, fis_labels, bg_labels,
+                 fis_annotate=None, bg_annotate=None, include_sha=True):
   colors = sns.color_palette(n_colors=5)
   annotation_color = colors[0]
+  annotation_color_e = 'r'
+  annotation_color_b = 'g'
 
   dataframes = {}
   annotate = []
 
   t_fis_size, t_fis_sign, t_fis_verify, t_fis_labels = prepare_data(fis_data, fis_labels)
   t_bg_size, t_bg_sign, t_bg_verify, t_bg_labels = prepare_data(bg_data, bg_labels)
+
+  if fis_annotate is not None:
+    fis_index = t_fis_labels.index(fis_annotate)
+  else:
+    fis_index = len(t_fis_labels) / 2 - 1
+
+  if bg_annotate is not None:
+    bg_index = t_bg_labels.index(bg_annotate)
+  else:
+    bg_index = len(t_bg_labels) / 2 - 1
 
   t_fis_labels = ["{0}-{1}-{2}".format(fis_n, fis_k, l) for l in t_fis_labels]
   t_bg_labels = ["{0}-{1}-{2}".format(bg_n, bg_k, l) for l in t_bg_labels]
@@ -141,54 +154,61 @@ def create_graph(prefix, fis_n, bg_n, fis_k, bg_k, fis_data, bg_data, fis_labels
   dataframes['bg_verify_{0}'.format(bg_n)] = pd.Series(t_bg_verify, index=t_bg_labels)
   dataframes['bg_size_{0}'.format(bg_n)] = pd.Series(t_bg_size, index=t_bg_labels)
 
-  fis_index = len(t_fis_labels) / 2 - 1
-  bg_index = len(t_bg_labels) / 2 - 1
+  fis_min_index = t_fis_size.index(min(t_fis_size))
+  fis_max_index = t_fis_size.index(max(t_fis_size))
+  bg_min_index = t_bg_size.index(min(t_bg_size))
+  bg_max_index = t_bg_size.index(max(t_bg_size))
 
-  annotate.append(Annotation(t_fis_labels[0],
-                             (t_fis_size[0], t_fis_sign[0]),
-                             annotation_color))
+  annotate.append(Annotation(t_fis_labels[fis_min_index],
+                             (t_fis_size[fis_min_index], t_fis_sign[fis_min_index]),
+                             annotation_color_e))
   annotate.append(Annotation(None,
-                             (t_fis_size[0], t_fis_verify[0]),
-                             annotation_color))
-  annotate.append(Annotation(t_bg_labels[0],
-                             (t_bg_size[0], t_bg_sign[0]),
-                             annotation_color))
+                             (t_fis_size[fis_min_index], t_fis_verify[fis_min_index]),
+                             annotation_color_e))
+  annotate.append(Annotation(t_bg_labels[bg_min_index],
+                             (t_bg_size[bg_min_index], t_bg_sign[bg_min_index]),
+                             annotation_color_e))
   annotate.append(Annotation(None,
-                             (t_bg_size[0], t_bg_verify[0]),
-                             annotation_color))
+                             (t_bg_size[bg_min_index], t_bg_verify[bg_min_index]),
+                             annotation_color_e))
 
-  annotate.append(Annotation(t_fis_labels[-1],
-                             (t_fis_size[-1], t_fis_sign[-1]),
-                             annotation_color))
+  annotate.append(Annotation(t_fis_labels[fis_max_index],
+                             (t_fis_size[fis_max_index], t_fis_sign[fis_max_index]),
+                             annotation_color_e))
   annotate.append(Annotation(None,
-                             (t_fis_size[-1], t_fis_verify[-1]),
-                             annotation_color))
-  annotate.append(Annotation(t_bg_labels[-1],
-                             (t_bg_size[-1], t_bg_sign[-1]),
-                             annotation_color))
+                             (t_fis_size[fis_max_index], t_fis_verify[fis_max_index]),
+                             annotation_color_e))
+  annotate.append(Annotation(t_bg_labels[bg_max_index],
+                             (t_bg_size[bg_max_index], t_bg_sign[bg_max_index]),
+                             annotation_color_e))
   annotate.append(Annotation(None,
-                             (t_bg_size[-1], t_bg_verify[-1]),
-                             annotation_color))
+                             (t_bg_size[bg_max_index], t_bg_verify[bg_max_index]),
+                             annotation_color_e))
 
   annotate.append(Annotation(t_fis_labels[fis_index],
                              (t_fis_size[fis_index], t_fis_sign[fis_index]),
-                             annotation_color))
+                             annotation_color_b))
   annotate.append(Annotation(None,
                              (t_fis_size[fis_index], t_fis_verify[fis_index]),
-                             annotation_color))
+                             annotation_color_b))
   annotate.append(Annotation(t_bg_labels[bg_index],
                              (t_bg_size[bg_index], t_bg_sign[bg_index]),
-                             annotation_color))
+                             annotation_color_b))
   annotate.append(Annotation(None,
                              (t_bg_size[bg_index], t_bg_verify[bg_index]),
-                             annotation_color))
+                             annotation_color_b))
 
-  annotate.append(Annotation('SHA256 proof',
-                             (mpc_sha256_size, mpc_sha256_proof),
-                             annotation_color, horizontalalignment='right'))
-  annotate.append(Annotation('SHA256 verify',
-                             (mpc_sha256_size, mpc_sha256_verify),
-                             annotation_color, horizontalalignment='right'))
+  print("FIS", t_fis_labels[fis_index], t_fis_size[fis_index], t_fis_sign[fis_index], t_fis_verify[fis_index])
+  print("BG", t_bg_labels[bg_index], t_bg_size[bg_index], t_bg_sign[bg_index], t_bg_verify[bg_index])
+
+
+  if include_sha:
+    annotate.append(Annotation('SHA256 proof',
+                               (mpc_sha256_size, mpc_sha256_proof),
+                               annotation_color, horizontalalignment='right'))
+    annotate.append(Annotation('SHA256 verify',
+                               (mpc_sha256_size, mpc_sha256_verify),
+                               annotation_color, horizontalalignment='right'))
 
   combined_time = t_fis_sign + t_fis_verify + t_bg_sign + t_bg_verify + [mpc_sha256_proof,
       mpc_sha256_verify]
@@ -221,7 +241,7 @@ def create_graph(prefix, fis_n, bg_n, fis_k, bg_k, fis_data, bg_data, fis_labels
     a.plot(ax)
 
   # title and labels
-  ax.set_title('Runtime vs. Signature size, [n]-[k]-[m]-[r]'.format(k))
+  ax.set_title('Runtime vs. Signature Size, [n]-[k]-[m]-[r]'.format(k))
   ax.set_ylabel('Time [ms]')
   ax.set_xlabel('Size [kB]')
 
@@ -237,7 +257,7 @@ def create_graph(prefix, fis_n, bg_n, fis_k, bg_k, fis_data, bg_data, fis_labels
   ax.grid(True, axis='y', which='both')
 
   plt.savefig('{0}.eps'.format(prefix))
-  plt.savefig('{0}.png'.format(prefix))
+  plt.savefig('{0}.pdf'.format(prefix))
 
 
 def create_omp_graph(prefix, n, k, data, size, labels, max_num_threads, title=''):
@@ -265,7 +285,7 @@ def create_omp_graph(prefix, n, k, data, size, labels, max_num_threads, title=''
   ax.grid(True, axis='y', which='both')
 
   plt.savefig('{0}-{1}-{2}.eps'.format(prefix, n, k))
-  plt.savefig('{0}-{1}-{2}.png'.format(prefix, n, k))
+  plt.savefig('{0}-{1}-{2}.pdf'.format(prefix, n, k))
 
 
 def create_omp_graphs(args):
@@ -328,7 +348,7 @@ def create_graphs(args):
     bg_sum = np.array(timings.get("bg_mean"))
 
   create_graph("{0}".format(prefix), fis_n, bg_n, fis_k, bg_k, fis_sum, bg_sum, fis_labels,
-      bg_labels)
+      bg_labels, args.fs_annotate, args.bg_annotate)
 
 
 def create_qh_graphs(args):
@@ -359,7 +379,11 @@ def create_qh_graphs(args):
     bg_sum = np.array(timings.get("bg_mean"))
 
     size, sign, verify, label = prepare_data(bg_sum, bg_labels)
-    idx = len(label) / 2 - 1
+
+    if args.bg_annotate is not None:
+      idx = label.index(args.bg_annotate)
+    else:
+      idx = len(label) / 2 - 1
 
     bg_size = size[idx]
     bg_verify = verify[idx]
@@ -385,7 +409,6 @@ def create_qh_graphs(args):
   annotate.append(Annotation('BG-{0}-{1}-{2} verify'.format(bg_n, bg_k, bg_label),
                              (bg_size, bg_verify),
                              annotation_color))
-
 
   plt.figure(figsize=figsize)
 
@@ -416,15 +439,17 @@ def create_qh_graphs(args):
   ax.grid(True, axis='y', which='both')
 
   plt.savefig('qh-{0}.eps'.format(prefix))
-  plt.savefig('qh-{0}.png'.format(prefix))
+  plt.savefig('qh-{0}.pdf'.format(prefix))
 
 
 def main():
   sns.set(style='white', context='paper', color_codes=True)
+  sns.set(style='white', context='paper', font='CMU Serif')
   sns.set_style('white', {
     'legend.frameon': True,
-    'font.family': ['serif'],
-    'font.serif': ['Computer Modern Romand', 'serif']
+    # 'text.usetex': True,
+    'font.family': 'CMU Serif',
+    'font.serif': ['CMU Serif']
   })
 
   parser = argparse.ArgumentParser(description='Create graphs')
@@ -450,6 +475,10 @@ def main():
                       choices=[128, 192, 256, 384, 448, 512], required=True, type=int)
   default_parser.add_argument("--fs-blocksize", help="LowMC block size for FS",
                       choices=[128, 192, 256, 384, 448, 512], required=True, type=int)
+  default_parser.add_argument("--bg-annotate", help="Pick BG instance to annotate",
+                              dest="bg_annotate")
+  default_parser.add_argument("--fs-annotate", help="Pick FS instance to annotate",
+                              dest="fs_annotate")
 
   qh_parser = subparsers.add_parser('qH', help='graphs for rising q_H')
   qh_parser.set_defaults(func=create_qh_graphs)
@@ -457,6 +486,7 @@ def main():
                       choices=[128, 192, 256, 384, 448, 512], required=True, type=int)
   qh_parser.add_argument("--bg-blocksize", help="LowMC block size for BG",
                       choices=[128, 192, 256, 384, 448, 512], required=True, type=int)
+  qh_parser.add_argument("--bg-annotate", help="Pick BG instance to annotate", dest="bg_annotate")
   qh_parser.add_argument("fsblocksizes", help="LowMC block size for FS", type=int,
                       choices=[128, 192, 256, 384, 448, 512], nargs='+')
 

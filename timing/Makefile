@@ -28,21 +28,26 @@ timings-omp:
 timings: timings-plain timings-pq timings-omp
 
 graphs-plain:
-	python graphs.py -p timings default --fs-blocksize 256 --fs-keysize 256 --bg-blocksize 128 --bg-keysize 128
-	mv timings.eps timings-w-reduction-loss.eps
-	python graphs.py -p timings default --fs-blocksize 128 --fs-keysize 128 --bg-blocksize 128 --bg-keysize 128
+	python graphs.py -p timings default \
+		--fs-blocksize 128 --fs-keysize 128 --fs-annotate 12-26 \
+		--bg-blocksize 128 --bg-keysize 128 --bg-annotate 12-26
 
 graphs-pq:
-	python graphs.py -p pq-timings default --fs-blocksize 384 --fs-keysize 256 --bg-blocksize 256 --bg-keysize 256
-	mv pq-timings.eps pq-timings-w-reduction-loss.eps
-	python graphs.py -p pq-timings default --fs-blocksize 256 --fs-keysize 256 --bg-blocksize 256 --bg-keysize 256
+	python graphs.py -p pq-timings default \
+		--fs-blocksize 256 --fs-keysize 256 --fs-annotate 20-31 \
+		--bg-blocksize 256 --bg-keysize 256 --bg-annotate 20-31
 
 graphs-omp:
 	python graphs.py -p omp-timings omp --bg-blocksize 128 --bg-keysize 128 -t $(MAXTHREADS)
 
 graphs-qh:
-	python graphs.py -p timings qH --bg-blocksize 128 --bg-keysize 128 128 192 256 512
-	# python graphs.py -p timings qh --bg-blocksize 128 --bg-keysize 128 128 192 256 512
+	python graphs.py -p timings qH \
+		--bg-blocksize 128 --bg-keysize 128 --bg-annotate 12-26 \
+		128 192 256 512
+	python graphs.py -p pq-timings qH \
+		--bg-blocksize 256 --bg-keysize 256 --bg-annotate 40-25 \
+		256 384 512
 
+graphs: graphs-plain graphs-pq graphs-omp graphs-qh
 
 all: timings-plain graphs-plain
