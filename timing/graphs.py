@@ -15,6 +15,8 @@ mpc_sha256_proof = 187
 mpc_sha256_verify = 89
 mpc_sha256_size = 830
 
+figsize=(10, 10 * 3 / 4.0)
+
 
 def compute_size(data):
   return data[:, 12] / 1024
@@ -198,7 +200,7 @@ def create_graph(prefix, fis_n, bg_n, fis_k, bg_k, fis_data, bg_data, fis_labels
   df = pd.DataFrame(dataframes)
   df.sort_values(by=[k for k in dataframes.keys() if '_size_' in k], inplace=True)
 
-  plt.figure(figsize=(10, 10 * 3 / 4.0))
+  plt.figure(figsize=figsize)
 
   ax = None
   ax = df.plot(x='fis_size_{0}'.format(fis_n), y='fis_sign_{0}'.format(fis_n),
@@ -246,7 +248,7 @@ def create_omp_graph(prefix, n, k, data, size, labels, max_num_threads, title=''
   df = pd.DataFrame(datadict)
   df.sort_values(by='size', inplace=True)
 
-  plt.figure(figsize=(10, 10 * 3 / 4.0))
+  plt.figure(figsize=figsize)
 
   colors = sns.color_palette(n_colors=max_num_threads)
   ax = None
@@ -266,7 +268,12 @@ def create_omp_graph(prefix, n, k, data, size, labels, max_num_threads, title=''
   plt.savefig('{0}-{1}-{2}.png'.format(prefix, n, k))
 
 
-def create_omp_graphs(n, k, prefix, max_num_threads):
+def create_omp_graphs(args):
+  prefix = args.prefix
+  n = args.bg_blocksize
+  k = args.bg_keysize
+  max_num_threads = args.threads
+
   labels = None
   all_fis_sign = []
   all_fis_verify = []
@@ -305,17 +312,8 @@ def create_omp_graphs(n, k, prefix, max_num_threads):
       max_num_threads, title='(Verify)')
 
 
-def main(args):
-  sns.set(style='white', context='paper', color_codes=True)
-  sns.set_style('white', {'legend.frameon': True})
-
+def create_graphs(args):
   prefix = args.prefix
-
-  if args.omp:
-    n = args.bg_blocksize
-    k = args.bg_keysize
-    return create_omp_graphs(n, k, prefix, args.threads)
-
   fis_n = args.fs_blocksize
   fis_k = args.fs_keysize
   bg_n = args.bg_blocksize
@@ -333,25 +331,140 @@ def main(args):
       bg_labels)
 
 
-if __name__ == "__main__":
+def create_qh_graphs(args):
+  prefix = args.prefix
+  bg_n = args.bg_blocksize
+  bg_k = args.bg_keysize
+
+  all_fis_sign = []
+  all_fis_verify = []
+  all_fis_label = []
+  all_fis_size = []
+
+  for n in args.fsblocksizes:
+    with h5py.File('{0}-{1}-{2}.mat'.format(prefix, n, n), 'r') as timings:
+      fis_labels = list(timings.get("labels"))
+      fis_sum = np.array(timings.get("fis_mean"))
+
+      size, sign, verify, label =  prepare_data(fis_sum, fis_labels)
+      idx = len(label) / 2 - 1
+
+      all_fis_sign.append(sign[idx])
+      all_fis_size.append(size[idx])
+      all_fis_verify.append(verify[idx])
+      all_fis_label.append(label[idx])
+
+  with h5py.File('{0}-{1}-{2}.mat'.format(prefix, bg_n, bg_k), 'r') as timings:
+    bg_labels = list(timings.get("labels"))
+    bg_sum = np.array(timings.get("bg_mean"))
+
+    size, sign, verify, label = prepare_data(bg_sum, bg_labels)
+    idx = len(label) / 2 - 1
+
+    bg_size = size[idx]
+    bg_verify = verify[idx]
+    bg_sign = sign[idx]
+    bg_label = label[idx]
+
+  colors = sns.color_palette(n_colors=3)
+  annotation_color = colors[0]
+
+  dataframes = {}
+  annotate = []
+
+  dataframes['fis_sign'] = pd.Series(all_fis_sign, index=all_fis_label)
+  dataframes['fis_verify'] = pd.Series(all_fis_verify, index=all_fis_label)
+  dataframes['fis_size'] = pd.Series(all_fis_size, index=all_fis_label)
+
+  df = pd.DataFrame(dataframes)
+  df.sort_values(by=[k for k in dataframes.keys() if '_size' in k], inplace=True)
+
+  annotate.append(Annotation('BG-{0}-{1}-{2} sign'.format(bg_n, bg_k, bg_label),
+                             (bg_size, bg_sign),
+                             annotation_color))
+  annotate.append(Annotation('BG-{0}-{1}-{2} verify'.format(bg_n, bg_k, bg_label),
+                             (bg_size, bg_verify),
+                             annotation_color))
+
+
+  plt.figure(figsize=figsize)
+
+  ax = None
+  ax = df.plot(x='fis_size', y='fis_sign',
+          label='Sign (FS)',
+          color=colors[1], linestyle='--', ax=ax)
+  df.plot(x='fis_size', y='fis_verify', label='Verify (FS)',
+          ax=ax, color=colors[2], linestyle=':')
+
+  for a in annotate:
+    a.plot(ax)
+
+  # title and labels
+  # ax.set_title('Runtime vs. Signature size with increasing q_H'.format(k))
+  ax.set_ylabel('Time [ms]')
+  ax.set_xlabel('Size [kB]')
+
+  # legend
+  handles, labels = ax.get_legend_handles_labels()
+  plt.legend(handles, labels, loc='upper center')
+
+  # TODO: add better ticks!
+  # TODO: fix xlim and ylim
+
+  # grid
+  # ax.yaxis.set_minor_locator(plticker.AutoMinorLocator(4))
+  ax.grid(True, axis='y', which='both')
+
+  plt.savefig('qh-{0}.eps'.format(prefix))
+  plt.savefig('qh-{0}.png'.format(prefix))
+
+
+def main():
+  sns.set(style='white', context='paper', color_codes=True)
+  sns.set_style('white', {
+    'legend.frameon': True,
+    'font.family': ['serif'],
+    'font.serif': ['Computer Modern Romand', 'serif']
+  })
+
   parser = argparse.ArgumentParser(description='Create graphs')
-  parser.add_argument("--bg-keysize", help="LowMC key size for BG",
-                      choices=[128, 192, 256, 384, 448, 512], required=True, type=int)
-  parser.add_argument("--fs-keysize", help="LowMC key size for FS",
-                      choices=[128, 192, 256, 384, 448, 512], required=True, type=int)
-  parser.add_argument("--bg-blocksize", help="LowMC key size for BG",
-                      choices=[128, 192, 256, 384, 448, 512], required=True, type=int)
-  parser.add_argument("--fs-blocksize", help="LowMC key size for FS",
-                      choices=[128, 192, 256, 384, 448, 512], required=True, type=int)
   parser.add_argument("-p", "--prefix", help="prefix of mat files",
                       default="timings")
-  parser.add_argument("-o", "--omp", help="produce graphs for omp runs",
-                      action='store_true', default=False)
-  parser.add_argument("-t", "--threads", help="# of OpenMP threads", type=int,
-                      default=4)
+  subparsers = parser.add_subparsers()
+
+  thread_parser = subparsers.add_parser('omp', help='OpenMP graphs')
+  thread_parser.set_defaults(func=create_omp_graphs)
+  thread_parser.add_argument("-t", "--threads", help="# of OpenMP threads", type=int, default=4)
+  thread_parser.add_argument("--bg-keysize", help="LowMC key size for BG",
+                             choices=[128, 192, 256, 384, 448, 512], required=True, type=int)
+  thread_parser.add_argument("--bg-blocksize", help="LowMC block size for BG",
+                             choices=[128, 192, 256, 384, 448, 512], required=True, type=int)
+
+  default_parser = subparsers.add_parser('default', help='Size vs Runtime graphs')
+  default_parser.set_defaults(func=create_graphs)
+  default_parser.add_argument("--bg-keysize", help="LowMC key size for BG",
+                      choices=[128, 192, 256, 384, 448, 512], required=True, type=int)
+  default_parser.add_argument("--bg-blocksize", help="LowMC block size for BG",
+                      choices=[128, 192, 256, 384, 448, 512], required=True, type=int)
+  default_parser.add_argument("--fs-keysize", help="LowMC key size for FS",
+                      choices=[128, 192, 256, 384, 448, 512], required=True, type=int)
+  default_parser.add_argument("--fs-blocksize", help="LowMC block size for FS",
+                      choices=[128, 192, 256, 384, 448, 512], required=True, type=int)
+
+  qh_parser = subparsers.add_parser('qH', help='graphs for rising q_H')
+  qh_parser.set_defaults(func=create_qh_graphs)
+  qh_parser.add_argument("--bg-keysize", help="LowMC key size for BG",
+                      choices=[128, 192, 256, 384, 448, 512], required=True, type=int)
+  qh_parser.add_argument("--bg-blocksize", help="LowMC block size for BG",
+                      choices=[128, 192, 256, 384, 448, 512], required=True, type=int)
+  qh_parser.add_argument("fsblocksizes", help="LowMC block size for FS", type=int,
+                      choices=[128, 192, 256, 384, 448, 512], nargs='+')
 
   args = parser.parse_args()
+  args.func(args)
 
-  main(args)
+
+if __name__ == "__main__":
+  main()
 
 # vim: tw=100 sts=2 sw=2 et

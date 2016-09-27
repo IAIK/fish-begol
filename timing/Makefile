@@ -1,5 +1,5 @@
-ITER?=10
-MAXTHREADS?=8
+ITER?=100
+MAXTHREADS?=$(shell grep "^processor"  /proc/cpuinfo | wc -l)
 
 timings-plain:
 	python timing.py lowmc-inst-128.txt -k 128 -i $(ITER)
@@ -7,6 +7,8 @@ timings-plain:
 	python timing.py lowmc-inst-192.txt -k 192 -i $(ITER)
 	python timing.py lowmc-inst-256.txt -k 128 -i $(ITER)
 	python timing.py lowmc-inst-256.txt -k 256 -i $(ITER)
+	python timing.py lowmc-inst-512.txt -k 128 -i $(ITER)
+	python timing.py lowmc-inst-512.txt -k 512 -i $(ITER)
 
 timings-pq:
 	python timing.py pq-lowmc-inst-256.txt -k 256 -i $(ITER) -p pq-timings
@@ -26,16 +28,21 @@ timings-omp:
 timings: timings-plain timings-pq timings-omp
 
 graphs-plain:
-	python graphs.py -p timings --fs-blocksize 256 --fs-keysize 256 --bg-blocksize 128 --bg-keysize 128
+	python graphs.py -p timings default --fs-blocksize 256 --fs-keysize 256 --bg-blocksize 128 --bg-keysize 128
 	mv timings.eps timings-w-reduction-loss.eps
-	python graphs.py -p timings --fs-blocksize 128 --fs-keysize 128 --bg-blocksize 128 --bg-keysize 128
+	python graphs.py -p timings default --fs-blocksize 128 --fs-keysize 128 --bg-blocksize 128 --bg-keysize 128
 
 graphs-pq:
-	python graphs.py -p pq-timings --fs-blocksize 384 --fs-keysize 256 --bg-blocksize 256 --bg-keysize 256
+	python graphs.py -p pq-timings default --fs-blocksize 384 --fs-keysize 256 --bg-blocksize 256 --bg-keysize 256
 	mv pq-timings.eps pq-timings-w-reduction-loss.eps
-	python graphs.py -p pq-timings --fs-blocksize 256 --fs-keysize 256 --bg-blocksize 256 --bg-keysize 256
+	python graphs.py -p pq-timings default --fs-blocksize 256 --fs-keysize 256 --bg-blocksize 256 --bg-keysize 256
 
 graphs-omp:
-	python graphs.py --fs-blocksize 128 --fs-keysize 128 --bg-blocksize 128 --bg-keysize 128 -p omp-timings -o -t $(MAXTHREADS)
+	python graphs.py -p omp-timings omp --bg-blocksize 128 --bg-keysize 128 -t $(MAXTHREADS)
+
+graphs-qh:
+	python graphs.py -p timings qH --bg-blocksize 128 --bg-keysize 128 128 192 256 512
+	# python graphs.py -p timings qh --bg-blocksize 128 --bg-keysize 128 128 192 256 512
+
 
 all: timings-plain graphs-plain
