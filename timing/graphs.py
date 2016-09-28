@@ -245,7 +245,6 @@ def create_graph(prefix, fis_n, bg_n, fis_k, bg_k, fis_data, bg_data, fis_labels
   handles, labels = ax.get_legend_handles_labels()
   plt.legend(handles, labels, loc='lower right')
 
-  # TODO: add better ticks!
   # TODO: fix xlim and ylim
 
   # grid and ticks
@@ -356,17 +355,28 @@ def create_qh_graphs(args):
   bg_k = args.bg_keysize
 
   dataframes = {}
+  annotate = []
+
   with h5py.File('{0}-{1}-{2}.mat'.format(prefix, bg_n, bg_k), 'r') as timings:
     bg_labels = list(timings.get("labels"))
     bg_sum = np.array(timings.get("bg_mean"))
 
     bg_size, bg_sign, bg_verify, bg_label = prepare_data(bg_sum, bg_labels)
-    dataframes['bg_sign'] = pd.Series(bg_sign, index=bg_label)
+    # dataframes['bg_sign'] = pd.Series(bg_sign, index=bg_label)
     dataframes['bg_verify'] = pd.Series(bg_verify, index=bg_label)
     dataframes['bg_size'] = pd.Series(bg_size, index=bg_label)
 
     xlim = [min(bg_size), max(bg_size)]
     ylim = [min(bg_verify), max(bg_verify)]
+
+    if args.bg_annotate:
+      try:
+        idx = bg_label.index(args.bg_annotate)
+
+        annotate.append(Annotation('BG-{0}-{1}-{2}'.format(bg_n, bg_k, bg_label[idx]),
+                                   (bg_size[idx], bg_verify[idx]), 'b'))
+      except ValueError:
+        pass
 
   for n in args.fsblocksizes:
     with h5py.File('{0}-{1}-{2}.mat'.format(prefix, n, n), 'r') as timings:
@@ -375,20 +385,28 @@ def create_qh_graphs(args):
 
       size, sign, verify, label =  prepare_data(fis_sum, fis_labels)
 
-      dataframes['fis_sign_{0}'.format(n)] = pd.Series(sign, index=label)
+      # dataframes['fis_sign_{0}'.format(n)] = pd.Series(sign, index=label)
       dataframes['fis_verify_{0}'.format(n)] = pd.Series(verify, index=label)
       dataframes['fis_size_{0}'.format(n)] = pd.Series(size, index=label)
 
       xlim = [min(size + xlim), max(size + xlim)]
       ylim = [min(verify + ylim), max(verify + ylim)]
 
+      if args.fs_annotate and args.fsblocksizes.index(n) == 0:
+        try:
+          idx = label.index(args.fs_annotate)
+
+          annotate.append(Annotation('FS-{0}-{1}-{2}'.format(n, n, label[idx]),
+                                     (size[idx], verify[idx]), 'b'))
+        except ValueError:
+          pass
+
+
   xlim = (round_down(xlim[0]), round_up(xlim[1]))
   ylim = (round_down(ylim[0]), round_up(ylim[1]))
 
   colors = sns.color_palette('Greys_d', n_colors=len(args.fsblocksizes) + 1)
   annotation_color = 'g'
-
-  annotate = []
 
   df = pd.DataFrame(dataframes)
   df.sort_values(by=[k for k in dataframes.keys() if '_size' in k], inplace=True)
@@ -475,6 +493,7 @@ def main():
   qh_parser.add_argument("--bg-blocksize", help="LowMC block size for BG",
                       choices=[128, 192, 256, 384, 448, 512], required=True, type=int)
   qh_parser.add_argument("--bg-annotate", help="Pick BG instance to annotate", dest="bg_annotate")
+  qh_parser.add_argument("--fs-annotate", help="Pick FS instance to annotate", dest="fs_annotate")
   qh_parser.add_argument("fsblocksizes", help="LowMC block size for FS", type=int,
                       choices=[128, 192, 256, 384, 448, 512], nargs='+')
 
