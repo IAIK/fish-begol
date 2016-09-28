@@ -12,9 +12,8 @@ timings-plain:
 
 timings-pq:
 	python timing.py pq-lowmc-inst-256.txt -k 256 -i $(ITER) -p pq-timings
-	python timing.py pq-lowmc-inst-384.txt -k 256 -i $(ITER) -p pq-timings
-	python timing.py pq-lowmc-inst-384.txt -k 384 -i $(ITER) -p pq-timings
-	python timing.py pq-lowmc-inst-512.txt -k 256 -i $(ITER) -p pq-timings
+	# python timing.py pq-lowmc-inst-384.txt -k 256 -i $(ITER) -p pq-timings
+	python timing.py pq-lowmc-inst-384-384.txt -k 384 -i $(ITER) -p pq-timings
 	python timing.py pq-lowmc-inst-512.txt -k 512 -i $(ITER) -p pq-timings
 
 timings-omp:
