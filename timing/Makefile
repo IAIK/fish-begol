@@ -45,7 +45,7 @@ graphs-qh:
 		--bg-blocksize 128 --bg-keysize 128 --bg-annotate 12-26 \
 		128 192 256 512
 	python graphs.py -p pq-timings qH \
-		--bg-blocksize 256 --bg-keysize 256 --bg-annotate 40-25 \
+		--bg-blocksize 256 --bg-keysize 256 --bg-annotate 20-31 \
 		256 384 512
 
 graphs: graphs-plain graphs-pq graphs-omp graphs-qh

@@ -198,10 +198,6 @@ def create_graph(prefix, fis_n, bg_n, fis_k, bg_k, fis_data, bg_data, fis_labels
                              (t_bg_size[bg_index], t_bg_verify[bg_index]),
                              annotation_color_b))
 
-  print("FIS", t_fis_labels[fis_index], t_fis_size[fis_index], t_fis_sign[fis_index], t_fis_verify[fis_index])
-  print("BG", t_bg_labels[bg_index], t_bg_size[bg_index], t_bg_sign[bg_index], t_bg_verify[bg_index])
-
-
   if include_sha:
     annotate.append(Annotation('SHA256 proof',
                                (mpc_sha256_size, mpc_sha256_proof),
@@ -247,13 +243,16 @@ def create_graph(prefix, fis_n, bg_n, fis_k, bg_k, fis_data, bg_data, fis_labels
 
   # legend
   handles, labels = ax.get_legend_handles_labels()
-  plt.legend(handles, labels, loc='upper center')
+  plt.legend(handles, labels, loc='lower right')
 
   # TODO: add better ticks!
   # TODO: fix xlim and ylim
 
-  # grid
-  # ax.yaxis.set_minor_locator(plticker.AutoMinorLocator(4))
+  # grid and ticks
+  ax.xaxis.set_major_locator(plticker.AutoLocator())
+  ax.yaxis.set_major_locator(plticker.AutoLocator())
+  ax.xaxis.set_major_formatter(plticker.ScalarFormatter())
+  ax.yaxis.set_major_formatter(plticker.ScalarFormatter())
   ax.grid(True, axis='y', which='both')
 
   plt.savefig('{0}.eps'.format(prefix))
@@ -356,10 +355,18 @@ def create_qh_graphs(args):
   bg_n = args.bg_blocksize
   bg_k = args.bg_keysize
 
-  all_fis_sign = []
-  all_fis_verify = []
-  all_fis_label = []
-  all_fis_size = []
+  dataframes = {}
+  with h5py.File('{0}-{1}-{2}.mat'.format(prefix, bg_n, bg_k), 'r') as timings:
+    bg_labels = list(timings.get("labels"))
+    bg_sum = np.array(timings.get("bg_mean"))
+
+    bg_size, bg_sign, bg_verify, bg_label = prepare_data(bg_sum, bg_labels)
+    dataframes['bg_sign'] = pd.Series(bg_sign, index=bg_label)
+    dataframes['bg_verify'] = pd.Series(bg_verify, index=bg_label)
+    dataframes['bg_size'] = pd.Series(bg_size, index=bg_label)
+
+    xlim = [min(bg_size), max(bg_size)]
+    ylim = [min(bg_verify), max(bg_verify)]
 
   for n in args.fsblocksizes:
     with h5py.File('{0}-{1}-{2}.mat'.format(prefix, n, n), 'r') as timings:
@@ -367,57 +374,36 @@ def create_qh_graphs(args):
       fis_sum = np.array(timings.get("fis_mean"))
 
       size, sign, verify, label =  prepare_data(fis_sum, fis_labels)
-      idx = len(label) / 2 - 1
 
-      all_fis_sign.append(sign[idx])
-      all_fis_size.append(size[idx])
-      all_fis_verify.append(verify[idx])
-      all_fis_label.append(label[idx])
+      dataframes['fis_sign_{0}'.format(n)] = pd.Series(sign, index=label)
+      dataframes['fis_verify_{0}'.format(n)] = pd.Series(verify, index=label)
+      dataframes['fis_size_{0}'.format(n)] = pd.Series(size, index=label)
 
-  with h5py.File('{0}-{1}-{2}.mat'.format(prefix, bg_n, bg_k), 'r') as timings:
-    bg_labels = list(timings.get("labels"))
-    bg_sum = np.array(timings.get("bg_mean"))
+      xlim = [min(size + xlim), max(size + xlim)]
+      ylim = [min(verify + ylim), max(verify + ylim)]
 
-    size, sign, verify, label = prepare_data(bg_sum, bg_labels)
+  xlim = (round_down(xlim[0]), round_up(xlim[1]))
+  ylim = (round_down(ylim[0]), round_up(ylim[1]))
 
-    if args.bg_annotate is not None:
-      idx = label.index(args.bg_annotate)
-    else:
-      idx = len(label) / 2 - 1
-
-    bg_size = size[idx]
-    bg_verify = verify[idx]
-    bg_sign = sign[idx]
-    bg_label = label[idx]
-
-  colors = sns.color_palette('Greys_d', n_colors=3)
+  colors = sns.color_palette('Greys_d', n_colors=len(args.fsblocksizes) + 1)
   annotation_color = 'g'
 
-  dataframes = {}
   annotate = []
-
-  dataframes['fis_sign'] = pd.Series(all_fis_sign, index=all_fis_label)
-  dataframes['fis_verify'] = pd.Series(all_fis_verify, index=all_fis_label)
-  dataframes['fis_size'] = pd.Series(all_fis_size, index=all_fis_label)
 
   df = pd.DataFrame(dataframes)
   df.sort_values(by=[k for k in dataframes.keys() if '_size' in k], inplace=True)
 
-  annotate.append(Annotation('BG-{0}-{1}-{2} sign'.format(bg_n, bg_k, bg_label),
-                             (bg_size, bg_sign),
-                             annotation_color))
-  annotate.append(Annotation('BG-{0}-{1}-{2} verify'.format(bg_n, bg_k, bg_label),
-                             (bg_size, bg_verify),
-                             annotation_color))
-
   plt.figure(figsize=figsize)
 
   ax = None
-  ax = df.plot(x='fis_size', y='fis_sign',
-          label='Sign (FS)',
-          color=colors[0], linestyle='-.', ax=ax)
-  df.plot(x='fis_size', y='fis_verify', label='Verify (FS)',
-          ax=ax, color=colors[2], linestyle=':')
+  ax = df.plot(x='bg_size', y='bg_verify', label='Verify (BG) n={0} k={0}'.format(bg_n), color=colors[0], linestyle='-',
+               ax=ax, xlim=xlim, ylim=ylim, logx=True, logy=True)
+
+  linestyles = ['-.', ':', '--']
+  for i in range(len(args.fsblocksizes)):
+    n = args.fsblocksizes[i]
+    df.plot(x='fis_size_{0}'.format(n), y='fis_verify_{0}'.format(n), label='Verify (FS) n={0} k={0}'.format(n),
+            color=colors[i], linestyle=linestyles[i % len(linestyles)], ax=ax, xlim=xlim, ylim=ylim, logx=True, logy=True)
 
   for a in annotate:
     a.plot(ax)
@@ -429,13 +415,16 @@ def create_qh_graphs(args):
 
   # legend
   handles, labels = ax.get_legend_handles_labels()
-  plt.legend(handles, labels, loc='upper center')
+  plt.legend(handles, labels, loc='upper right')
 
   # TODO: add better ticks!
   # TODO: fix xlim and ylim
 
-  # grid
-  # ax.yaxis.set_minor_locator(plticker.AutoMinorLocator(4))
+  # grid and ticks
+  ax.xaxis.set_major_locator(plticker.AutoLocator())
+  ax.yaxis.set_major_locator(plticker.AutoLocator())
+  ax.xaxis.set_major_formatter(plticker.ScalarFormatter())
+  ax.yaxis.set_major_formatter(plticker.ScalarFormatter())
   ax.grid(True, axis='y', which='both')
 
   plt.savefig('qh-{0}.eps'.format(prefix))
