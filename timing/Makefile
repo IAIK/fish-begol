@@ -14,7 +14,7 @@ timings-pq:
 	python timing.py pq-lowmc-inst-256.txt -k 256 -i $(ITER) -p pq-timings
 	# python timing.py pq-lowmc-inst-384.txt -k 256 -i $(ITER) -p pq-timings
 	python timing.py pq-lowmc-inst-384-384.txt -k 384 -i $(ITER) -p pq-timings
-	python timing.py pq-lowmc-inst-512.txt -k 512 -i $(ITER) -p pq-timings
+	python timing.py pq-lowmc-inst-512-512.txt -k 512 -i $(ITER) -p pq-timings
 
 timings-omp:
 	# before running this benchmark, make sure to disable HyperThreading as it
@@ -42,9 +42,11 @@ graphs-omp:
 graphs-qh:
 	python graphs.py -p timings qH \
 		--bg-blocksize 128 --bg-keysize 128 --bg-annotate 12-26 \
-		128 192 256 512
+		--fs-annotate 12-26 \
+		128 192 256
 	python graphs.py -p pq-timings qH \
 		--bg-blocksize 256 --bg-keysize 256 --bg-annotate 20-31 \
+		--fs-annotate 20-31 \
 		256 384 512
 
 graphs: graphs-plain graphs-pq graphs-omp graphs-qh
