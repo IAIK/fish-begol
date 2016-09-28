@@ -123,7 +123,7 @@ class Annotation(object):
 
 def create_graph(prefix, fis_n, bg_n, fis_k, bg_k, fis_data, bg_data, fis_labels, bg_labels,
                  fis_annotate=None, bg_annotate=None, include_sha=True):
-  colors = sns.color_palette('Greys_d', n_colors=3)
+  colors = sns.color_palette('Greys_d', n_colors=5)
   annotation_color = colors[0]
   annotation_color_e = 'r'
   annotation_color_b = 'g'
@@ -218,21 +218,18 @@ def create_graph(prefix, fis_n, bg_n, fis_k, bg_k, fis_data, bg_data, fis_labels
 
   plt.figure(figsize=figsize)
 
-  ax = None
-  ax = df.plot(x='fis_size_{0}'.format(fis_n), y='fis_sign_{0}'.format(fis_n),
-          label='Sign (FS) n={0}'.format(fis_n),
-          ylim=ylim, xlim=xlim, linewidth=1,
-          color=colors[2], linestyle='--', ax=ax, logy=True, logx=True)
-  df.plot(x='fis_size_{0}'.format(fis_n), y='fis_verify_{0}'.format(fis_n), label='Verify (FS) n={0}'.format(fis_n),
-          ylim=ylim, xlim=xlim, linewidth=1,
-          ax=ax, color=colors[2], linestyle=':', logy=True, logx=True)
-  df.plot(x='bg_size_{0}'.format(bg_n), y='bg_sign_{0}'.format(bg_n), label='Sign (BG) n={0}'.format(bg_n),
-          ylim=ylim, xlim=xlim, linewidth=1,
-          color=colors[0], linestyle='--', ax=ax, logy=True, logx=True)
-  df.plot(x='bg_size_{0}'.format(bg_n), y='bg_verify_{0}'.format(bg_n), label='Verify (BG) n={0}'.format(bg_n),
-          ylim=ylim, xlim=xlim, linewidth=1,
-          ax=ax, color=colors[0], linestyle=':', logy=True, logx=True)
+  args = {'logy': True, 'logx': True, 'linewidth': 1, 'ax': None}
+  args['ax'] = df.plot(x='fis_size_{0}'.format(fis_n), y='fis_sign_{0}'.format(fis_n),
+          label='${{\sf Sign}}$ (FS) n={0}'.format(fis_n),
+          color=colors[-1], linestyle='--', **args)
+  df.plot(x='fis_size_{0}'.format(fis_n), y='fis_verify_{0}'.format(fis_n), label='${{\sf Verify}}$ (FS) n={0}'.format(fis_n),
+          color=colors[-1], linestyle=':', **args)
+  df.plot(x='bg_size_{0}'.format(bg_n), y='bg_sign_{0}'.format(bg_n), label='${{\sf Sign}}$ (BG) n={0}'.format(bg_n),
+          color=colors[0], linestyle='--', **args)
+  df.plot(x='bg_size_{0}'.format(bg_n), y='bg_verify_{0}'.format(bg_n), label='${{\sf Verify}}$ (BG) n={0}'.format(bg_n),
+          color=colors[0], linestyle=':', **args)
 
+  ax = args['ax']
   for a in annotate:
     a.plot(ax)
 
@@ -245,7 +242,11 @@ def create_graph(prefix, fis_n, bg_n, fis_k, bg_k, fis_data, bg_data, fis_labels
   handles, labels = ax.get_legend_handles_labels()
   plt.legend(handles, labels, loc='lower right')
 
-  # TODO: fix xlim and ylim
+  # limits
+  ax.set_xlim(xlim)
+  ax.set_ylim(ylim)
+  ax.margins(x=0.1, y=0.1, tight=True)
+  ax.autoscale(enable=True, axis='both', tight=True)
 
   # grid and ticks
   ax.xaxis.set_major_locator(plticker.AutoLocator())
@@ -362,7 +363,7 @@ def create_qh_graphs(args):
     bg_sum = np.array(timings.get("bg_mean"))
 
     bg_size, bg_sign, bg_verify, bg_label = prepare_data(bg_sum, bg_labels)
-    # dataframes['bg_sign'] = pd.Series(bg_sign, index=bg_label)
+    dataframes['bg_sign'] = pd.Series(bg_sign, index=bg_label)
     dataframes['bg_verify'] = pd.Series(bg_verify, index=bg_label)
     dataframes['bg_size'] = pd.Series(bg_size, index=bg_label)
 
@@ -374,7 +375,7 @@ def create_qh_graphs(args):
         idx = bg_label.index(args.bg_annotate)
 
         annotate.append(Annotation('BG-{0}-{1}-{2}'.format(bg_n, bg_k, bg_label[idx]),
-                                   (bg_size[idx], bg_verify[idx]), 'b'))
+                                   (bg_size[idx], bg_sign[idx]), 'b'))
       except ValueError:
         pass
 
@@ -385,7 +386,7 @@ def create_qh_graphs(args):
 
       size, sign, verify, label =  prepare_data(fis_sum, fis_labels)
 
-      # dataframes['fis_sign_{0}'.format(n)] = pd.Series(sign, index=label)
+      dataframes['fis_sign_{0}'.format(n)] = pd.Series(sign, index=label)
       dataframes['fis_verify_{0}'.format(n)] = pd.Series(verify, index=label)
       dataframes['fis_size_{0}'.format(n)] = pd.Series(size, index=label)
 
@@ -397,7 +398,7 @@ def create_qh_graphs(args):
           idx = label.index(args.fs_annotate)
 
           annotate.append(Annotation('FS-{0}-{1}-{2}'.format(n, n, label[idx]),
-                                     (size[idx], verify[idx]), 'b'))
+                                     (size[idx], sign[idx]), 'b'))
         except ValueError:
           pass
 
@@ -414,13 +415,15 @@ def create_qh_graphs(args):
   plt.figure(figsize=figsize)
 
   ax = None
-  ax = df.plot(x='bg_size', y='bg_verify', label='Verify (BG) n={0} k={0}'.format(bg_n), color=colors[0], linestyle='-',
+  ax = df.plot(x='bg_size', y='bg_sign', label='BG, $Q_h = 2^{60}, \ldots, 2^{100}$', color=colors[0], linestyle='-',
                ax=ax, xlim=xlim, ylim=ylim, logx=True, logy=True)
 
+  qhs = [60, 80, 100, 120]
   linestyles = ['-.', ':', '--']
   for i in range(len(args.fsblocksizes)):
     n = args.fsblocksizes[i]
-    df.plot(x='fis_size_{0}'.format(n), y='fis_verify_{0}'.format(n), label='Verify (FS) n={0} k={0}'.format(n),
+    qh = qhs[i]
+    df.plot(x='fis_size_{0}'.format(n), y='fis_sign_{0}'.format(n), label='FS, $Q_h = 2^{{{0}}}$'.format(qh),
             color=colors[i], linestyle=linestyles[i % len(linestyles)], ax=ax, xlim=xlim, ylim=ylim, logx=True, logy=True)
 
   for a in annotate:
@@ -453,7 +456,7 @@ def main():
   sns.set(style='white', context='paper', font='CMU Serif')
   sns.set_style('white', {
     'legend.frameon': True,
-    # 'text.usetex': True,
+    'text.usetex': True,
     'font.family': 'CMU Serif',
     'font.serif': ['CMU Serif']
   })
