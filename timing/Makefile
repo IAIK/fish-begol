@@ -43,10 +43,12 @@ graphs-qh:
 	python graphs.py -p timings qH \
 		--bg-blocksize 128 --bg-keysize 128 --bg-annotate 12-26 \
 		--fs-annotate "128-128-12-26 256-256-26-18 512-512-34-37" \
+		--annotate-extreme \
 		128 256 512
 	python graphs.py -p pq-timings qH \
 		--bg-blocksize 256 --bg-keysize 256 --bg-annotate 20-31 \
 		--fs-annotate "256-256-20-31 384-384-30-33 512-512-34-37" \
+		--annotate-extreme \
 		256 384 512
 
 graphs: graphs-plain graphs-pq graphs-omp graphs-qh
