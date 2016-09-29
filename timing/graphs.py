@@ -271,9 +271,11 @@ def create_graph(prefix, fis_n, bg_n, fis_k, bg_k, fis_data, bg_data, fis_labels
 
   # grid and ticks
   ax.xaxis.set_major_locator(plticker.AutoLocator())
+  ax.xaxis.set_minor_locator(plticker.MultipleLocator(50))
   ax.yaxis.set_major_locator(plticker.AutoLocator())
   ax.yaxis.set_minor_locator(plticker.MultipleLocator(10 if bg_n == 128 else 25))
   ax.xaxis.set_major_formatter(plticker.ScalarFormatter())
+  ax.xaxis.set_minor_formatter(ScalarFormatterLim(0, 200))
   ax.yaxis.set_major_formatter(plticker.ScalarFormatter())
   ax.yaxis.set_minor_formatter(ScalarFormatterLim(0, 50 if bg_n == 128 else 100))
   ax.grid(True, axis='y', which='both')
@@ -503,9 +505,11 @@ def create_qh_graphs(args, style=None):
 
   # grid and ticks
   ax.xaxis.set_major_locator(plticker.AutoLocator())
+  ax.xaxis.set_minor_locator(plticker.MultipleLocator(50))
   ax.yaxis.set_major_locator(plticker.AutoLocator())
   ax.yaxis.set_minor_locator(plticker.MultipleLocator(25))
   ax.xaxis.set_major_formatter(plticker.ScalarFormatter())
+  ax.xaxis.set_minor_formatter(ScalarFormatterLim(0, 200))
   ax.yaxis.set_major_formatter(plticker.ScalarFormatter())
   ax.yaxis.set_minor_formatter(ScalarFormatterLim(0, 100))
   ax.grid(True, axis='y', which='both')
