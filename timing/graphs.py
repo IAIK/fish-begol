@@ -8,6 +8,7 @@ import pandas as pd
 import seaborn as sns
 import math
 from operator import itemgetter
+import json
 
 
 # from ZKBoo
@@ -16,6 +17,15 @@ mpc_sha256_verify = 89
 mpc_sha256_size = 830
 
 figsize=(10, 10 * 3 / 4.0)
+
+
+def lookup_style(style, *args):
+  for a in args:
+    if a in style:
+      style = style[a]
+    else:
+      return {}
+  return style
 
 
 def compute_size(data):
@@ -82,12 +92,6 @@ def pick_interesting(size, sign, verify, labels):
       continue
 
     rounds.add(r)
-    '''
-    indices = [j for (j, x) in enumerate(labels) if x.split('-')[1] == r]
-    new_size.append(sum(size[j] for j in indices) / len(indices))
-    new_sign.append(sum(sign[j] for j in indices) / len(indices))
-    new_verify.append(sum(verify[j] for j in indices) / len(indices))
-    '''
     new_size.append(size[i])
     new_sign.append(sign[i])
     new_verify.append(verify[i])
@@ -287,7 +291,7 @@ def create_omp_graph(prefix, n, k, data, size, labels, max_num_threads, title=''
   plt.savefig('{0}-{1}-{2}.pdf'.format(prefix, n, k))
 
 
-def create_omp_graphs(args):
+def create_omp_graphs(args, style=None):
   prefix = args.prefix
   n = args.bg_blocksize
   k = args.bg_keysize
@@ -331,7 +335,7 @@ def create_omp_graphs(args):
       max_num_threads, title='(Verify)')
 
 
-def create_graphs(args):
+def create_graphs(args, style=None):
   prefix = args.prefix
   fis_n = args.fs_blocksize
   fis_k = args.fs_keysize
@@ -350,7 +354,7 @@ def create_graphs(args):
       bg_labels, args.fs_annotate, args.bg_annotate)
 
 
-def create_qh_graphs(args):
+def create_qh_graphs(args, style=None):
   prefix = args.prefix
   bg_n = args.bg_blocksize
   bg_k = args.bg_keysize
@@ -374,17 +378,25 @@ def create_qh_graphs(args):
     ylim = [0, max(bg_sign)]
 
     if args.annotate_extreme:
-      annotate.append(Annotation('{0}-{1}-{2}'.format(bg_n, bg_k, bg_label[min_idx]),
-                                 (bg_size[min_idx], bg_sign[min_idx]), 'r'))
-      annotate.append(Annotation('{0}-{1}-{2}'.format(bg_n, bg_k, bg_label[max_idx]),
-                                 (bg_size[max_idx], bg_sign[max_idx]), 'r'))
+      min_label = '{0}-{1}-{2}'.format(bg_n, bg_k, bg_label[min_idx])
+      min_style = lookup_style(style, 'omp', 'BG', min_label)
+      max_label = '{0}-{1}-{2}'.format(bg_n, bg_k, bg_label[max_idx])
+      max_style = lookup_style(style, 'omp', 'BG', max_label)
+
+      annotate.append(Annotation(min_label,
+                                 (bg_size[min_idx], bg_sign[min_idx]), 'r', **min_style))
+      annotate.append(Annotation(max_label,
+                                 (bg_size[max_idx], bg_sign[max_idx]), 'r', **max_style))
 
     if args.bg_annotate:
       try:
         idx = bg_label.index(args.bg_annotate)
 
-        annotate.append(Annotation('{0}-{1}-{2}'.format(bg_n, bg_k, bg_label[idx]),
-                                   (bg_size[idx], bg_sign[idx]), 'g'))
+        alabel = '{0}-{1}-{2}'.format(bg_n, bg_k, bg_label[idx])
+        astyle = lookup_style(style, 'omp', 'BG', alabel)
+
+        annotate.append(Annotation(alabel,
+                                   (bg_size[idx], bg_sign[idx]), 'g', **astyle))
       except ValueError:
         pass
 
@@ -407,10 +419,15 @@ def create_qh_graphs(args):
       ylim = [0, max(sign + ylim)]
 
       if args.annotate_extreme:
-        annotate.append(Annotation('{0}-{1}-{2}'.format(n, n, label[min_idx]),
-                                   (size[min_idx], sign[min_idx]), 'r'))
-        annotate.append(Annotation('{0}-{1}-{2}'.format(n, n, label[max_idx]),
-                                   (size[max_idx], sign[max_idx]), 'r'))
+        min_label = '{0}-{1}-{2}'.format(n, n, label[min_idx])
+        min_style = lookup_style(style, 'omp', 'FS', min_label)
+        max_label = '{0}-{1}-{2}'.format(n, n, label[max_idx])
+        max_style = lookup_style(style, 'omp', 'FS', max_label)
+
+        annotate.append(Annotation(min_label,
+                                   (size[min_idx], sign[min_idx]), 'r', **min_style))
+        annotate.append(Annotation(max_label,
+                                   (size[max_idx], sign[max_idx]), 'r', **max_style))
 
       if args.fs_annotate:
         idx = None
@@ -422,8 +439,11 @@ def create_qh_graphs(args):
           pass
 
         if idx is not None:
-          annotate.append(Annotation('{0}-{1}-{2}'.format(n, n, label[idx]),
-                                     (size[idx], sign[idx]), 'g'))
+          alabel = '{0}-{1}-{2}'.format(n, n, label[idx])
+          astyle = lookup_style(style, 'omp', 'FS', alabel)
+
+          annotate.append(Annotation(alabel,
+                                     (size[idx], sign[idx]), 'g', **astyle))
 
 
   xlim = (round_down_log(xlim[0]), round_up_log(xlim[1]))
@@ -485,6 +505,7 @@ def main():
   parser = argparse.ArgumentParser(description='Create graphs')
   parser.add_argument('-p', '--prefix', help='prefix of mat files',
                       default='timings')
+  parser.add_argument('-s', '--style', help='JSON file with style info', default='style.json')
   subparsers = parser.add_subparsers()
 
   thread_parser = subparsers.add_parser('omp', help='OpenMP graphs')
@@ -524,7 +545,13 @@ def main():
                       choices=[128, 192, 256, 384, 448, 512], nargs='+')
 
   args = parser.parse_args()
-  args.func(args)
+
+  style = None
+  if args.style:
+    with open(args.style, 'r') as s:
+      style = json.load(s)
+
+  args.func(args, style)
 
 
 if __name__ == '__main__':

@@ -1,0 +1,48 @@
+{
+  "omp": {
+    "BG": {
+      "256-256-2-232": {
+        "horizontalalignment": "left",
+        "xytext": [5,0]
+      },
+      "256-256-20-31": {
+        "horizontalalignment": "center",
+        "xytext": [0,-12]
+      }
+    },
+    "FS": {
+      "128-128-12-26": {
+        "horizontalalignment": "left",
+        "xytext": [0,5]
+      },
+      "256-256-26-18": {
+        "horizontalalignment": "left",
+        "xytext": [0,5]
+      },
+      "512-512-34-37": {
+        "horizontalalignment": "left",
+        "xytext": [0,5]
+      },
+      "384-384-30-33": {
+        "horizontalalignment": "center",
+        "xytext": [0,-12]
+      },
+      "384-384-4-172": {
+        "horizontalalignment": "right",
+        "xytext": [0,5]
+      },
+      "512-512-34-37": {
+        "horizontalalignment": "left",
+        "xytext": [0,5]
+      },
+      "512-512-6-152": {
+        "horizontalalignment": "center",
+        "xytext": [0,5]
+      },
+      "512-512-170-25": {
+        "horizontalalignment": "center",
+        "xytext": [0,5]
+      }
+    }
+  }
+}
