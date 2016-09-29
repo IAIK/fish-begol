@@ -3,7 +3,7 @@
 
 #include <openssl/sha.h>
 
-// Output of size of the random oracle (\gamma')
+// Output of size of the random oracle (\rho)
 #define COMMITMENT_LENGTH SHA256_DIGEST_LENGTH
 // Size of the randomness for the commitment (\nu)
 #define COMMITMENT_RAND_LENGTH 17
