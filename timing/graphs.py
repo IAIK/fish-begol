@@ -368,7 +368,7 @@ def create_qh_graphs(args):
     dataframes['bg_size'] = pd.Series(bg_size, index=bg_label)
 
     xlim = [min(bg_size), max(bg_size)]
-    ylim = [min(bg_verify), max(bg_verify)]
+    ylim = [0, max(bg_verify)]
 
     if args.bg_annotate:
       try:
@@ -391,7 +391,7 @@ def create_qh_graphs(args):
       dataframes['fis_size_{0}'.format(n)] = pd.Series(size, index=label)
 
       xlim = [min(size + xlim), max(size + xlim)]
-      ylim = [min(verify + ylim), max(verify + ylim)]
+      ylim = [0, max(verify + ylim)]
 
       if args.fs_annotate and args.fsblocksizes.index(n) == 0:
         try:
@@ -404,7 +404,7 @@ def create_qh_graphs(args):
 
 
   xlim = (round_down(xlim[0]), round_up(xlim[1]))
-  ylim = (round_down(ylim[0]), round_up(ylim[1]))
+  ylim = (0, round_up(ylim[1]))
 
   colors = sns.color_palette('Greys_d', n_colors=len(args.fsblocksizes) + 1)
   annotation_color = 'g'
@@ -414,9 +414,9 @@ def create_qh_graphs(args):
 
   plt.figure(figsize=figsize)
 
-  ax = None
-  ax = df.plot(x='bg_size', y='bg_sign', label='BG, $Q_h = 2^{60}, \ldots, 2^{100}$', color=colors[0], linestyle='-',
-               ax=ax, xlim=xlim, ylim=ylim, logx=True, logy=True)
+  args = {'xlim': xlim, 'ylim': ylim, 'logx': True, 'logy': True, 'ax': None}
+  args['ax'] = df.plot(x='bg_size', y='bg_sign', label='BG, $Q_h = 2^{60}, \ldots, 2^{100}$', color=colors[0], linestyle='-',
+               **args)
 
   qhs = [60, 80, 100, 120]
   linestyles = ['-.', ':', '--']
@@ -424,8 +424,9 @@ def create_qh_graphs(args):
     n = args.fsblocksizes[i]
     qh = qhs[i]
     df.plot(x='fis_size_{0}'.format(n), y='fis_sign_{0}'.format(n), label='FS, $Q_h = 2^{{{0}}}$'.format(qh),
-            color=colors[i], linestyle=linestyles[i % len(linestyles)], ax=ax, xlim=xlim, ylim=ylim, logx=True, logy=True)
+            color=colors[i], linestyle=linestyles[i % len(linestyles)], **args)
 
+  ax = args['ax']
   for a in annotate:
     a.plot(ax)
 
