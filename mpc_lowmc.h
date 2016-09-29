@@ -11,9 +11,7 @@ typedef mzd_shared_t mpc_lowmc_key_t;
 
 typedef lowmc_t mpc_lowmc_t;
 
-typedef struct {
-  mzd_t **s;
-} view_t;
+typedef struct { mzd_t** s; } view_t;
 
 typedef struct {
   view_t** views;
@@ -32,7 +30,8 @@ unsigned char* proof_to_char_array(mpc_lowmc_t* lowmc, proof_t* proof, unsigned*
 
 proof_t* create_proof(proof_t* proof, mpc_lowmc_t const* lowmc,
                       unsigned char hashes[NUM_ROUNDS][3][COMMITMENT_LENGTH],
-                      unsigned char ch[NUM_ROUNDS], unsigned char r[NUM_ROUNDS][3][COMMITMENT_RAND_LENGTH],
+                      unsigned char ch[NUM_ROUNDS],
+                      unsigned char r[NUM_ROUNDS][3][COMMITMENT_RAND_LENGTH],
                       unsigned char keys[NUM_ROUNDS][3][16], mzd_t*** c_mpc,
                       view_t* const views[NUM_ROUNDS]);
 

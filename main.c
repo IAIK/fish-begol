@@ -1,4 +1,5 @@
 #include "hashing_util.h"
+#include "io.h"
 #include "lowmc.h"
 #include "lowmc_pars.h"
 #include "mpc.h"
@@ -8,7 +9,6 @@
 #include "randomness.h"
 #include "signature_bg.h"
 #include "signature_fis.h"
-#include "io.h"
 #include "timing.h"
 
 #include <inttypes.h>
@@ -16,10 +16,11 @@
 
 #ifndef VERBOSE
 static void print_timings(timing_and_size_t* timings, unsigned int iter, unsigned int numt) {
-  for(unsigned i = 0 ; i < iter ; i++) {
-    for(unsigned j = 0 ; j < numt ; j++) {
+  for (unsigned i = 0; i < iter; i++) {
+    for (unsigned j = 0; j < numt; j++) {
       printf("%lu", timings[i].data[j]);
-      if(j < numt - 1) printf(",");
+      if (j < numt - 1)
+        printf(",");
     }
     printf("\n");
   }
@@ -50,9 +51,9 @@ static void print_detailed_timings(timing_and_size_t* timings, unsigned int iter
 
 #endif
 
-void parse_args(int params[5], int argc, char **argv) {
-  if(argc != 6) {
-    printf("Usage ./mpc_lowmc [Number of SBoxes] [Blocksize] [Rounds] [Keysize] [Numiter]\n"); 
+void parse_args(int params[5], int argc, char** argv) {
+  if (argc != 6) {
+    printf("Usage ./mpc_lowmc [Number of SBoxes] [Blocksize] [Rounds] [Keysize] [Numiter]\n");
     exit(-1);
   }
   params[0] = atoi(argv[1]);
@@ -79,14 +80,15 @@ static void fis_sign_verify(int args[5]) {
 
     fis_signature_t* sig = fis_sign(&pp, &private_key, m);
 
-    unsigned len = 0;
-    unsigned char *data = fis_sig_to_char_array(&pp, sig, &len);
-    timing_and_size->size = fis_compute_sig_size(pp.lowmc->m, pp.lowmc->n, pp.lowmc->r, pp.lowmc->k);
+    unsigned len        = 0;
+    unsigned char* data = fis_sig_to_char_array(&pp, sig, &len);
+    timing_and_size->size =
+        fis_compute_sig_size(pp.lowmc->m, pp.lowmc->n, pp.lowmc->r, pp.lowmc->k);
     fis_free_signature(&pp, sig);
     sig = fis_sig_from_char_array(&pp, data);
     free(data);
 
-    if(fis_verify(&pp, &public_key, m, sig)) {
+    if (fis_verify(&pp, &public_key, m, sig)) {
 #ifndef VERBOSE
       printf("error\n");
 #endif
@@ -125,14 +127,14 @@ static void bg_sign_verify(int args[5]) {
 
     bg_signature_t* signature = bg_sign(&pp, &private_key, m);
 
-    unsigned len = 0;
-    unsigned char *data = bg_sig_to_char_array(&pp, signature, &len);
+    unsigned len          = 0;
+    unsigned char* data   = bg_sig_to_char_array(&pp, signature, &len);
     timing_and_size->size = bg_compute_sig_size(pp.lowmc->m, pp.lowmc->n, pp.lowmc->r, pp.lowmc->k);
     bg_free_signature(&pp, signature);
     signature = bg_sig_from_char_array(&pp, data);
     free(data);
 
-    if(bg_verify(&pp, &public_key, m, signature)) {
+    if (bg_verify(&pp, &public_key, m, signature)) {
 #ifndef VERBOSE
       printf("error\n");
 #endif

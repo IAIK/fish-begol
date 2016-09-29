@@ -5,16 +5,12 @@
 
 typedef struct {
   // pk = E_k(0)
-  mzd_t *pk;
+  mzd_t* pk;
 } fis_public_key_t;
 
-typedef struct {
-  lowmc_key_t *k;
-} fis_private_key_t;
+typedef struct { lowmc_key_t* k; } fis_private_key_t;
 
-typedef struct {
-  proof_t *proof;
-} fis_signature_t;
+typedef struct { proof_t* proof; } fis_signature_t;
 
 unsigned fis_compute_sig_size(unsigned m, unsigned n, unsigned r, unsigned k);
 
