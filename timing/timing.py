@@ -37,19 +37,19 @@ def main():
     for line in f.readlines():
       if line.rstrip():
         m, n, r = get_params(line)
-        fname = "{0}-{1}".format(m, r)
+        fname = '{0}-{1}'.format(m, r)
         labels.append(fname)
 
-        with open(fname, "w") as timings:
+        with open(fname, 'w') as timings:
           subprocess.Popen([args.executable, str(m), str(n), str(r), str(k),
                             str(args.iterations)], stdout=timings).wait()
 
-        with open(fname, "r") as timings:
+        with open(fname, 'r') as timings:
           data = timings.read()
         os.unlink(fname)
 
         mat = []
-        for line in data.split("\n"):
+        for line in data.split('\n'):
           line = line.replace('{', '')
           line = line.replace('}', '')
           if not len(line):
@@ -82,12 +82,12 @@ def main():
             bg_size])))
 
     with h5py.File('{0}-{1}-{2}.mat'.format(args.prefix, n, k), 'w') as timings:
-        timings.create_dataset("fis_sum", data=np.array(all_timings_fs))
-        timings.create_dataset("bg_sum", data=np.array(all_timings_bg))
-        timings.create_dataset("fis_median", data=np.array(all_timings_fs_median))
-        timings.create_dataset("bg_median", data=np.array(all_timings_bg_median))
-        timings.create_dataset("fis_mean", data=np.array(all_timings_fs_mean))
-        timings.create_dataset("bg_mean", data=np.array(all_timings_bg_mean))
+        timings.create_dataset('fis_sum', data=np.array(all_timings_fs))
+        timings.create_dataset('bg_sum', data=np.array(all_timings_bg))
+        timings.create_dataset('fis_median', data=np.array(all_timings_fs_median))
+        timings.create_dataset('bg_median', data=np.array(all_timings_bg_median))
+        timings.create_dataset('fis_mean', data=np.array(all_timings_fs_mean))
+        timings.create_dataset('bg_mean', data=np.array(all_timings_bg_mean))
         timings.create_dataset('labels', data=labels)
 
 
@@ -102,17 +102,18 @@ def get_params(line):
 
 def parse_args():
   parser = argparse.ArgumentParser(description='Process LowMC Timing Args.')
-  parser.add_argument("filename", help="the filename of the lowmc instances")
-  parser.add_argument("-k", "--keysize", help="the LowMC keysize", type=int,
+  parser.add_argument('filename', help='the filename of the lowmc instances')
+  parser.add_argument('-k', '--keysize', help='the LowMC keysize', type=int,
                       choices=[128, 192, 256, 384, 448, 512], default=128)
-  parser.add_argument("-x", "--executable", help="the LowMC MPC executable",
-                      default="../mpc_lowmc")
-  parser.add_argument("-i", "--iterations", help="number of iterations",
-                      default="100")
-  parser.add_argument("-p", "--prefix", help="prefix of mat files",
-                      default="timings")
+  parser.add_argument('-x', '--executable', help='the LowMC MPC executable',
+                      default='../mpc_lowmc')
+  parser.add_argument('-i', '--iterations', help='number of iterations',
+                      default='100')
+  parser.add_argument('-p', '--prefix', help='prefix of mat files',
+                      default='timings')
   args = parser.parse_args()
   return args
 
-if __name__ == "__main__":
+
+if __name__ == '__main__':
     main()
