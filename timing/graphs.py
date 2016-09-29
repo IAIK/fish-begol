@@ -414,9 +414,9 @@ def create_qh_graphs(args):
 
   plt.figure(figsize=figsize)
 
-  args = {'xlim': xlim, 'ylim': ylim, 'logx': True, 'logy': True, 'ax': None}
-  args['ax'] = df.plot(x='bg_size', y='bg_sign', label='BG, $Q_h = 2^{60}, \ldots, 2^{100}$', color=colors[0], linestyle='-',
-               **args)
+  pargs = {'xlim': xlim, 'ylim': ylim, 'logx': True, 'logy': True, 'ax': None}
+  pargs['ax'] = df.plot(x='bg_size', y='bg_sign', label='BG, $Q_h = 2^{60}, \ldots, 2^{100}$', color=colors[0], linestyle='-',
+                        **pargs)
 
   qhs = [60, 80, 100, 120]
   linestyles = ['-.', ':', '--']
@@ -424,9 +424,9 @@ def create_qh_graphs(args):
     n = args.fsblocksizes[i]
     qh = qhs[i]
     df.plot(x='fis_size_{0}'.format(n), y='fis_sign_{0}'.format(n), label='FS, $Q_h = 2^{{{0}}}$'.format(qh),
-            color=colors[i], linestyle=linestyles[i % len(linestyles)], **args)
+            color=colors[i], linestyle=linestyles[i % len(linestyles)], **pargs)
 
-  ax = args['ax']
+  ax = pargs['ax']
   for a in annotate:
     a.plot(ax)
 
