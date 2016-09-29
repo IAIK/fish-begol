@@ -50,3 +50,13 @@ m:   30 blocksize:   384    ANDdepth:    33        ANDs/bit:  7.73
 m:   28 blocksize:   384    ANDdepth:    35        ANDs/bit:  7.66
 m:   26 blocksize:   384    ANDdepth:    36        ANDs/bit:  7.31
 m:   24 blocksize:   384    ANDdepth:    38        ANDs/bit:  7.12
+m:   22 blocksize:   384    ANDdepth:    39        ANDs/bit:   6.7
+m:   20 blocksize:   384    ANDdepth:    41        ANDs/bit:  6.41
+m:   18 blocksize:   384    ANDdepth:    44        ANDs/bit:  6.19
+m:   16 blocksize:   384    ANDdepth:    49        ANDs/bit:  6.12
+m:   14 blocksize:   384    ANDdepth:    55        ANDs/bit:  6.02
+m:   12 blocksize:   384    ANDdepth:    62        ANDs/bit:  5.81
+m:   10 blocksize:   384    ANDdepth:    73        ANDs/bit:   5.7
+m:    8 blocksize:   384    ANDdepth:    90        ANDs/bit:  5.62
+m:    6 blocksize:   384    ANDdepth:   117        ANDs/bit:  5.48
+m:    4 blocksize:   384    ANDdepth:   172        ANDs/bit:  5.38
