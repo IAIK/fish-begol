@@ -373,10 +373,11 @@ def create_qh_graphs(args):
     xlim = [min(bg_size), max(bg_size)]
     ylim = [0, max(bg_sign)]
 
-    annotate.append(Annotation('{0}-{1}-{2}'.format(bg_n, bg_k, bg_label[min_idx]),
-                               (bg_size[min_idx], bg_sign[min_idx]), 'r'))
-    annotate.append(Annotation('{0}-{1}-{2}'.format(bg_n, bg_k, bg_label[max_idx]),
-                               (bg_size[max_idx], bg_sign[max_idx]), 'r'))
+    if args.annotate_extreme:
+      annotate.append(Annotation('{0}-{1}-{2}'.format(bg_n, bg_k, bg_label[min_idx]),
+                                 (bg_size[min_idx], bg_sign[min_idx]), 'r'))
+      annotate.append(Annotation('{0}-{1}-{2}'.format(bg_n, bg_k, bg_label[max_idx]),
+                                 (bg_size[max_idx], bg_sign[max_idx]), 'r'))
 
     if args.bg_annotate:
       try:
@@ -405,10 +406,11 @@ def create_qh_graphs(args):
       xlim = [min(size + xlim), max(size + xlim)]
       ylim = [0, max(sign + ylim)]
 
-      annotate.append(Annotation('{0}-{1}-{2}'.format(n, n, label[min_idx]),
-                                 (size[min_idx], sign[min_idx]), 'r'))
-      annotate.append(Annotation('{0}-{1}-{2}'.format(n, n, label[max_idx]),
-                                 (size[max_idx], sign[max_idx]), 'r'))
+      if args.annotate_extreme:
+        annotate.append(Annotation('{0}-{1}-{2}'.format(n, n, label[min_idx]),
+                                   (size[min_idx], sign[min_idx]), 'r'))
+        annotate.append(Annotation('{0}-{1}-{2}'.format(n, n, label[max_idx]),
+                                   (size[max_idx], sign[max_idx]), 'r'))
 
       if args.fs_annotate:
         idx = None
@@ -516,6 +518,8 @@ def main():
                       choices=[128, 192, 256, 384, 448, 512], required=True, type=int)
   qh_parser.add_argument('--bg-annotate', help='Pick BG instance to annotate', dest='bg_annotate')
   qh_parser.add_argument('--fs-annotate', help='Pick FS instance to annotate', dest='fs_annotate')
+  qh_parser.add_argument('--annotate-extreme', help='Annotate min/max points',
+                        dest='annotate_extreme', default=False, action='store_true')
   qh_parser.add_argument('fsblocksizes', help='LowMC block size for FS', type=int,
                       choices=[128, 192, 256, 384, 448, 512], nargs='+')
 
