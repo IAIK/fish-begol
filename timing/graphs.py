@@ -82,12 +82,12 @@ def pick_interesting(size, sign, verify, labels):
       continue
 
     rounds.add(r)
-    """
+    '''
     indices = [j for (j, x) in enumerate(labels) if x.split('-')[1] == r]
     new_size.append(sum(size[j] for j in indices) / len(indices))
     new_sign.append(sum(sign[j] for j in indices) / len(indices))
     new_verify.append(sum(verify[j] for j in indices) / len(indices))
-    """
+    '''
     new_size.append(size[i])
     new_sign.append(sign[i])
     new_verify.append(verify[i])
@@ -144,8 +144,8 @@ def create_graph(prefix, fis_n, bg_n, fis_k, bg_k, fis_data, bg_data, fis_labels
   else:
     bg_index = len(t_bg_labels) / 2 - 1
 
-  t_fis_labels = ["{0}-{1}-{2}".format(fis_n, fis_k, l) for l in t_fis_labels]
-  t_bg_labels = ["{0}-{1}-{2}".format(bg_n, bg_k, l) for l in t_bg_labels]
+  t_fis_labels = ['{0}-{1}-{2}'.format(fis_n, fis_k, l) for l in t_fis_labels]
+  t_bg_labels = ['{0}-{1}-{2}'.format(bg_n, bg_k, l) for l in t_bg_labels]
 
   dataframes['fis_sign_{0}'.format(fis_n)] = pd.Series(t_fis_sign, index=t_fis_labels)
   dataframes['fis_verify_{0}'.format(fis_n)] = pd.Series(t_fis_verify, index=t_fis_labels)
@@ -303,10 +303,10 @@ def create_omp_graphs(args):
 
   for threads in range(1, 1 + max_num_threads):
     with h5py.File('{0}-{1}-{2}-{3}.mat'.format(prefix, threads, n, k), 'r') as timings:
-      ol = list(timings.get("labels"))
+      ol = list(timings.get('labels'))
 
-      fis_sum = np.array(timings.get("fis_mean"))
-      bg_sum = np.array(timings.get("bg_mean"))
+      fis_sum = np.array(timings.get('fis_mean'))
+      bg_sum = np.array(timings.get('bg_mean'))
 
       size, sign, verify, l =  prepare_data(fis_sum[2:], ol[2:])
       all_fis_sign.append(sign)
@@ -339,14 +339,14 @@ def create_graphs(args):
   bg_k = args.bg_keysize
 
   with h5py.File('{0}-{1}-{2}.mat'.format(prefix, fis_n, fis_k), 'r') as timings:
-    fis_labels = list(timings.get("labels"))
-    fis_sum = np.array(timings.get("fis_mean"))
+    fis_labels = list(timings.get('labels'))
+    fis_sum = np.array(timings.get('fis_mean'))
 
   with h5py.File('{0}-{1}-{2}.mat'.format(prefix, bg_n, bg_k), 'r') as timings:
-    bg_labels = list(timings.get("labels"))
-    bg_sum = np.array(timings.get("bg_mean"))
+    bg_labels = list(timings.get('labels'))
+    bg_sum = np.array(timings.get('bg_mean'))
 
-  create_graph("{0}".format(prefix), fis_n, bg_n, fis_k, bg_k, fis_sum, bg_sum, fis_labels,
+  create_graph('{0}'.format(prefix), fis_n, bg_n, fis_k, bg_k, fis_sum, bg_sum, fis_labels,
       bg_labels, args.fs_annotate, args.bg_annotate)
 
 
@@ -359,30 +359,39 @@ def create_qh_graphs(args):
   annotate = []
 
   with h5py.File('{0}-{1}-{2}.mat'.format(prefix, bg_n, bg_k), 'r') as timings:
-    bg_labels = list(timings.get("labels"))
-    bg_sum = np.array(timings.get("bg_mean"))
+    bg_labels = list(timings.get('labels'))
+    bg_sum = np.array(timings.get('bg_mean'))
 
     bg_size, bg_sign, bg_verify, bg_label = prepare_data(bg_sum, bg_labels)
     dataframes['bg_sign'] = pd.Series(bg_sign, index=bg_label)
     dataframes['bg_verify'] = pd.Series(bg_verify, index=bg_label)
     dataframes['bg_size'] = pd.Series(bg_size, index=bg_label)
 
+    min_idx = bg_size.index(min(bg_size))
+    max_idx = bg_size.index(max(bg_size))
+
     xlim = [min(bg_size), max(bg_size)]
-    ylim = [0, max(bg_verify)]
+    ylim = [0, max(bg_sign)]
+
+    annotate.append(Annotation('{0}-{1}-{2}'.format(bg_n, bg_k, bg_label[min_idx]),
+                               (bg_size[min_idx], bg_sign[min_idx]), 'r'))
+    annotate.append(Annotation('{0}-{1}-{2}'.format(bg_n, bg_k, bg_label[max_idx]),
+                               (bg_size[max_idx], bg_sign[max_idx]), 'r'))
 
     if args.bg_annotate:
       try:
         idx = bg_label.index(args.bg_annotate)
 
-        annotate.append(Annotation('BG-{0}-{1}-{2}'.format(bg_n, bg_k, bg_label[idx]),
-                                   (bg_size[idx], bg_sign[idx]), 'b'))
+        annotate.append(Annotation('{0}-{1}-{2}'.format(bg_n, bg_k, bg_label[idx]),
+                                   (bg_size[idx], bg_sign[idx]), 'g'))
       except ValueError:
         pass
 
+  fs_annotations = args.fs_annotate.split(' ')
   for n in args.fsblocksizes:
     with h5py.File('{0}-{1}-{2}.mat'.format(prefix, n, n), 'r') as timings:
-      fis_labels = list(timings.get("labels"))
-      fis_sum = np.array(timings.get("fis_mean"))
+      fis_labels = list(timings.get('labels'))
+      fis_sum = np.array(timings.get('fis_mean'))
 
       size, sign, verify, label =  prepare_data(fis_sum, fis_labels)
 
@@ -390,21 +399,33 @@ def create_qh_graphs(args):
       dataframes['fis_verify_{0}'.format(n)] = pd.Series(verify, index=label)
       dataframes['fis_size_{0}'.format(n)] = pd.Series(size, index=label)
 
+      min_idx = size.index(min(size))
+      max_idx = size.index(max(size))
+
       xlim = [min(size + xlim), max(size + xlim)]
-      ylim = [0, max(verify + ylim)]
+      ylim = [0, max(sign + ylim)]
 
-      if args.fs_annotate and args.fsblocksizes.index(n) == 0:
+      annotate.append(Annotation('{0}-{1}-{2}'.format(n, n, label[min_idx]),
+                                 (size[min_idx], sign[min_idx]), 'r'))
+      annotate.append(Annotation('{0}-{1}-{2}'.format(n, n, label[max_idx]),
+                                 (size[max_idx], sign[max_idx]), 'r'))
+
+      if args.fs_annotate:
+        idx = None
         try:
-          idx = label.index(args.fs_annotate)
-
-          annotate.append(Annotation('FS-{0}-{1}-{2}'.format(n, n, label[idx]),
-                                     (size[idx], sign[idx]), 'b'))
+          for annot in fs_annotations:
+            if annot.startswith('{0}-{0}'.format(n)):
+              idx = label.index('-'.join(annot.split('-')[2:]))
         except ValueError:
           pass
 
+        if idx is not None:
+          annotate.append(Annotation('{0}-{1}-{2}'.format(n, n, label[idx]),
+                                     (size[idx], sign[idx]), 'g'))
 
-  xlim = (round_down(xlim[0]), round_up(xlim[1]))
-  ylim = (0, round_up(ylim[1]))
+
+  xlim = (round_down_log(xlim[0]), round_up_log(xlim[1]))
+  ylim = (0, round_up_log(ylim[1]))
 
   colors = sns.color_palette('Greys_d', n_colors=len(args.fsblocksizes) + 1)
   annotation_color = 'g'
@@ -415,7 +436,7 @@ def create_qh_graphs(args):
   plt.figure(figsize=figsize)
 
   pargs = {'xlim': xlim, 'ylim': ylim, 'logx': True, 'logy': True, 'ax': None}
-  pargs['ax'] = df.plot(x='bg_size', y='bg_sign', label='BG, $Q_h = 2^{60}, \ldots, 2^{100}$', color=colors[0], linestyle='-',
+  pargs['ax'] = df.plot(x='bg_size', y='bg_sign', label='BG, $Q_H = 2^{60}, \ldots, 2^{100}$', color=colors[0], linestyle='-',
                         **pargs)
 
   qhs = [60, 80, 100, 120]
@@ -423,7 +444,7 @@ def create_qh_graphs(args):
   for i in range(len(args.fsblocksizes)):
     n = args.fsblocksizes[i]
     qh = qhs[i]
-    df.plot(x='fis_size_{0}'.format(n), y='fis_sign_{0}'.format(n), label='FS, $Q_h = 2^{{{0}}}$'.format(qh),
+    df.plot(x='fis_size_{0}'.format(n), y='fis_sign_{0}'.format(n), label='FS, $Q_H = 2^{{{0}}}$'.format(qh),
             color=colors[i], linestyle=linestyles[i % len(linestyles)], **pargs)
 
   ax = pargs['ax']
@@ -438,9 +459,6 @@ def create_qh_graphs(args):
   # legend
   handles, labels = ax.get_legend_handles_labels()
   plt.legend(handles, labels, loc='upper right')
-
-  # TODO: add better ticks!
-  # TODO: fix xlim and ylim
 
   # grid and ticks
   ax.xaxis.set_major_locator(plticker.AutoLocator())
@@ -463,49 +481,49 @@ def main():
   })
 
   parser = argparse.ArgumentParser(description='Create graphs')
-  parser.add_argument("-p", "--prefix", help="prefix of mat files",
-                      default="timings")
+  parser.add_argument('-p', '--prefix', help='prefix of mat files',
+                      default='timings')
   subparsers = parser.add_subparsers()
 
   thread_parser = subparsers.add_parser('omp', help='OpenMP graphs')
   thread_parser.set_defaults(func=create_omp_graphs)
-  thread_parser.add_argument("-t", "--threads", help="# of OpenMP threads", type=int, default=4)
-  thread_parser.add_argument("--bg-keysize", help="LowMC key size for BG",
+  thread_parser.add_argument('-t', '--threads', help='# of OpenMP threads', type=int, default=4)
+  thread_parser.add_argument('--bg-keysize', help='LowMC key size for BG',
                              choices=[128, 192, 256, 384, 448, 512], required=True, type=int)
-  thread_parser.add_argument("--bg-blocksize", help="LowMC block size for BG",
+  thread_parser.add_argument('--bg-blocksize', help='LowMC block size for BG',
                              choices=[128, 192, 256, 384, 448, 512], required=True, type=int)
 
   default_parser = subparsers.add_parser('default', help='Size vs Runtime graphs')
   default_parser.set_defaults(func=create_graphs)
-  default_parser.add_argument("--bg-keysize", help="LowMC key size for BG",
+  default_parser.add_argument('--bg-keysize', help='LowMC key size for BG',
                       choices=[128, 192, 256, 384, 448, 512], required=True, type=int)
-  default_parser.add_argument("--bg-blocksize", help="LowMC block size for BG",
+  default_parser.add_argument('--bg-blocksize', help='LowMC block size for BG',
                       choices=[128, 192, 256, 384, 448, 512], required=True, type=int)
-  default_parser.add_argument("--fs-keysize", help="LowMC key size for FS",
+  default_parser.add_argument('--fs-keysize', help='LowMC key size for FS',
                       choices=[128, 192, 256, 384, 448, 512], required=True, type=int)
-  default_parser.add_argument("--fs-blocksize", help="LowMC block size for FS",
+  default_parser.add_argument('--fs-blocksize', help='LowMC block size for FS',
                       choices=[128, 192, 256, 384, 448, 512], required=True, type=int)
-  default_parser.add_argument("--bg-annotate", help="Pick BG instance to annotate",
-                              dest="bg_annotate")
-  default_parser.add_argument("--fs-annotate", help="Pick FS instance to annotate",
-                              dest="fs_annotate")
+  default_parser.add_argument('--bg-annotate', help='Pick BG instance to annotate',
+                              dest='bg_annotate')
+  default_parser.add_argument('--fs-annotate', help='Pick FS instance to annotate',
+                              dest='fs_annotate')
 
   qh_parser = subparsers.add_parser('qH', help='graphs for rising q_H')
   qh_parser.set_defaults(func=create_qh_graphs)
-  qh_parser.add_argument("--bg-keysize", help="LowMC key size for BG",
+  qh_parser.add_argument('--bg-keysize', help='LowMC key size for BG',
                       choices=[128, 192, 256, 384, 448, 512], required=True, type=int)
-  qh_parser.add_argument("--bg-blocksize", help="LowMC block size for BG",
+  qh_parser.add_argument('--bg-blocksize', help='LowMC block size for BG',
                       choices=[128, 192, 256, 384, 448, 512], required=True, type=int)
-  qh_parser.add_argument("--bg-annotate", help="Pick BG instance to annotate", dest="bg_annotate")
-  qh_parser.add_argument("--fs-annotate", help="Pick FS instance to annotate", dest="fs_annotate")
-  qh_parser.add_argument("fsblocksizes", help="LowMC block size for FS", type=int,
+  qh_parser.add_argument('--bg-annotate', help='Pick BG instance to annotate', dest='bg_annotate')
+  qh_parser.add_argument('--fs-annotate', help='Pick FS instance to annotate', dest='fs_annotate')
+  qh_parser.add_argument('fsblocksizes', help='LowMC block size for FS', type=int,
                       choices=[128, 192, 256, 384, 448, 512], nargs='+')
 
   args = parser.parse_args()
   args.func(args)
 
 
-if __name__ == "__main__":
+if __name__ == '__main__':
   main()
 
 # vim: tw=100 sts=2 sw=2 et
