@@ -1,8 +1,8 @@
 #ifndef MZD_ADDITIONAL_H
 #define MZD_ADDITIONAL_H
 
-#include "randomness.h"
 #include <m4ri/m4ri.h>
+#include "randomness.h"
 
 /**
  * Modified mzd_init calling malloc less often. Do not pass mzd_t instances
@@ -32,6 +32,8 @@ mzd_t* mzd_local_copy(mzd_t* dst, mzd_t const* src);
  * \param n the length of the vector
  */
 mzd_t* mzd_init_random_vector(rci_t n);
+
+mzd_t* mzd_init_random_vector_prng(rci_t n, aes_prng_t* aes_prng);
 
 void mzd_randomize_ssl(mzd_t* val);
 
@@ -68,25 +70,5 @@ mzd_t* mzd_mul_v(mzd_t* c, mzd_t const* v, mzd_t const* At);
  * Compute c + v * A optimized for c and v being vectors.
  */
 mzd_t* mzd_addmul_v(mzd_t* c, mzd_t const* v, mzd_t const* At);
-
-typedef struct {
-  unsigned int share_count;
-  mzd_t* shared[3];
-} mzd_shared_t;
-
-#define MZD_SHARED_EMPTY                                                                           \
-  {                                                                                                \
-    0, {                                                                                           \
-      NULL                                                                                         \
-    }                                                                                              \
-  }
-
-void mzd_shared_init(mzd_shared_t* shared_value, mzd_t const* value);
-void mzd_shared_copy(mzd_shared_t* dst, mzd_shared_t const* src);
-void mzd_shared_from_shares(mzd_shared_t* shared_value, mzd_t* const* shares,
-                            unsigned int share_count);
-void mzd_shared_share(mzd_shared_t* shared_value);
-void mzd_shared_share_prng(mzd_shared_t* shared_value, aes_prng_t* aes_prng);
-void mzd_shared_clear(mzd_shared_t* shared_value);
 
 #endif

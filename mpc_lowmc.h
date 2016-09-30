@@ -5,6 +5,7 @@
 #include <stdbool.h>
 
 #include "lowmc_pars.h"
+#include "mzd_shared.h"
 #include "parameters.h"
 
 typedef mzd_shared_t mpc_lowmc_key_t;
