@@ -152,23 +152,6 @@ static void mzd_randomize_aes_prng(mzd_t* v, aes_prng_t* aes_prng) {
   }
 }
 
-void mzd_randomize_upper_triangular(mzd_t* val) {
-  const word mask_end = val->high_bitmask;
-  for (rci_t i = 0; i < val->nrows; ++i) {
-    const unsigned int offset = i / word_size_bits;
-    const unsigned int bit    = i % word_size_bits;
-    word* row                 = val->rows[i];
-
-    rand_bytes((unsigned char*)(row + offset), (val->width - offset) * sizeof(word));
-    row[val->width - 1] &= mask_end;
-
-    row[offset] |= ((word)1) << bit;
-    if (bit) {
-      row[offset] &= ~((((word)1) << bit) - 1);
-    }
-  }
-}
-
 mzd_t* mzd_init_random_vector(rci_t n) {
   mzd_t* A = mzd_local_init(1, n);
   mzd_randomize_ssl(A);
