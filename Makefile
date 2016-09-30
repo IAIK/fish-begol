@@ -21,4 +21,4 @@ clean:
 dist:
 	zip source.zip $(wildcard *.c) $(wildcard *.h) Makefile README.md \
 		$(wildcard timing/*.py) timing/Makefile \
-		$(wildcard timing/lowmc-*.txt) $(wildcard timing/pq-lowmc-*.txt)
+		$(wildcard timing/lowmc-*-*-*.txt) $(wildcard timing/pq-lowmc-*-*-*.txt)
