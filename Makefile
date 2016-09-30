@@ -19,6 +19,6 @@ clean:
 	rm -f *.o *.gch mpc_lowmc mpc_lowmc_openmp
 
 dist:
-	zip source.zip $(wildcard *.c) $(wildcard *.h) Makefile README.md \
+	zip ../source.zip $(wildcard *.c) $(wildcard *.h) Makefile README.md \
 		$(wildcard timing/*.py) timing/Makefile \
 		$(wildcard timing/lowmc-*-*-*.txt) $(wildcard timing/pq-lowmc-*-*-*.txt)
