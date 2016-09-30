@@ -18,6 +18,12 @@ mpc_sha256_size = 830
 
 figsize=(10, 10 * 3 / 4.0)
 
+strings = {
+  'FS': '${\sf Fish}$',
+  'BG': '${\sf Begol}$',
+  'Verify': '${\sf Verify}$',
+  'Sign': '${\sf Sign}$'
+}
 
 class ScalarFormatterLim(plticker.ScalarFormatter):
 
@@ -243,13 +249,13 @@ def create_graph(prefix, fis_n, bg_n, fis_k, bg_k, fis_data, bg_data, fis_labels
 
   args = {'logy': True, 'logx': True, 'linewidth': 1, 'ax': None}
   args['ax'] = df.plot(x='fis_size_{0}'.format(fis_n), y='fis_sign_{0}'.format(fis_n),
-          label='${{\sf Sign}}$ (FS) n={0}'.format(fis_n),
+          label='{Sign} ({FS}) n={0}'.format(fis_n, **strings),
           color=colors[-1], linestyle='--', **args)
-  df.plot(x='fis_size_{0}'.format(fis_n), y='fis_verify_{0}'.format(fis_n), label='${{\sf Verify}}$ (FS) n={0}'.format(fis_n),
+  df.plot(x='fis_size_{0}'.format(fis_n), y='fis_verify_{0}'.format(fis_n), label='{Verify} ({FS}) n={0}'.format(fis_n, **strings),
           color=colors[-1], linestyle=':', **args)
-  df.plot(x='bg_size_{0}'.format(bg_n), y='bg_sign_{0}'.format(bg_n), label='${{\sf Sign}}$ (BG) n={0}'.format(bg_n),
+  df.plot(x='bg_size_{0}'.format(bg_n), y='bg_sign_{0}'.format(bg_n), label='{Sign} ({BG}) n={0}'.format(bg_n, **strings),
           color=colors[0], linestyle='--', **args)
-  df.plot(x='bg_size_{0}'.format(bg_n), y='bg_verify_{0}'.format(bg_n), label='${{\sf Verify}}$ (BG) n={0}'.format(bg_n),
+  df.plot(x='bg_size_{0}'.format(bg_n), y='bg_verify_{0}'.format(bg_n), label='{Verify} ({BG}) n={0}'.format(bg_n, **strings),
           color=colors[0], linestyle=':', **args)
 
   ax = args['ax']
@@ -479,7 +485,7 @@ def create_qh_graphs(args, style=None):
   plt.figure(figsize=figsize)
 
   pargs = {'xlim': xlim, 'ylim': ylim, 'logx': True, 'logy': True, 'ax': None}
-  pargs['ax'] = df.plot(x='bg_size', y='bg_sign', label='BG, $Q_H = 2^{60}, \ldots, 2^{100}$', color=colors[0], linestyle='-',
+  pargs['ax'] = df.plot(x='bg_size', y='bg_sign', label='{BG}, $Q_H = 2^{{60}}, \ldots, 2^{{100}}$'.format(**strings), color=colors[0], linestyle='-',
                         **pargs)
 
   qhs = [60, 80, 100, 120]
@@ -487,7 +493,7 @@ def create_qh_graphs(args, style=None):
   for i in range(len(args.fsblocksizes)):
     n = args.fsblocksizes[i]
     qh = qhs[i]
-    df.plot(x='fis_size_{0}'.format(n), y='fis_sign_{0}'.format(n), label='FS, $Q_H = 2^{{{0}}}$'.format(qh),
+    df.plot(x='fis_size_{0}'.format(n), y='fis_sign_{0}'.format(n), label='{FS}, $Q_H = 2^{{{0}}}$'.format(qh, **strings),
             color=colors[i], linestyle=linestyles[i % len(linestyles)], **pargs)
 
   ax = pargs['ax']
