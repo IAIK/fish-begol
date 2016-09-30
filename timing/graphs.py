@@ -27,21 +27,16 @@ strings = {
 
 class ScalarFormatterLim(plticker.ScalarFormatter):
 
-  def __init__(self, minval, maxval, *args, **kwargs):
+  def __init__(self, minval, maxval, base, *args, **kwargs):
     self.minval = minval
     self.maxval = maxval
+    self.base = base
     super(ScalarFormatterLim, self).__init__(*args, **kwargs)
 
   def pprint_val(self, value):
-    if value >= self.minval and value < self.maxval:
+    if (value >= self.minval and value < self.maxval) or value % self.base == 0:
       return super(ScalarFormatterLim, self).pprint_val(value)
     return ''
-
-  def format_data_short(self, value):
-    if value >= self.minval and value < self.maxval:
-      return super(ScalarFormatterLim, self).format_data_short(value)
-    return ''
-
 
 
 def lookup_style(style, *args):
@@ -276,14 +271,10 @@ def create_graph(prefix, fis_n, bg_n, fis_k, bg_k, fis_data, bg_data, fis_labels
   ax.set_ylim(ylim)
 
   # grid and ticks
-  ax.xaxis.set_major_locator(plticker.AutoLocator())
-  ax.xaxis.set_minor_locator(plticker.MultipleLocator(50))
-  ax.yaxis.set_major_locator(plticker.AutoLocator())
-  ax.yaxis.set_minor_locator(plticker.MultipleLocator(10 if bg_n == 128 else 25))
-  ax.xaxis.set_major_formatter(plticker.ScalarFormatter())
-  ax.xaxis.set_minor_formatter(ScalarFormatterLim(0, 200))
-  ax.yaxis.set_major_formatter(plticker.ScalarFormatter())
-  ax.yaxis.set_minor_formatter(ScalarFormatterLim(0, 50 if bg_n == 128 else 100))
+  ax.xaxis.set_major_locator(plticker.MultipleLocator(50))
+  ax.yaxis.set_major_locator(plticker.MultipleLocator(10 if bg_n == 128 else 25))
+  ax.xaxis.set_major_formatter(ScalarFormatterLim(0, 200, 100))
+  ax.yaxis.set_major_formatter(ScalarFormatterLim(0, 50 if bg_n == 128 else 100, 100))
   ax.grid(True, axis='y', which='both')
 
   plt.savefig('{0}.eps'.format(prefix))
@@ -510,14 +501,10 @@ def create_qh_graphs(args, style=None):
   plt.legend(handles, labels, loc='upper right')
 
   # grid and ticks
-  ax.xaxis.set_major_locator(plticker.AutoLocator())
-  ax.xaxis.set_minor_locator(plticker.MultipleLocator(50))
-  ax.yaxis.set_major_locator(plticker.AutoLocator())
-  ax.yaxis.set_minor_locator(plticker.MultipleLocator(25))
-  ax.xaxis.set_major_formatter(plticker.ScalarFormatter())
-  ax.xaxis.set_minor_formatter(ScalarFormatterLim(0, 200))
-  ax.yaxis.set_major_formatter(plticker.ScalarFormatter())
-  ax.yaxis.set_minor_formatter(ScalarFormatterLim(0, 100))
+  ax.xaxis.set_major_locator(plticker.MultipleLocator(50))
+  ax.yaxis.set_major_locator(plticker.MultipleLocator(25))
+  ax.xaxis.set_major_formatter(ScalarFormatterLim(0, 200, 100))
+  ax.yaxis.set_major_formatter(ScalarFormatterLim(0, 100, 100))
   ax.grid(True, axis='y', which='both')
 
   plt.savefig('qh-{0}.eps'.format(prefix))
