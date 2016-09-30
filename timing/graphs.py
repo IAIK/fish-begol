@@ -146,7 +146,7 @@ class Annotation(object):
 
 
 def create_graph(prefix, fis_n, bg_n, fis_k, bg_k, fis_data, bg_data, fis_labels, bg_labels,
-                 fis_annotate=None, bg_annotate=None, include_sha=True):
+                 fis_annotate=None, bg_annotate=None, include_sha=True, style={}):
   colors = sns.color_palette('Greys_d', n_colors=5)
   annotation_color = colors[0]
   annotation_color_e = 'r'
@@ -244,13 +244,16 @@ def create_graph(prefix, fis_n, bg_n, fis_k, bg_k, fis_data, bg_data, fis_labels
 
   args = {'logy': True, 'logx': True, 'linewidth': 1, 'ax': None}
   args['ax'] = df.plot(x='fis_size_{0}'.format(fis_n), y='fis_sign_{0}'.format(fis_n),
-          label='{Sign} ({FS}) n={0}'.format(fis_n, **strings),
+          label=('{Sign} ({FS})' + (' n={0}' if bg_n != fis_n else '')).format(fis_n, **strings),
           color=colors[-1], linestyle='--', **args)
-  df.plot(x='fis_size_{0}'.format(fis_n), y='fis_verify_{0}'.format(fis_n), label='{Verify} ({FS}) n={0}'.format(fis_n, **strings),
+  df.plot(x='fis_size_{0}'.format(fis_n), y='fis_verify_{0}'.format(fis_n),
+          label=('{Verify} ({FS})' + (' n={0}' if bg_n != fis_n else '')).format(fis_n, **strings),
           color=colors[-1], linestyle=':', **args)
-  df.plot(x='bg_size_{0}'.format(bg_n), y='bg_sign_{0}'.format(bg_n), label='{Sign} ({BG}) n={0}'.format(bg_n, **strings),
+  df.plot(x='bg_size_{0}'.format(bg_n), y='bg_sign_{0}'.format(bg_n),
+          label=('{Sign} ({BG})'  + (' n={0}' if bg_n != fis_n else '')).format(bg_n, **strings),
           color=colors[0], linestyle='--', **args)
-  df.plot(x='bg_size_{0}'.format(bg_n), y='bg_verify_{0}'.format(bg_n), label='{Verify} ({BG}) n={0}'.format(bg_n, **strings),
+  df.plot(x='bg_size_{0}'.format(bg_n), y='bg_verify_{0}'.format(bg_n),
+          label=('{Verify} ({BG})'  + (' n={0}' if bg_n != fis_n else '')).format(bg_n, **strings),
           color=colors[0], linestyle=':', **args)
 
   ax = args['ax']
@@ -258,13 +261,13 @@ def create_graph(prefix, fis_n, bg_n, fis_k, bg_k, fis_data, bg_data, fis_labels
     a.plot(ax)
 
   # title and labels
-  ax.set_title('Runtime vs. Signature Size, [n]-[k]-[m]-[r]'.format(k))
+  ax.set_title('Runtime vs. Signature Size, [n]-[k]-[m]-[r]' + (', n={0}'.format(bg_n) if bg_n == fis_n else ''))
   ax.set_ylabel('Time [ms]')
   ax.set_xlabel('Size [kB]')
 
   # legend
   handles, labels = ax.get_legend_handles_labels()
-  plt.legend(handles, labels, loc='lower right')
+  plt.legend(handles, labels, loc='lower right', prop=lookup_style(style, 'legend', 'n={0}'.format(bg_n)))
 
   # limits
   ax.set_xlim(xlim)
@@ -369,7 +372,7 @@ def create_graphs(args, style=None):
     bg_sum = np.array(timings.get('bg_mean'))
 
   create_graph('{0}'.format(prefix), fis_n, bg_n, fis_k, bg_k, fis_sum, bg_sum, fis_labels,
-      bg_labels, args.fs_annotate, args.bg_annotate)
+      bg_labels, args.fs_annotate, args.bg_annotate, style=style)
 
 
 def create_qh_graphs(args, style=None):
