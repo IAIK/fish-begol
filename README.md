@@ -6,6 +6,12 @@ setting described in [2]. Some of the code, and in particular the basic LowMC
 related methods, are taken from [1]. Methods for MPC computations are based on
 [3].
 
+Building
+--------
+
+To disable optimizations remove `-DWITH_OPT` from `CPPFLAGS` in `Makefile`.
+Verbose output can be enabled by adding `-DVERBOSE`.
+
 Dependencies
 ------------
 
