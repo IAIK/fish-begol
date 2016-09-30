@@ -408,6 +408,7 @@ _mpc_sbox_layer_bitsliced_avx_verify(mzd_t** out, mzd_t** in, view_t const* view
 
 #endif
 
+/*
 static int _mpc_sbox_layer(mzd_t** out, mzd_t** in, rci_t m, view_t* views, int* i, mzd_t** rvec,
                            unsigned sc, BIT_and_ptr andBitPtr) {
   mpc_copy(out, in, sc);
@@ -505,6 +506,7 @@ static mzd_t** _mpc_lowmc_call(mpc_lowmc_t const* lowmc, mpc_lowmc_key_t* lowmc_
   mpc_free(x, sc);
   return c;
 }
+*/
 
 static mzd_t** _mpc_lowmc_call_bitsliced(mpc_lowmc_t const* lowmc, mpc_lowmc_key_t* lowmc_key,
                                          mzd_t const* p, mzd_t* const* shared_p, view_t* views,
