@@ -5,14 +5,14 @@
 #include "avx.h"
 
 static const unsigned int sse_bound = 128 / (8 * sizeof(word));
-static const unsigned int avx_bound = 256 / (8 * sizeof(word));
 #endif
+static const unsigned int avx_bound = 256 / (8 * sizeof(word));
 static const unsigned int word_size_bits = 8 * sizeof(word);
 
 static rci_t calculate_rowstride(rci_t width) {
   // As soon as we hit the AVX bound, use 32 byte alignment. Otherwise use 6
   // byte alignment for SSE.
-  if (width >= avx_bound) {
+  if ((size_t) width >= avx_bound) {
     return ((width * sizeof(word) + 31) & ~31) / sizeof(word);
   } else {
     return ((width * sizeof(word) + 15) & ~15) / sizeof(word);
