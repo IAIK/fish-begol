@@ -14,7 +14,7 @@ import json
 # from ZKBoo
 mpc_sha256_proof = 187
 mpc_sha256_verify = 89
-mpc_sha256_size = 830
+mpc_sha256_size = 1368312 / 1024.0
 
 figsize=(10, 10 * 3 / 4.0)
 
