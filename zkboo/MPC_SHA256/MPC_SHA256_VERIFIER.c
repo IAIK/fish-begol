@@ -40,7 +40,7 @@ int main(void) {
 	z zs[NUM_ROUNDS];
 	FILE *file;
 
-	char outputFile[10];
+	char outputFile[11];
 	sprintf(outputFile, "out%i.bin", NUM_ROUNDS);
 	file = fopen(outputFile, "rb");
 	if (!file) {

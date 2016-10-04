@@ -707,7 +707,7 @@ int main(void) {
 	clock_t beginWrite = clock();
 	FILE *file;
 
-	char outputFile[10];
+	char outputFile[11];
 	sprintf(outputFile, "out%i.bin", NUM_ROUNDS);
 	file = fopen(outputFile, "wb");
 	if (!file) {
