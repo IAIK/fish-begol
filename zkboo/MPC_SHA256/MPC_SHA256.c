@@ -25,7 +25,7 @@ int totalRandom = 0;
 int totalSha = 0;
 int totalSS = 0;
 int totalHash = 0;
-int NUM_ROUNDS = 136;
+int NUM_ROUNDS = 219;
 
 
 
