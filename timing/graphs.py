@@ -34,8 +34,27 @@ class ScalarFormatterLim(plticker.ScalarFormatter):
     super(ScalarFormatterLim, self).__init__(*args, **kwargs)
 
   def pprint_val(self, value):
-    if (value >= self.minval and value < self.maxval) or value % self.base == 0:
+    if (value >= self.minval and value < self.maxval) or int(value) % self.base == 0:
       return super(ScalarFormatterLim, self).pprint_val(value)
+    return ''
+
+
+class MultiScalarFormatterLim(plticker.ScalarFormatter):
+
+  def __init__(self, minvals, maxvals, bases, *args, **kwargs):
+    self.minval = minvals
+    self.maxval = maxvals
+    self.base = bases
+    self.len = len(bases)
+
+    assert len(minvals) == len(maxvals) == len(bases)
+
+    super(MultiScalarFormatterLim, self).__init__(*args, **kwargs)
+
+  def pprint_val(self, value):
+    for i in range(self.len):
+      if (value >= self.minval[i] and value < self.maxval[i]) and int(value) % self.base[i] == 0:
+        return super(MultiScalarFormatterLim, self).pprint_val(value)
     return ''
 
 
@@ -276,7 +295,8 @@ def create_graph(prefix, fis_n, bg_n, fis_k, bg_k, fis_data, bg_data, fis_labels
   # grid and ticks
   ax.xaxis.set_major_locator(plticker.MultipleLocator(50))
   ax.yaxis.set_major_locator(plticker.MultipleLocator(10 if bg_n == 128 else 25))
-  ax.xaxis.set_major_formatter(ScalarFormatterLim(0, 200, 100))
+  ax.xaxis.set_major_formatter(MultiScalarFormatterLim([0, 200, 600, 1000], [200, 600, 1000, 10000],
+    [50, 100, 200, 500]))
   ax.yaxis.set_major_formatter(ScalarFormatterLim(0, 50 if bg_n == 128 else 100, 100))
   ax.grid(True, axis='y', which='both')
 
