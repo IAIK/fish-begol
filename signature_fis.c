@@ -148,6 +148,7 @@ static int fis_proof_verify(mpc_lowmc_t const* lowmc, mzd_t const* p, mzd_t cons
   unsigned char hash[FIS_NUM_ROUNDS][2][COMMITMENT_LENGTH];
 #pragma omp parallel for
   for (unsigned i = 0; i < FIS_NUM_ROUNDS; ++i) {
+    // TODO: reconstruct y from challenge and last view
     H(prf->keys[i][0], prf->y[i], prf->views[i], 0, view_count, prf->r[i][0], hash[i][0]);
     H(prf->keys[i][1], prf->y[i], prf->views[i], 1, view_count, prf->r[i][1], hash[i][1]);
   }
