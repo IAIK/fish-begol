@@ -20,7 +20,7 @@ typedef SHA512_CTX commitment_ctx;
 #define commitment_final SHA512_Final
 #endif
 
-static inline unsigned int getChAt(unsigned char const* ch, unsigned int i) {
+unsigned int getChAt(unsigned char const* ch, unsigned int i) {
   const int unsigned idx    = i / 4;
   const int unsigned offset = (i % 4) * 2;
 

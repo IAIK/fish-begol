@@ -26,4 +26,6 @@ void bg_H3_verify(unsigned char const h1[NUM_ROUNDS][2][COMMITMENT_LENGTH],
                   unsigned char const hp2[NUM_ROUNDS][COMMITMENT_LENGTH],
                   unsigned char const ch_in[(NUM_ROUNDS + 3) / 4], unsigned char* ch);
 
+unsigned int getChAt(unsigned char const* ch, unsigned int i);
+
 #endif

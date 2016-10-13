@@ -20,7 +20,7 @@ typedef struct {
   unsigned char r[NUM_ROUNDS][2][COMMITMENT_RAND_LENGTH];
   unsigned char hashes[NUM_ROUNDS][COMMITMENT_LENGTH];
   unsigned char ch[(NUM_ROUNDS + 3) / 4];
-  mzd_t*** y;
+  mzd_t* y[NUM_ROUNDS];
 } proof_t;
 
 proof_t* proof_from_char_array(mpc_lowmc_t* lowmc, proof_t* proof, unsigned char* data,
