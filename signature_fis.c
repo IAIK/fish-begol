@@ -10,8 +10,8 @@ unsigned fis_compute_sig_size(unsigned m, unsigned n, unsigned r, unsigned k) {
   unsigned first_view_size = k;
   unsigned full_view_size  = n;
   unsigned int_view_size   = 3 * m;
-  // views for mpc_and in sbox, intial view and last view + shared ciphertexts
-  unsigned views = 2 * (r * int_view_size + first_view_size + full_view_size) + full_view_size;
+  // views for mpc_and in sbox, intial view and last view
+  unsigned views = 2 * (r * int_view_size + first_view_size + full_view_size);
   // commitment and r and seed
   unsigned int commitment = 8 * (COMMITMENT_LENGTH + 2 * (COMMITMENT_RAND_LENGTH + 16));
   unsigned int challenge  = (FIS_NUM_ROUNDS + 3) / 4;
@@ -121,7 +121,7 @@ static proof_t* fis_prove(mpc_lowmc_t* lowmc, lowmc_key_t* lowmc_key, mzd_t* p, 
   fis_H3(hashes, m, m_len, ch);
   END_TIMING(timing_and_size->sign.challenge);
 
-  proof_t* proof = create_proof(0, lowmc, hashes, ch, r, keys, c_mpc, views);
+  proof_t* proof = create_proof(NULL, lowmc, hashes, ch, r, keys, views);
 
   for (unsigned j = 0; j < FIS_NUM_ROUNDS; j++) {
     mzd_shared_clear(&s[j]);
@@ -145,21 +145,23 @@ static int fis_proof_verify(mpc_lowmc_t const* lowmc, mzd_t const* p, mzd_t cons
   const unsigned int last_view_index = lowmc->r + 1;
 
   mzd_t* ys[NUM_ROUNDS][3];
+  mzd_t* ys_f[NUM_ROUNDS];
 
   START_TIMING;
   unsigned char ch[FIS_NUM_ROUNDS];
   unsigned char hash[FIS_NUM_ROUNDS][2][COMMITMENT_LENGTH];
 #pragma omp parallel for
   for (unsigned i = 0; i < FIS_NUM_ROUNDS; ++i) {
-    unsigned int a = getChAt(prf->ch, i);
-    unsigned int b = (a + 1) % 3;
-    unsigned int c = (a + 2) % 3;
+    unsigned int a_i = getChAt(prf->ch, i);
+    unsigned int b_i = (a_i + 1) % 3;
+    unsigned int c_i = (a_i + 2) % 3;
 
-    ys[i][a] = prf->views[i][last_view_index].s[0];
-    ys[i][b] = prf->views[i][last_view_index].s[1];
-    ys[i][c] = prf->y[i];
+    ys[i][a_i] = prf->views[i][last_view_index].s[0];
+    ys[i][b_i] = prf->views[i][last_view_index].s[1];
+    ys[i][c_i] = (mzd_t*) c;
 
-    // TODO: reconstruct y from challenge and last view
+    ys[i][c_i] = ys_f[i] = mpc_reconstruct_from_share(ys[i]);
+
     H(prf->keys[i][0], ys[i], prf->views[i], 0, view_count, prf->r[i][0], hash[i][0]);
     H(prf->keys[i][1], ys[i], prf->views[i], 1, view_count, prf->r[i][1], hash[i][1]);
   }
@@ -170,6 +172,7 @@ static int fis_proof_verify(mpc_lowmc_t const* lowmc, mzd_t const* p, mzd_t cons
   int output_share_status = 0;
   int view_verify_status  = 0;
 
+  // TODO: probably unnecessary now
   START_TIMING;
 #pragma omp parallel for reduction(| : reconstruct_status) reduction(| : view_verify_status)
   for (unsigned int i = 0; i < FIS_NUM_ROUNDS; ++i) {
@@ -178,6 +181,7 @@ static int fis_proof_verify(mpc_lowmc_t const* lowmc, mzd_t const* p, mzd_t cons
       reconstruct_status |= -1;
     }
     mzd_local_free(c_mpcr);
+    mzd_local_free(ys_f[i]);
   }
   END_TIMING(timing_and_size->verify.output_shares);
 

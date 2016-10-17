@@ -39,7 +39,7 @@ unsigned char* proof_to_char_array(mpc_lowmc_t* lowmc, proof_t* proof, unsigned*
   unsigned full_mzd_size    = lowmc->n / 8;
   unsigned single_mzd_bytes = ((3 * lowmc->m) + 7) / 8;
   unsigned mzd_bytes =
-      2 * (lowmc->r * single_mzd_bytes + first_view_bytes + full_mzd_size) + full_mzd_size;
+      2 * (lowmc->r * single_mzd_bytes + first_view_bytes + full_mzd_size);
   *len = NUM_ROUNDS * (COMMITMENT_LENGTH + 2 * (COMMITMENT_RAND_LENGTH + 16) + mzd_bytes) +
          (store_ch ? ((NUM_ROUNDS + 3) / 4) : 0);
   unsigned char* result = (unsigned char*)malloc(*len * sizeof(unsigned char));
@@ -93,11 +93,6 @@ unsigned char* proof_to_char_array(mpc_lowmc_t* lowmc, proof_t* proof, unsigned*
 
     free(v0);
     free(v1);
-
-    unsigned char* c0 = mzd_to_char_array(proof->y[i], full_mzd_size);
-    memcpy(temp, c0, full_mzd_size);
-    temp += full_mzd_size;
-    free(c0);
   }
 
   if (store_ch)
@@ -109,13 +104,13 @@ unsigned char* proof_to_char_array(mpc_lowmc_t* lowmc, proof_t* proof, unsigned*
 proof_t* proof_from_char_array(mpc_lowmc_t* lowmc, proof_t* proof, unsigned char* data,
                                unsigned* len, bool contains_ch) {
   if (!proof)
-    proof = (proof_t*)malloc(sizeof(proof_t));
+    proof = calloc(sizeof(proof_t), 1);
 
   unsigned first_view_bytes = lowmc->k / 8;
   unsigned full_mzd_size    = lowmc->n / 8;
   unsigned single_mzd_bytes = ((3 * lowmc->m) + 7) / 8;
   unsigned mzd_bytes =
-      2 * (lowmc->r * single_mzd_bytes + first_view_bytes + full_mzd_size) + full_mzd_size;
+      2 * (lowmc->r * single_mzd_bytes + first_view_bytes + full_mzd_size);
   *len = NUM_ROUNDS * (COMMITMENT_LENGTH + 2 * (COMMITMENT_RAND_LENGTH + 16) + mzd_bytes) +
          (contains_ch ? ((NUM_ROUNDS + 3) / 4) : 0);
 
@@ -157,9 +152,6 @@ proof_t* proof_from_char_array(mpc_lowmc_t* lowmc, proof_t* proof, unsigned char
     temp += full_mzd_size;
     proof->views[i][1 + lowmc->r].s[1] = mzd_from_char_array(temp, full_mzd_size, lowmc->n);
     temp += full_mzd_size;
-
-    proof->y[i] = mzd_from_char_array(temp, full_mzd_size, lowmc->n);
-    temp += full_mzd_size;
   }
 
   if (contains_ch)
@@ -172,10 +164,10 @@ proof_t* create_proof(proof_t* proof, mpc_lowmc_t const* lowmc,
                       unsigned char hashes[NUM_ROUNDS][3][COMMITMENT_LENGTH],
                       unsigned char ch[NUM_ROUNDS],
                       unsigned char r[NUM_ROUNDS][3][COMMITMENT_RAND_LENGTH],
-                      unsigned char keys[NUM_ROUNDS][3][16], mzd_t*** c_mpc,
+                      unsigned char keys[NUM_ROUNDS][3][16],
                       view_t* const views[NUM_ROUNDS]) {
   if (!proof)
-    proof = (proof_t*)malloc(sizeof(proof_t));
+    proof = calloc(sizeof(proof_t), 1);
 
   proof->views = (view_t**)malloc(NUM_ROUNDS * sizeof(view_t*));
 
@@ -210,10 +202,7 @@ proof_t* create_proof(proof_t* proof, mpc_lowmc_t const* lowmc,
       proof->ch[idx] |= (ch[i + 2] & 3) << 4;
       proof->ch[idx] |= (ch[i + 3] & 3) << 6;
     }
-
-    proof->y[i] = mzd_local_copy(NULL, c_mpc[i][c]);
   }
-  // proof->y = c_mpc;
 
   return proof;
 }
@@ -693,7 +682,6 @@ sbox_vars_t* sbox_vars_init(sbox_vars_t* vars, rci_t n, unsigned sc) {
 
 void clear_proof(mpc_lowmc_t const* lowmc, proof_t const* proof) {
   for (unsigned i = 0; i < NUM_ROUNDS; i++) {
-    mzd_local_free(proof->y[i]);
     for (unsigned j = 0; j < 2 + lowmc->r; j++) {
       mzd_local_free(proof->views[i][j].s[0]);
       mzd_local_free(proof->views[i][j].s[1]);
