@@ -309,9 +309,8 @@ static int bg_proof_verify(public_parameters_t* pp, bg_public_key_t* pk, mzd_t* 
     if (mzd_equal(signature->c, c_mpcr) != 0) {
       reconstruct_status |= -1;
     }
-    mzd_local_free(c_mpcr);
 
-    c_mpcr = mpc_reconstruct_from_share(NULL, ys_s[i]);
+    c_mpcr = mpc_reconstruct_from_share(c_mpcr, ys_s[i]);
     if (mzd_equal(pk->pk, c_mpcr) != 0) {
       reconstruct_status |= -1;
     }
