@@ -175,7 +175,7 @@ static int fis_proof_verify(mpc_lowmc_t const* lowmc, mzd_t const* p, mzd_t cons
 
   // TODO: probably unnecessary now
   START_TIMING;
-#pragma omp parallel for reduction(| : reconstruct_status) reduction(| : view_verify_status)
+#pragma omp parallel for reduction(| : reconstruct_status)
   for (unsigned int i = 0; i < FIS_NUM_ROUNDS; ++i) {
     mzd_t* c_mpcr = mpc_reconstruct_from_share(NULL, ys[i]);
     if (mzd_cmp(c, c_mpcr) != 0) {

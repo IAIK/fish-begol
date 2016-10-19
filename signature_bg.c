@@ -303,7 +303,7 @@ static int bg_proof_verify(public_parameters_t* pp, bg_public_key_t* pk, mzd_t* 
 
   // TODO: probably unnecessary now
   START_TIMING;
-#pragma omp parallel for reduction(| : reconstruct_status) reduction(| : output_share_status)
+#pragma omp parallel for reduction(| : reconstruct_status)
   for (unsigned int i = 0; i < BG_NUM_ROUNDS; ++i) {
     mzd_t* c_mpcr = mpc_reconstruct_from_share(NULL, ys_p[i]);
     if (mzd_equal(signature->c, c_mpcr) != 0) {
