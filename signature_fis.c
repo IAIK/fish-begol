@@ -146,6 +146,7 @@ static int fis_proof_verify(mpc_lowmc_t const* lowmc, mzd_t const* p, mzd_t cons
 
   mzd_t* ys[NUM_ROUNDS][3];
   mzd_t* ys_f[NUM_ROUNDS];
+  mzd_local_init_multiple(ys_f, NUM_ROUNDS, 1, lowmc->n);
 
   START_TIMING;
   unsigned char ch[FIS_NUM_ROUNDS];
@@ -160,7 +161,7 @@ static int fis_proof_verify(mpc_lowmc_t const* lowmc, mzd_t const* p, mzd_t cons
     ys[i][b_i] = prf->views[i][last_view_index].s[1];
     ys[i][c_i] = (mzd_t*) c;
 
-    ys[i][c_i] = ys_f[i] = mpc_reconstruct_from_share(ys[i]);
+    ys[i][c_i] = mpc_reconstruct_from_share(ys_f[i], ys[i]);
 
     H(prf->keys[i][0], ys[i], prf->views[i], 0, view_count, prf->r[i][0], hash[i][0]);
     H(prf->keys[i][1], ys[i], prf->views[i], 1, view_count, prf->r[i][1], hash[i][1]);
@@ -176,14 +177,15 @@ static int fis_proof_verify(mpc_lowmc_t const* lowmc, mzd_t const* p, mzd_t cons
   START_TIMING;
 #pragma omp parallel for reduction(| : reconstruct_status) reduction(| : view_verify_status)
   for (unsigned int i = 0; i < FIS_NUM_ROUNDS; ++i) {
-    mzd_t* c_mpcr = mpc_reconstruct_from_share(ys[i]);
+    mzd_t* c_mpcr = mpc_reconstruct_from_share(NULL, ys[i]);
     if (mzd_cmp(c, c_mpcr) != 0) {
       reconstruct_status |= -1;
     }
     mzd_local_free(c_mpcr);
-    mzd_local_free(ys_f[i]);
   }
   END_TIMING(timing_and_size->verify.output_shares);
+
+  mzd_local_free_multiple(ys_f);
 
   // TODO: probably unnecessary now
   START_TIMING;

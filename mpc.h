@@ -78,7 +78,7 @@ mzd_t** mpc_init_empty_share_vector(rci_t n, unsigned sc);
  * \param shared_vec an array containing the shares
  * \return           the reconstructed vector
  */
-mzd_t* mpc_reconstruct_from_share(mzd_t** shared_vec);
+mzd_t* mpc_reconstruct_from_share(mzd_t* dst, mzd_t** shared_vec);
 
 /**
  * Computes the a &= b on two secret shared bits according to

@@ -160,7 +160,7 @@ static bg_signature_t* bg_prove(public_parameters_t* pp, bg_private_key_t* priva
     c_mpc_s[i] =
         mpc_lowmc_call_shared_p(lowmc, &lowmc_key_k[i], &lowmc_key_s[i], views_s[i], rvec_s[i]);
   }
-  signature->c = mpc_reconstruct_from_share(c_mpc_p[0]);
+  signature->c = mpc_reconstruct_from_share(NULL, c_mpc_p[0]);
   END_TIMING(timing_and_size->sign.lowmc_enc);
 
   START_TIMING;
@@ -262,6 +262,8 @@ static int bg_proof_verify(public_parameters_t* pp, bg_public_key_t* pk, mzd_t* 
 
   mzd_t* y_free_p[NUM_ROUNDS];
   mzd_t* y_free_s[NUM_ROUNDS];
+  mzd_local_init_multiple(y_free_p, NUM_ROUNDS, 1, lowmc->n);
+  mzd_local_init_multiple(y_free_s, NUM_ROUNDS, 1, lowmc->n);
 
 #pragma omp parallel for
   for (unsigned i = 0; i < BG_NUM_ROUNDS; ++i) {
@@ -277,8 +279,8 @@ static int bg_proof_verify(public_parameters_t* pp, bg_public_key_t* pk, mzd_t* 
     ys_p[i][b_i] = proof_p->views[i][last_view_index].s[1];
     ys_p[i][c_i] = signature->c;
 
-    ys_s[i][c_i] = y_free_s[i] = mpc_reconstruct_from_share(ys_s[i]);
-    ys_p[i][c_i] = y_free_p[i] = mpc_reconstruct_from_share(ys_p[i]);
+    ys_s[i][c_i] = mpc_reconstruct_from_share(y_free_s[i], ys_s[i]);
+    ys_p[i][c_i] = mpc_reconstruct_from_share(y_free_p[i], ys_p[i]);
 
     H(proof_p->keys[i][0], ys_p[i], proof_p->views[i], 0, view_count, proof_p->r[i][0],
       hash_p[i][0]);
@@ -303,21 +305,22 @@ static int bg_proof_verify(public_parameters_t* pp, bg_public_key_t* pk, mzd_t* 
   START_TIMING;
 #pragma omp parallel for reduction(| : reconstruct_status) reduction(| : output_share_status)
   for (unsigned int i = 0; i < BG_NUM_ROUNDS; ++i) {
-    mzd_t* c_mpcr = mpc_reconstruct_from_share(ys_p[i]);
+    mzd_t* c_mpcr = mpc_reconstruct_from_share(NULL, ys_p[i]);
     if (mzd_equal(signature->c, c_mpcr) != 0) {
       reconstruct_status |= -1;
     }
     mzd_local_free(c_mpcr);
-    mzd_local_free(y_free_p[i]);
 
-    c_mpcr = mpc_reconstruct_from_share(ys_s[i]);
+    c_mpcr = mpc_reconstruct_from_share(NULL, ys_s[i]);
     if (mzd_equal(pk->pk, c_mpcr) != 0) {
       reconstruct_status |= -1;
     }
     mzd_local_free(c_mpcr);
-    mzd_local_free(y_free_s[i]);
   }
   END_TIMING(timing_and_size->verify.output_shares);
+
+  mzd_local_free_multiple(y_free_s);
+  mzd_local_free_multiple(y_free_p);
 
   // TODO: probably unnecessary now
   START_TIMING;

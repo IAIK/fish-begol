@@ -366,7 +366,7 @@ __attribute__((target("avx2"))) static inline mzd_t* mzd_xor_avx(mzd_t* res, mzd
 #endif
 
 mzd_t* mzd_xor(mzd_t* res, mzd_t const* first, mzd_t const* second) {
-  if (res == 0) {
+  if (!res) {
     res = mzd_local_init(1, first->ncols);
   }
 

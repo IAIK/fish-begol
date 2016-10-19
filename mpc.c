@@ -290,14 +290,14 @@ void mpc_copy(mzd_t** out, mzd_t* const* in, unsigned sc) {
   }
 }
 
-mzd_t* mpc_reconstruct_from_share(mzd_t** shared_vec) {
-  mzd_t* res = mzd_xor(0, shared_vec[0], shared_vec[1]);
-  mzd_xor(res, res, shared_vec[2]);
-  return res;
+mzd_t* mpc_reconstruct_from_share(mzd_t* dst, mzd_t** shared_vec) {
+  dst = mzd_xor(dst, shared_vec[0], shared_vec[1]);
+  mzd_xor(dst, dst, shared_vec[2]);
+  return dst;
 }
 
 void mpc_print(mzd_t** shared_vec) {
-  mzd_t* r = mpc_reconstruct_from_share(shared_vec);
+  mzd_t* r = mpc_reconstruct_from_share(NULL, shared_vec);
   mzd_print(r);
   mzd_local_free(r);
 }
