@@ -292,8 +292,7 @@ void mpc_copy(mzd_t** out, mzd_t* const* in, unsigned sc) {
 
 mzd_t* mpc_reconstruct_from_share(mzd_t* dst, mzd_t** shared_vec) {
   dst = mzd_xor(dst, shared_vec[0], shared_vec[1]);
-  mzd_xor(dst, dst, shared_vec[2]);
-  return dst;
+  return mzd_xor(dst, dst, shared_vec[2]);
 }
 
 void mpc_print(mzd_t** shared_vec) {
