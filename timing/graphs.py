@@ -67,10 +67,6 @@ def lookup_style(style, *args):
   return style
 
 
-def compute_size(data):
-  return data[:, 12] / 1024
-
-
 def compute_sign(data):
   return np.sum(data[:, 3:8] / 1000, axis=1)
 
