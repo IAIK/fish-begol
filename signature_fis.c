@@ -238,7 +238,7 @@ static int fis_proof_verify(mpc_lowmc_t const* lowmc, mzd_t const* p, mzd_t cons
 }
 
 fis_signature_t* fis_sign(public_parameters_t* pp, fis_private_key_t* private_key, char* m) {
-  fis_signature_t* sig = (fis_signature_t*)malloc(sizeof(fis_signature_t));
+  fis_signature_t* sig = malloc(sizeof(fis_signature_t));
   mzd_t* p             = mzd_local_init(1, pp->lowmc->n);
   sig->proof           = fis_prove(pp->lowmc, private_key->k, p, m, strlen(m));
   mzd_local_free(p);
