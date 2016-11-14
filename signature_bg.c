@@ -28,7 +28,7 @@ unsigned char* bg_sig_to_char_array(public_parameters_t* pp, bg_signature_t* sig
 
   *len = len1 + len2 + (pp->lowmc->n / 8);
 
-  unsigned char* result = (unsigned char*)malloc(*len * sizeof(unsigned char));
+  unsigned char* result = malloc(*len * sizeof(unsigned char));
   unsigned char* temp   = result;
   memcpy(temp, p1, len1);
   temp += len1;
@@ -44,8 +44,8 @@ unsigned char* bg_sig_to_char_array(public_parameters_t* pp, bg_signature_t* sig
 }
 
 bg_signature_t* bg_sig_from_char_array(public_parameters_t* pp, unsigned char* data) {
-  bg_signature_t* sig = (bg_signature_t*)malloc(sizeof(bg_signature_t));
-  unsigned len        = 0;
+  bg_signature_t* sig = malloc(sizeof(bg_signature_t));
+  unsigned int len    = 0;
   proof_from_char_array(pp->lowmc, &sig->proof_s, data, &len, true);
   data += len;
   proof_from_char_array(pp->lowmc, &sig->proof_p, data, &len, false);
@@ -118,7 +118,7 @@ static bg_signature_t* bg_prove(public_parameters_t* pp, bg_private_key_t* priva
   mzd_t** rvec_p[BG_NUM_ROUNDS][3];
   mzd_t** rvec_s[BG_NUM_ROUNDS][3];
 #pragma omp parallel for
-  for (unsigned i = 0; i < BG_NUM_ROUNDS; ++i) {
+  for (unsigned int i = 0; i < BG_NUM_ROUNDS; ++i) {
     for (unsigned int j = 0; j < 3; ++j) {
       rvec_p[i][j] = mzd_init_random_vectors_from_seed(keys_p[i][j], lowmc->n, lowmc->r);
       rvec_s[i][j] = mzd_init_random_vectors_from_seed(keys_s[i][j], lowmc->n, lowmc->r);
@@ -155,7 +155,7 @@ static bg_signature_t* bg_prove(public_parameters_t* pp, bg_private_key_t* priva
 
   START_TIMING;
 #pragma omp parallel for
-  for (unsigned i = 0; i < BG_NUM_ROUNDS; ++i) {
+  for (unsigned int i = 0; i < BG_NUM_ROUNDS; ++i) {
     c_mpc_p[i] = mpc_lowmc_call(lowmc, &lowmc_key_s[i], p, views_p[i], rvec_p[i]);
     c_mpc_s[i] =
         mpc_lowmc_call_shared_p(lowmc, &lowmc_key_k[i], &lowmc_key_s[i], views_s[i], rvec_s[i]);
@@ -167,7 +167,7 @@ static bg_signature_t* bg_prove(public_parameters_t* pp, bg_private_key_t* priva
   unsigned char hashes_p[BG_NUM_ROUNDS][3][COMMITMENT_LENGTH];
   unsigned char hashes_s[BG_NUM_ROUNDS][3][COMMITMENT_LENGTH];
 #pragma omp parallel for
-  for (unsigned i = 0; i < BG_NUM_ROUNDS; ++i) {
+  for (unsigned int i = 0; i < BG_NUM_ROUNDS; ++i) {
     for (unsigned int j = 0; j < 3; ++j) {
       H(keys_p[i][j], c_mpc_p[i], views_p[i], j, view_count, r_p[i][j], hashes_p[i][j]);
       H(keys_s[i][j], c_mpc_s[i], views_s[i], j, view_count, r_s[i][j], hashes_s[i][j]);
@@ -211,7 +211,7 @@ static int verify_views(mpc_lowmc_t const* lowmc, mzd_t const* p, proof_t const*
   int view_verify_status = 0;
 
 #pragma omp parallel for reduction(| : view_verify_status)
-  for (unsigned int i = 0; i < BG_NUM_ROUNDS; i++) {
+  for (unsigned int i = 0; i < BG_NUM_ROUNDS; ++i) {
     mzd_shared_t shared_s = MZD_SHARED_EMPTY;
     mzd_shared_from_shares(&shared_s, proof_p->views[i][0].s, 2);
 
@@ -266,7 +266,7 @@ static int bg_proof_verify(public_parameters_t* pp, bg_public_key_t* pk, mzd_t* 
   mzd_local_init_multiple(y_free_s, NUM_ROUNDS, 1, lowmc->n);
 
 #pragma omp parallel for
-  for (unsigned i = 0; i < BG_NUM_ROUNDS; ++i) {
+  for (unsigned int i = 0; i < BG_NUM_ROUNDS; ++i) {
     unsigned int a_i = getChAt(proof_s->ch, i);
     unsigned int b_i = (a_i + 1) % 3;
     unsigned int c_i = (a_i + 2) % 3;
