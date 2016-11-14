@@ -76,7 +76,7 @@ static proof_t* fis_prove(mpc_lowmc_t* lowmc, lowmc_key_t* lowmc_key, mzd_t* p, 
 
   mzd_t** rvec[FIS_NUM_ROUNDS][3];
 #pragma omp parallel for
-  for (unsigned i = 0; i < FIS_NUM_ROUNDS; i++) {
+  for (unsigned int i = 0; i < FIS_NUM_ROUNDS; ++i) {
     rvec[i][0] = mzd_init_random_vectors_from_seed(keys[i][0], lowmc->n, lowmc->r);
     rvec[i][1] = mzd_init_random_vectors_from_seed(keys[i][1], lowmc->n, lowmc->r);
     rvec[i][2] = mzd_init_random_vectors_from_seed(keys[i][2], lowmc->n, lowmc->r);
@@ -101,7 +101,7 @@ static proof_t* fis_prove(mpc_lowmc_t* lowmc, lowmc_key_t* lowmc_key, mzd_t* p, 
   START_TIMING;
   mzd_t** c_mpc[FIS_NUM_ROUNDS];
 #pragma omp parallel for
-  for (unsigned i = 0; i < FIS_NUM_ROUNDS; i++) {
+  for (unsigned int i = 0; i < FIS_NUM_ROUNDS; ++i) {
     c_mpc[i] = mpc_lowmc_call(lowmc, &s[i], p, views[i], rvec[i]);
   }
   END_TIMING(timing_and_size->sign.lowmc_enc);
@@ -109,7 +109,7 @@ static proof_t* fis_prove(mpc_lowmc_t* lowmc, lowmc_key_t* lowmc_key, mzd_t* p, 
   START_TIMING;
   unsigned char hashes[FIS_NUM_ROUNDS][3][COMMITMENT_LENGTH];
 #pragma omp parallel for
-  for (unsigned i = 0; i < FIS_NUM_ROUNDS; ++i) {
+  for (unsigned int i = 0; i < FIS_NUM_ROUNDS; ++i) {
     H(keys[i][0], c_mpc[i], views[i], 0, view_count, r[i][0], hashes[i][0]);
     H(keys[i][1], c_mpc[i], views[i], 1, view_count, r[i][1], hashes[i][1]);
     H(keys[i][2], c_mpc[i], views[i], 2, view_count, r[i][2], hashes[i][2]);
@@ -123,9 +123,9 @@ static proof_t* fis_prove(mpc_lowmc_t* lowmc, lowmc_key_t* lowmc_key, mzd_t* p, 
 
   proof_t* proof = create_proof(NULL, lowmc, hashes, ch, r, keys, views);
 
-  for (unsigned j = 0; j < FIS_NUM_ROUNDS; j++) {
+  for (unsigned int j = 0; j < FIS_NUM_ROUNDS; ++j) {
     mzd_shared_clear(&s[j]);
-    for (unsigned i = 0; i < 3; i++) {
+    for (unsigned int i = 0; i < 3; ++i) {
       mzd_local_free_multiple(rvec[j][i]);
       free(rvec[j][i]);
     }
@@ -152,7 +152,7 @@ static int fis_proof_verify(mpc_lowmc_t const* lowmc, mzd_t const* p, mzd_t cons
   unsigned char ch[FIS_NUM_ROUNDS];
   unsigned char hash[FIS_NUM_ROUNDS][2][COMMITMENT_LENGTH];
 #pragma omp parallel for
-  for (unsigned i = 0; i < FIS_NUM_ROUNDS; ++i) {
+  for (unsigned int i = 0; i < FIS_NUM_ROUNDS; ++i) {
     unsigned int a_i = getChAt(prf->ch, i);
     unsigned int b_i = (a_i + 1) % 3;
     unsigned int c_i = (a_i + 2) % 3;
