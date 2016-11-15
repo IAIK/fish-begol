@@ -18,6 +18,9 @@ Dependencies
 * OpenSSL (libssl-dev)
 * m4ri (libm4ri-dev)
 
-[1] https://bitbucket.org/malb/lowmc-helib/src
-[2] https://eprint.iacr.org/2016/163.pdf
-[3] https://github.com/Sobuno/ZKBoo
+References
+----------
+
+* [1] https://bitbucket.org/malb/lowmc-helib/src
+* [2] https://eprint.iacr.org/2016/163.pdf
+* [3] https://github.com/Sobuno/ZKBoo
