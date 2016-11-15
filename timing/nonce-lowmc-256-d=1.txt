@@ -1,0 +1,4 @@
+m:    1 blocksize:   256  ANDdepth:   177
+m:    2 blocksize:   256  ANDdepth:    91
+m:   10 blocksize:   256  ANDdepth:    23
+m:   40 blocksize:   256  ANDdepth:    11
