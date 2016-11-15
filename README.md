@@ -1,5 +1,5 @@
-zkboo-sigs
-==========
+Fish and Begol signature schemes
+================================
 
 This code represents a portation of the LowMC implementation from [1] to the
 setting described in [2]. Some of the code, and in particular the basic LowMC

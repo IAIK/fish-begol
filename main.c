@@ -103,7 +103,7 @@ static void fis_sign_verify(int args[5]) {
 #ifndef VERBOSE
   print_timings(timings_fis, args[4], 13);
 #else
-  printf("Fiat-Shamir Signature:\n\n");
+  printf("Fish Signature:\n\n");
   print_detailed_timings(timings_fis, args[4]);
 #endif
 
@@ -151,7 +151,7 @@ static void bg_sign_verify(int args[5]) {
 #ifndef VERBOSE
   print_timings(timings_bg, args[4], 13);
 #else
-  printf("BG Signature:\n\n");
+  printf("Begol Signature:\n\n");
   print_detailed_timings(timings_bg, args[4]);
 #endif
 
