@@ -1,6 +1,0 @@
-LDLIBS+=-lcrypto -lomp
-
-all: MPC_SHA256 MPC_SHA256_VERIFIER
-
-clean: 
-	rm MPC_SHA256 MPC_SHA256_VERIFIER *.bin
