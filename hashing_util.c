@@ -112,8 +112,7 @@ void fis_H3_verify(unsigned char const h[NUM_ROUNDS][2][COMMITMENT_LENGTH],
 }
 
 /**
- * Computes the challenge (similar as in
- * https://github.com/Sobuno/ZKBoo/blob/master/MPC_SHA256/shared.h)
+ * Computes the challenge.
  */
 void fis_H3(unsigned char const h[NUM_ROUNDS][3][COMMITMENT_LENGTH], const char* m, unsigned m_len,
             unsigned char* ch) {
