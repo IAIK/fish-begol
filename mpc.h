@@ -80,6 +80,7 @@ mzd_t** mpc_init_empty_share_vector(rci_t n, unsigned sc);
  */
 mzd_t* mpc_reconstruct_from_share(mzd_t* dst, mzd_t** shared_vec);
 
+#if 0
 /**
  * Computes the a &= b on two secret shared bits according to
  * https://eprint.iacr.org/2016/163.pdf
@@ -125,6 +126,7 @@ void mpc_read_bit(BIT* out, mzd_t** vec, rci_t n, unsigned sc);
  * \param sc  the share count
  */
 void mpc_write_bit(mzd_t** vec, rci_t n, BIT* bit, unsigned sc);
+#endif
 
 /**
  * Computes the addition in GF(2) of two secret shared

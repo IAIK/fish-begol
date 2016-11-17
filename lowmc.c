@@ -121,21 +121,6 @@ __attribute__((target("avx2"))) static void sbox_layer_avx(mzd_t* out, mzd_t* in
 }
 #endif
 
-/*
-static void sbox_layer(mzd_t* out, mzd_t* in, rci_t m) {
-  mzd_local_copy(out, in);
-  for (rci_t n = out->ncols - 3 * m; n < out->ncols; n += 3) {
-    word x0 = mzd_read_bit(in, 0, n + 0);
-    word x1 = mzd_read_bit(in, 0, n + 1);
-    word x2 = mzd_read_bit(in, 0, n + 2);
-
-    mzd_write_bit(out, 0, n + 0, (x1 & x2) ^ x0);
-    mzd_write_bit(out, 0, n + 1, (x0 & x2) ^ x0 ^ x1);
-    mzd_write_bit(out, 0, n + 2, (x0 & x1) ^ x0 ^ x1 ^ x2);
-  }
-}
-*/
-
 mzd_t* lowmc_call(lowmc_t* lowmc, lowmc_key_t* lowmc_key, mzd_t* p) {
   if (p->ncols > lowmc->n) {
     printf("p larger than block size!");
@@ -151,7 +136,6 @@ mzd_t* lowmc_call(lowmc_t* lowmc, lowmc_key_t* lowmc_key, mzd_t* p) {
 
   lowmc_round_t* round = lowmc->rounds;
   for (unsigned i = 0; i < lowmc->r; ++i, ++round) {
-    // sbox_layer(y, x, lowmc->m);
 #ifdef WITH_OPT
     if (CPU_SUPPORTS_SSE2 && y->ncols == 128) {
       sbox_layer_sse(y, x, &lowmc->mask);

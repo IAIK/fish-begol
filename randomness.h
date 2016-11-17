@@ -8,13 +8,7 @@
 #include <stdint.h>
 
 void init_EVP();
-
 void cleanup_EVP();
-
-/**
- * Returns a random bit
- */
-BIT getrandbit();
 
 typedef struct { EVP_CIPHER_CTX* ctx; } aes_prng_t;
 

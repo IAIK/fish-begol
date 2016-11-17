@@ -208,6 +208,7 @@ int mpc_and_verify(mzd_t* const* res, mzd_t* const* first, mzd_t* const* second,
   return 0;
 }
 
+#if 0
 int mpc_and_bit(BIT* a, BIT* b, BIT* r, view_t* views, int* i, unsigned bp, unsigned sc) {
   BIT* wp = (BIT*)malloc(sc * sizeof(BIT));
   for (unsigned m = 0; m < sc; ++m) {
@@ -255,6 +256,7 @@ void mpc_write_bit(mzd_t** vec, rci_t n, BIT* bit, unsigned sc) {
   for (unsigned i = 0; i < sc; i++)
     mzd_write_bit(vec[i], 0, n, bit[i]);
 }
+#endif
 
 mzd_t** mpc_add(mzd_t** result, mzd_t** first, mzd_t** second, unsigned sc) {
   if (result == 0)
