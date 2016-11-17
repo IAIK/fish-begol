@@ -17,6 +17,11 @@ Dependencies
 * OpenSSL (libssl-dev)
 * m4ri (libm4ri-dev)
 
+License
+-------
+
+The code is licensed under GPL-3+.
+
 References
 ----------
 
