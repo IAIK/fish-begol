@@ -1,6 +1,6 @@
 ---
-Language:        Cpp
-BasedOnStyle:  LLVM
+Language: Cpp
+BasedOnStyle: LLVM
 AlignConsecutiveAssignments: true
 AllowShortFunctionsOnASingleLine: Empty
 AllowShortIfStatementsOnASingleLine: false
@@ -12,4 +12,3 @@ PointerAlignment: Left
 TabWidth: 2
 ColumnLimit: 100
 ...
-
