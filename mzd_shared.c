@@ -46,4 +46,3 @@ void mzd_shared_clear(mzd_shared_t* shared_value) {
   }
   shared_value->share_count = 0;
 }
-

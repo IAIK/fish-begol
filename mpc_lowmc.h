@@ -32,8 +32,7 @@ proof_t* create_proof(proof_t* proof, mpc_lowmc_t const* lowmc,
                       unsigned char hashes[NUM_ROUNDS][3][COMMITMENT_LENGTH],
                       unsigned char ch[NUM_ROUNDS],
                       unsigned char r[NUM_ROUNDS][3][COMMITMENT_RAND_LENGTH],
-                      unsigned char keys[NUM_ROUNDS][3][16],
-                      view_t* const views[NUM_ROUNDS]);
+                      unsigned char keys[NUM_ROUNDS][3][16], view_t* const views[NUM_ROUNDS]);
 
 void clear_proof(mpc_lowmc_t const* lowmc, proof_t const* proof);
 void free_proof(mpc_lowmc_t const* lowmc, proof_t* proof);

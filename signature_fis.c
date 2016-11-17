@@ -159,7 +159,7 @@ static int fis_proof_verify(mpc_lowmc_t const* lowmc, mzd_t const* p, mzd_t cons
 
     ys[i][a_i] = prf->views[i][last_view_index].s[0];
     ys[i][b_i] = prf->views[i][last_view_index].s[1];
-    ys[i][c_i] = (mzd_t*) c;
+    ys[i][c_i] = (mzd_t*)c;
 
     ys[i][c_i] = mpc_reconstruct_from_share(ys_f[i], ys[i]);
 

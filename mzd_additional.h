@@ -1,8 +1,8 @@
 #ifndef MZD_ADDITIONAL_H
 #define MZD_ADDITIONAL_H
 
-#include <m4ri/m4ri.h>
 #include "randomness.h"
+#include <m4ri/m4ri.h>
 
 /**
  * Modified mzd_init calling malloc less often. Do not pass mzd_t instances

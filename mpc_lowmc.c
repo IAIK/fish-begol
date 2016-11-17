@@ -38,8 +38,7 @@ unsigned char* proof_to_char_array(mpc_lowmc_t* lowmc, proof_t* proof, unsigned*
   unsigned first_view_bytes = lowmc->k / 8;
   unsigned full_mzd_size    = lowmc->n / 8;
   unsigned single_mzd_bytes = ((3 * lowmc->m) + 7) / 8;
-  unsigned mzd_bytes =
-      2 * (lowmc->r * single_mzd_bytes + first_view_bytes + full_mzd_size);
+  unsigned mzd_bytes        = 2 * (lowmc->r * single_mzd_bytes + first_view_bytes + full_mzd_size);
   *len = NUM_ROUNDS * (COMMITMENT_LENGTH + 2 * (COMMITMENT_RAND_LENGTH + 16) + mzd_bytes) +
          (store_ch ? ((NUM_ROUNDS + 3) / 4) : 0);
   unsigned char* result = (unsigned char*)malloc(*len * sizeof(unsigned char));
@@ -109,8 +108,7 @@ proof_t* proof_from_char_array(mpc_lowmc_t* lowmc, proof_t* proof, unsigned char
   unsigned first_view_bytes = lowmc->k / 8;
   unsigned full_mzd_size    = lowmc->n / 8;
   unsigned single_mzd_bytes = ((3 * lowmc->m) + 7) / 8;
-  unsigned mzd_bytes =
-      2 * (lowmc->r * single_mzd_bytes + first_view_bytes + full_mzd_size);
+  unsigned mzd_bytes        = 2 * (lowmc->r * single_mzd_bytes + first_view_bytes + full_mzd_size);
   *len = NUM_ROUNDS * (COMMITMENT_LENGTH + 2 * (COMMITMENT_RAND_LENGTH + 16) + mzd_bytes) +
          (contains_ch ? ((NUM_ROUNDS + 3) / 4) : 0);
 
@@ -164,8 +162,7 @@ proof_t* create_proof(proof_t* proof, mpc_lowmc_t const* lowmc,
                       unsigned char hashes[NUM_ROUNDS][3][COMMITMENT_LENGTH],
                       unsigned char ch[NUM_ROUNDS],
                       unsigned char r[NUM_ROUNDS][3][COMMITMENT_RAND_LENGTH],
-                      unsigned char keys[NUM_ROUNDS][3][16],
-                      view_t* const views[NUM_ROUNDS]) {
+                      unsigned char keys[NUM_ROUNDS][3][16], view_t* const views[NUM_ROUNDS]) {
   if (!proof)
     proof = calloc(sizeof(proof_t), 1);
 

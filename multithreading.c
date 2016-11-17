@@ -12,8 +12,8 @@
 static omp_lock_t* locks = NULL;
 
 static void openmp_locking_callback(int mode, int type, const char* file, int line) {
-  (void) file;
-  (void) line;
+  (void)file;
+  (void)line;
   if (mode & CRYPTO_LOCK) {
     omp_set_lock(&locks[type]);
   } else {
