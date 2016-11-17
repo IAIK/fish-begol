@@ -1,10 +1,9 @@
 Fish and Begol signature schemes
 ================================
 
-This code represents a portation of the LowMC implementation from [1] to the
-setting described in [2]. Some of the code, and in particular the basic LowMC
-related methods, are taken from [1]. Methods for MPC computations are based on
-[3].
+This code represents an implementation of the Fish and Begol signature schemes
+[1]. It uses (a bit-sliced version of) LowMC [3,4] in the setting of ZKBoo
+[2]. Some methods for MPC computations are based on [5].
 
 Building
 --------
@@ -21,6 +20,8 @@ Dependencies
 References
 ----------
 
-* [1] https://bitbucket.org/malb/lowmc-helib/src
-* [2] https://eprint.iacr.org/2016/163.pdf
-* [3] https://github.com/Sobuno/ZKBoo
+* [1] https://eprint.iacr.org/2016/XXX
+* [2] https://eprint.iacr.org/2016/163
+* [3] https://eprint.iacr.org/2016/687
+* [4] https://bitbucket.org/malb/lowmc-helib
+* [5] https://github.com/Sobuno/ZKBoo
