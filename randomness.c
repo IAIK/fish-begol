@@ -22,7 +22,9 @@
 
 void init_EVP() {
 #if OPENSSL_VERSION_NUMBER >= 0x10100000
-  OPENSSL_init_crypto(OPENSSL_INIT_LOAD_CRYPTO_STRINGS | OPENSSL_INIT_ADD_ALL_CIPHERS | OPENSSL_INIT_ADD_ALL_DIGESTS, NULL);
+  OPENSSL_init_crypto(OPENSSL_INIT_LOAD_CRYPTO_STRINGS | OPENSSL_INIT_ADD_ALL_CIPHERS |
+                          OPENSSL_INIT_ADD_ALL_DIGESTS,
+                      NULL);
 #else
   ERR_load_crypto_strings();
   OpenSSL_add_all_algorithms();
