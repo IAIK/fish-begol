@@ -1,4 +1,4 @@
-m:    1 blocksize:   128  ANDdepth:   211   ANDs/bit:
+m:    1 blocksize:   128  ANDdepth:   252   ANDs/bit:
 m:    2 blocksize:   128  ANDdepth:   128   ANDs/bit:   6.0
 m:    4 blocksize:   128  ANDdepth:    67   ANDs/bit:  6.28
 m:    6 blocksize:   128  ANDdepth:    47   ANDs/bit:  6.61
