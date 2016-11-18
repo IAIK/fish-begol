@@ -24,6 +24,7 @@ The code is licensed under GPL-3+.
 
 Authors
 -------
+
 The code was written by David Derler and Sebastian Ramacher from  Institute for
 Applied Information Processing and Communications, Graz University of
 Technology. They can be contacted via mail to firstname.lastname@iaik.tugraz.at.
