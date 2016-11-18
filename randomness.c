@@ -21,14 +21,22 @@
 #include <openssl/rand.h>
 
 void init_EVP() {
+#if OPENSSL_VERSION_NUMBER >= 0x10100000
+  OPENSSL_init_crypto(OPENSSL_INIT_LOAD_CRYPTO_STRINGS | OPENSSL_INIT_ADD_ALL_CIPHERS | OPENSSL_INIT_ADD_ALL_DIGESTS, NULL);
+#else
   ERR_load_crypto_strings();
   OpenSSL_add_all_algorithms();
   OPENSSL_config(NULL);
+#endif
 }
 
 void cleanup_EVP() {
+#if OPENSSL_VERSION_NUMBER >= 0x10100000
+  OPENSSL_cleanup();
+#else
   EVP_cleanup();
   ERR_free_strings();
+#endif
 }
 
 static void __attribute__((noreturn)) handleErrors(void) {
