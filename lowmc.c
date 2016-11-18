@@ -21,7 +21,7 @@
 #include "mzd_additional.h"
 
 #ifdef WITH_OPT
-#include "avx.h"
+#include "simd.h"
 #endif
 
 static void sbox_layer_bitsliced(mzd_t* out, mzd_t* in, rci_t m, mask_t* mask) {

@@ -39,7 +39,7 @@ int mpc_and_verify(mzd_t* const* res, mzd_t* const* first, mzd_t* const* second,
                    view_t const* view, mzd_t const* mask, unsigned viewshift, mzd_t* const* buffer);
 
 #ifdef WITH_OPT
-#include "avx.h"
+#include "simd.h"
 
 int mpc_and_sse(__m128i* res, __m128i const* first, __m128i const* second, __m128i const* r,
                 view_t const* view, unsigned viewshift);

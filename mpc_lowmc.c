@@ -26,7 +26,7 @@
 #include <stdbool.h>
 
 #ifdef WITH_OPT
-#include "avx.h"
+#include "simd.h"
 #endif
 
 typedef struct {

@@ -20,7 +20,7 @@
 #include "randomness.h"
 
 #ifdef WITH_OPT
-#include "avx.h"
+#include "simd.h"
 
 static const unsigned int sse_bound = 128 / (8 * sizeof(word));
 #endif

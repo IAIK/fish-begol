@@ -17,7 +17,7 @@
  */
 
 #include "mpc.h"
-#include "avx.h"
+#include "simd.h"
 #include "mzd_additional.h"
 
 void mpc_clear(mzd_t** res, unsigned sc) {
