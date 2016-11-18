@@ -75,7 +75,7 @@ void aes_prng_get_randomness(aes_prng_t* aes_prng, unsigned char* dst, size_t co
   }
 
   if (count) {
-    if (unlikely(1 != (EVP_EncryptUpdate(ctx, dst, &len, plaintext, count), 1))) {
+    if (unlikely(1 != EVP_EncryptUpdate(ctx, dst, &len, plaintext, count))) {
       handleErrors();
     }
   }
