@@ -33,7 +33,7 @@ Technology](https://www.iaik.tugraz.at). They can be contacted via
 References
 ----------
 
-* [1] https://eprint.iacr.org/2016/XXX
+* [1] https://eprint.iacr.org/2016/1085
 * [2] https://eprint.iacr.org/2016/163
 * [3] https://eprint.iacr.org/2016/687
 * [4] https://bitbucket.org/malb/lowmc-helib
