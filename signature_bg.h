@@ -22,19 +22,20 @@
 #include "signature_common.h"
 
 typedef struct {
-  lowmc_key_t* k;
   lowmc_key_t* s;
+  mzd_t* beta;
 } bg_private_key_t;
 
 typedef struct {
-  // pk = E_k(s)
-  mzd_t* pk;
+  mzd_t* beta;
+  // c = F_s(\beta)
+  mzd_t* c;
 } bg_public_key_t;
 
 typedef struct {
-  proof_t proof_s;
-  proof_t proof_p;
-  mzd_t* c;
+  proof_t proof_c;
+  proof_t proof_y;
+  mzd_t* y;
 } bg_signature_t;
 
 unsigned bg_compute_sig_size(unsigned m, unsigned n, unsigned r, unsigned k);
