@@ -22,8 +22,6 @@
 #include "mpc_lowmc.h"
 #include "parameters.h"
 
-#define GETBIT(x, i) (((x) >> (i)) & 0x01)
-
 void H(const unsigned char k[16], mzd_t* y[3], view_t const* v, unsigned vidx, unsigned vcnt,
        const unsigned char r[COMMITMENT_RAND_LENGTH], unsigned char hash[COMMITMENT_LENGTH]);
 
@@ -44,6 +42,11 @@ void bg_H3_verify(unsigned char const h1[NUM_ROUNDS][2][COMMITMENT_LENGTH],
                   unsigned char const hp2[NUM_ROUNDS][COMMITMENT_LENGTH],
                   unsigned char const ch_in[(NUM_ROUNDS + 3) / 4], unsigned char* ch);
 
-unsigned int getChAt(unsigned char const* ch, unsigned int i);
+static inline unsigned int getChAt(unsigned char const* const ch, unsigned int i) {
+  const unsigned int idx    = i / 4;
+  const unsigned int offset = (i % 4) * 2;
+
+  return (ch[idx] >> offset) & 0x3;
+}
 
 #endif

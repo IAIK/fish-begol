@@ -38,13 +38,6 @@ typedef SHA512_CTX commitment_ctx;
 #define commitment_final SHA512_Final
 #endif
 
-unsigned int getChAt(unsigned char const* ch, unsigned int i) {
-  const int unsigned idx    = i / 4;
-  const int unsigned offset = (i % 4) * 2;
-
-  return (ch[idx] >> offset) & 3;
-}
-
 static void hash_mzd(commitment_ctx* ctx, mzd_t const* v) {
   const rci_t nrows        = v->nrows;
   const unsigned int width = sizeof(word) * v->width;

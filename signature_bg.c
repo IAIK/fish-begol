@@ -288,9 +288,9 @@ static int bg_proof_verify(public_parameters_t* pp, bg_public_key_t* pk, mzd_t* 
 
 #pragma omp parallel for
   for (unsigned int i = 0; i < BG_NUM_ROUNDS; ++i) {
-    unsigned int a_i = getChAt(proof_c->ch, i);
-    unsigned int b_i = (a_i + 1) % 3;
-    unsigned int c_i = (a_i + 2) % 3;
+    const unsigned int a_i = getChAt(proof_c->ch, i);
+    const unsigned int b_i = (a_i + 1) % 3;
+    const unsigned int c_i = (a_i + 2) % 3;
 
     ys_c[i][a_i] = proof_c->views[i][last_view_index].s[0];
     ys_c[i][b_i] = proof_c->views[i][last_view_index].s[1];
