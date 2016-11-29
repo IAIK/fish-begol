@@ -85,20 +85,20 @@ void bg_create_key(public_parameters_t* pp, bg_private_key_t* private_key,
 
   START_TIMING;
   private_key->beta = public_key->beta = mzd_local_init(1, pp->lowmc->n);
-  public_key->c = lowmc_call(pp->lowmc, lowmc_key_s, public_key->beta);
+  public_key->c                        = lowmc_call(pp->lowmc, lowmc_key_s, public_key->beta);
 
   END_TIMING(timing_and_size->gen.pubkey);
 }
 
 void bg_destroy_key(bg_private_key_t* private_key, bg_public_key_t* public_key) {
   lowmc_key_free(private_key->s);
-  private_key->s = NULL;
+  private_key->s    = NULL;
   private_key->beta = NULL;
 
   mzd_local_free(public_key->c);
   mzd_local_free(public_key->beta);
   public_key->beta = NULL;
-  public_key->c = NULL;
+  public_key->c    = NULL;
 }
 
 void bg_free_signature(public_parameters_t* pp, bg_signature_t* signature) {
@@ -225,8 +225,9 @@ static bg_signature_t* bg_prove(public_parameters_t* pp, bg_private_key_t* priva
   return signature;
 }
 
-static int verify_views(mpc_lowmc_t const* lowmc, mzd_t const* p, mzd_t const* beta, proof_t const* proof_y,
-                        proof_t const* proof_c, unsigned char ch[BG_NUM_ROUNDS]) {
+static int verify_views(mpc_lowmc_t const* lowmc, mzd_t const* p, mzd_t const* beta,
+                        proof_t const* proof_y, proof_t const* proof_c,
+                        unsigned char ch[BG_NUM_ROUNDS]) {
   int view_verify_status = 0;
 
 #pragma omp parallel for reduction(| : view_verify_status)

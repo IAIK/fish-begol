@@ -17,8 +17,8 @@
  */
 
 #include "mpc.h"
-#include "simd.h"
 #include "mzd_additional.h"
+#include "simd.h"
 
 void mpc_clear(mzd_t** res, unsigned sc) {
   for (unsigned int i = 0; i < sc; i++)
