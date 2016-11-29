@@ -33,8 +33,11 @@ typedef struct {
 } bg_public_key_t;
 
 typedef struct {
+  // proof for c = F_s(\beta)
   proof_t proof_c;
+  // proof for y = F_s(m)
   proof_t proof_y;
+  // y = F_s(m)
   mzd_t* y;
 } bg_signature_t;
 

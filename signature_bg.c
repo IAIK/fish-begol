@@ -110,6 +110,13 @@ void bg_free_signature(public_parameters_t* pp, bg_signature_t* signature) {
 }
 
 static bg_signature_t* bg_prove(public_parameters_t* pp, bg_private_key_t* private_key, mzd_t* p) {
+  if (mzd_equal(p, private_key->beta) == 0) {
+#ifdef VERBOSE
+    printf("p == beta, aborting\n");
+#endif
+    return NULL;
+  }
+
   TIME_FUNCTION;
   lowmc_t const* lowmc          = pp->lowmc;
   const unsigned int view_count = lowmc->r + 2;
@@ -252,6 +259,13 @@ static int verify_views(mpc_lowmc_t const* lowmc, mzd_t const* p, mzd_t const* b
 static int bg_proof_verify(public_parameters_t* pp, bg_public_key_t* pk, mzd_t* p,
                            bg_signature_t* signature) {
   TIME_FUNCTION;
+
+  if (mzd_equal(p, pk->beta) == 0) {
+#ifdef VERBOSE
+    printf("p == beta, aborting\n");
+#endif
+    return -1;
+  }
 
   lowmc_t const* lowmc               = pp->lowmc;
   const unsigned int view_count      = lowmc->r + 2;
