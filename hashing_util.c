@@ -38,7 +38,7 @@ typedef SHA512_CTX commitment_ctx;
 #define commitment_final SHA512_Final
 #endif
 
-static void hash_mzd(commitment_ctx* ctx, mzd_t const* v) {
+static void commit_mzd(commitment_ctx* ctx, mzd_t const* v) {
   const rci_t nrows        = v->nrows;
   const unsigned int width = sizeof(word) * v->width;
   for (rci_t m = 0; m < nrows; ++m) {
@@ -57,10 +57,10 @@ void H(const unsigned char k[16], mzd_t* y[3], const view_t* v, unsigned vidx, u
   commitment_update(&ctx, k, 16);
 
   for (unsigned i = 0; i < 3; ++i) {
-    hash_mzd(&ctx, y[i]);
+    commit_mzd(&ctx, y[i]);
   }
   for (unsigned i = 0; i < vcnt; ++i) {
-    hash_mzd(&ctx, v[i].s[vidx]);
+    commit_mzd(&ctx, v[i].s[vidx]);
   }
 
   commitment_update(&ctx, r, COMMITMENT_RAND_LENGTH);
