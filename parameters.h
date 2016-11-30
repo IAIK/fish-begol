@@ -36,4 +36,7 @@
 // Share count for verification
 #define SC_VERIFY 2
 
+// Key size for PRNG
+#define PRNG_KEYSIZE 16
+
 #endif
