@@ -46,6 +46,18 @@ static void commit_mzd(commitment_ctx* ctx, mzd_t const* v) {
   }
 }
 
+#if COMMITMENT_LENGTH == SHA256_DIGEST_LENGTH
+#define hash_mzd commit_mzd
+#else
+static void hash_mzd(SHA256_CTX* ctx, mzd_t const* v) {
+  const rci_t nrows        = v->nrows;
+  const unsigned int width = sizeof(word) * v->width;
+  for (rci_t m = 0; m < nrows; ++m) {
+    SHA256_Update(ctx, v->rows[m], width);
+  }
+}
+#endif
+
 /*
  * Computes the SHA256 hash of a view using openssl (similar as in
  * https://github.com/Sobuno/ZKBoo/blob/master/MPC_SHA256/shared.h)
@@ -138,7 +150,8 @@ void fis_H3(unsigned char const h[NUM_ROUNDS][3][COMMITMENT_LENGTH], const char*
   H3_compute(hash, ch);
 }
 
-void bg_H3_verify(unsigned char const h1[NUM_ROUNDS][2][COMMITMENT_LENGTH],
+void bg_H3_verify(const mzd_t* beta, const mzd_t* c, const mzd_t* m, const mzd_t* y,
+                  unsigned char const h1[NUM_ROUNDS][2][COMMITMENT_LENGTH],
                   unsigned char const hp1[NUM_ROUNDS][COMMITMENT_LENGTH],
                   unsigned char const h2[NUM_ROUNDS][2][COMMITMENT_LENGTH],
                   unsigned char const hp2[NUM_ROUNDS][COMMITMENT_LENGTH],
@@ -189,18 +202,28 @@ void bg_H3_verify(unsigned char const h1[NUM_ROUNDS][2][COMMITMENT_LENGTH],
     }
   }
 
+  hash_mzd(&ctx, beta);
+  hash_mzd(&ctx, c);
+  hash_mzd(&ctx, m);
+  hash_mzd(&ctx, y);
+
   unsigned char hash[SHA256_DIGEST_LENGTH];
   SHA256_Final(hash, &ctx);
   H3_compute(hash, ch);
 }
 
-void bg_H3(const unsigned char h1[NUM_ROUNDS][3][COMMITMENT_LENGTH],
+void bg_H3(const mzd_t* beta, const mzd_t* c, const mzd_t* m, const mzd_t* y,
+           const unsigned char h1[NUM_ROUNDS][3][COMMITMENT_LENGTH],
            const unsigned char h2[NUM_ROUNDS][3][COMMITMENT_LENGTH], unsigned char* ch) {
   unsigned char hash[SHA256_DIGEST_LENGTH];
   SHA256_CTX ctx;
   SHA256_Init(&ctx);
   SHA256_Update(&ctx, h1, 3 * COMMITMENT_LENGTH * NUM_ROUNDS);
   SHA256_Update(&ctx, h2, 3 * COMMITMENT_LENGTH * NUM_ROUNDS);
+  hash_mzd(&ctx, beta);
+  hash_mzd(&ctx, c);
+  hash_mzd(&ctx, m);
+  hash_mzd(&ctx, y);
   SHA256_Final(hash, &ctx);
 
   H3_compute(hash, ch);

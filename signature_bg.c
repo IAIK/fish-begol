@@ -181,6 +181,7 @@ static bg_signature_t* bg_prove(public_parameters_t* pp, bg_private_key_t* priva
     c_mpc_c[i] = mpc_lowmc_call(lowmc, &lowmc_key_s[i], private_key->beta, views_c[i], rvec_c[i]);
   }
   signature->y = mpc_reconstruct_from_share(NULL, c_mpc_y[0]);
+  mzd_t* c     = mpc_reconstruct_from_share(NULL, c_mpc_c[0]);
   END_TIMING(timing_and_size->sign.lowmc_enc);
 
   START_TIMING;
@@ -197,8 +198,10 @@ static bg_signature_t* bg_prove(public_parameters_t* pp, bg_private_key_t* priva
 
   START_TIMING;
   unsigned char ch[BG_NUM_ROUNDS];
-  bg_H3(hashes_y, hashes_c, ch);
+  bg_H3(private_key->beta, c, p, signature->y, hashes_y, hashes_c, ch);
   END_TIMING(timing_and_size->sign.challenge);
+
+  mzd_local_free(c);
 
   create_proof(&signature->proof_y, lowmc, hashes_y, ch, r_y, keys_y, views_y);
   create_proof(&signature->proof_c, lowmc, hashes_c, ch, r_c, keys_c, views_c);
@@ -315,7 +318,8 @@ static int bg_proof_verify(public_parameters_t* pp, bg_public_key_t* pk, mzd_t* 
       hash_c[i][1]);
   }
 
-  bg_H3_verify(hash_y, proof_y->hashes, hash_c, proof_c->hashes, proof_c->ch, ch);
+  bg_H3_verify(pk->beta, pk->c, p, signature->y, hash_y, proof_y->hashes, hash_c, proof_c->hashes,
+               proof_c->ch, ch);
 
   END_TIMING(timing_and_size->verify.challenge);
 
