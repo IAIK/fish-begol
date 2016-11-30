@@ -30,23 +30,23 @@
 #endif
 
 typedef struct {
-  mzd_t* x0m[3];
-  mzd_t* x1m[3];
-  mzd_t* x2m[3];
-  mzd_t* r0m[3];
-  mzd_t* r1m[3];
-  mzd_t* r2m[3];
-  mzd_t* x0s[3];
-  mzd_t* r0s[3];
-  mzd_t* x1s[3];
-  mzd_t* r1s[3];
-  mzd_t* v[3];
+  mzd_t* x0m[SC_PROOF];
+  mzd_t* x1m[SC_PROOF];
+  mzd_t* x2m[SC_PROOF];
+  mzd_t* r0m[SC_PROOF];
+  mzd_t* r1m[SC_PROOF];
+  mzd_t* r2m[SC_PROOF];
+  mzd_t* x0s[SC_PROOF];
+  mzd_t* r0s[SC_PROOF];
+  mzd_t* x1s[SC_PROOF];
+  mzd_t* r1s[SC_PROOF];
+  mzd_t* v[SC_PROOF];
 
   mzd_t** storage;
 } sbox_vars_t;
 
 static sbox_vars_t* sbox_vars_init(sbox_vars_t* vars, rci_t n, unsigned sc);
-static void sbox_vars_clear(sbox_vars_t* vars, unsigned int sc);
+static void sbox_vars_clear(sbox_vars_t* vars);
 
 typedef int (*BIT_and_ptr)(BIT*, BIT*, BIT*, view_t*, int*, unsigned, unsigned);
 typedef int (*and_ptr)(mzd_t**, mzd_t**, mzd_t**, mzd_t**, view_t*, mzd_t*, unsigned, mzd_t**);
@@ -257,19 +257,19 @@ proof_t* create_proof(proof_t* proof, mpc_lowmc_t const* lowmc,
 static void _mpc_sbox_layer_bitsliced(mzd_t** out, mzd_t* const* in, view_t* view,
                                       mzd_t* const* rvec, mask_t const* mask,
                                       sbox_vars_t const* vars) {
-  bitsliced_step_1(3);
+  bitsliced_step_1(SC_PROOF);
 
   mpc_and(vars->r0m, vars->x0s, vars->x1s, vars->r2m, view, 0, vars->v);
   mpc_and(vars->r2m, vars->x1s, vars->x2m, vars->r0s, view, 2, vars->v);
   mpc_and(vars->r1m, vars->x0s, vars->x2m, vars->r1s, view, 1, vars->v);
 
-  bitsliced_step_2(3);
+  bitsliced_step_2(SC_PROOF);
 }
 
 static int _mpc_sbox_layer_bitsliced_verify(mzd_t** out, mzd_t* const* in, view_t const* view,
                                             mzd_t* const* rvec, mask_t const* mask,
                                             sbox_vars_t const* vars) {
-  bitsliced_step_1(2);
+  bitsliced_step_1(SC_VERIFY);
 
   if (mpc_and_verify(vars->r0m, vars->x0s, vars->x1s, vars->r2m, view, mask->x2, 0, vars->v) ||
       mpc_and_verify(vars->r2m, vars->x1s, vars->x2m, vars->r0s, view, mask->x2, 2, vars->v) ||
@@ -277,7 +277,7 @@ static int _mpc_sbox_layer_bitsliced_verify(mzd_t** out, mzd_t* const* in, view_
     return -1;
   }
 
-  bitsliced_step_2(2);
+  bitsliced_step_2(SC_VERIFY);
   return 0;
 }
 
@@ -344,19 +344,19 @@ static int _mpc_sbox_layer_bitsliced_verify(mzd_t** out, mzd_t* const* in, view_
 __attribute__((target("sse2"))) static void
 _mpc_sbox_layer_bitsliced_sse(mzd_t** out, mzd_t* const* in, view_t const* view, mzd_t* const* rvec,
                               mask_t const* mask) {
-  bitsliced_mm_step_1(3, __m128i, _mm_and_si128, mm128_shift_left);
+  bitsliced_mm_step_1(SC_PROOF, __m128i, _mm_and_si128, mm128_shift_left);
 
   mpc_and_sse(r0m, x0s, x1s, r2m, view, 0);
   mpc_and_sse(r2m, x1s, x2m, r0s, view, 2);
   mpc_and_sse(r1m, x0s, x2m, r1s, view, 1);
 
-  bitsliced_mm_step_2(3, __m128i, _mm_and_si128, _mm_xor_si128, mm128_shift_right);
+  bitsliced_mm_step_2(SC_VERIFY, __m128i, _mm_and_si128, _mm_xor_si128, mm128_shift_right);
 }
 
 __attribute__((target("sse2"))) static int
 _mpc_sbox_layer_bitsliced_sse_verify(mzd_t** out, mzd_t* const* in, view_t const* view,
                                      mzd_t** rvec, mask_t const* mask) {
-  bitsliced_mm_step_1(2, __m128i, _mm_and_si128, mm128_shift_left);
+  bitsliced_mm_step_1(SC_VERIFY, __m128i, _mm_and_si128, mm128_shift_left);
 
   if (mpc_and_verify_sse(r0m, x0s, x1s, r2m, view, mask->x2, 0) ||
       mpc_and_verify_sse(r2m, x1s, x2m, r0s, view, mask->x2, 2) ||
@@ -364,7 +364,7 @@ _mpc_sbox_layer_bitsliced_sse_verify(mzd_t** out, mzd_t* const* in, view_t const
     return -1;
   }
 
-  bitsliced_mm_step_2(2, __m128i, _mm_and_si128, _mm_xor_si128, mm128_shift_right);
+  bitsliced_mm_step_2(SC_VERIFY, __m128i, _mm_and_si128, _mm_xor_si128, mm128_shift_right);
 
   return 0;
 }
@@ -372,19 +372,19 @@ _mpc_sbox_layer_bitsliced_sse_verify(mzd_t** out, mzd_t* const* in, view_t const
 __attribute__((target("avx2"))) static void
 _mpc_sbox_layer_bitsliced_avx(mzd_t** out, mzd_t* const* in, view_t const* view, mzd_t* const* rvec,
                               mask_t const* mask) {
-  bitsliced_mm_step_1(3, __m256i, _mm256_and_si256, mm256_shift_left);
+  bitsliced_mm_step_1(SC_PROOF, __m256i, _mm256_and_si256, mm256_shift_left);
 
   mpc_and_avx(r0m, x0s, x1s, r2m, view, 0);
   mpc_and_avx(r2m, x1s, x2m, r0s, view, 2);
   mpc_and_avx(r1m, x0s, x2m, r1s, view, 1);
 
-  bitsliced_mm_step_2(3, __m256i, _mm256_and_si256, _mm256_xor_si256, mm256_shift_right);
+  bitsliced_mm_step_2(SC_PROOF, __m256i, _mm256_and_si256, _mm256_xor_si256, mm256_shift_right);
 }
 
 __attribute__((target("avx2"))) static int
 _mpc_sbox_layer_bitsliced_avx_verify(mzd_t** out, mzd_t** in, view_t const* view,
                                      mzd_t* const* rvec, mask_t const* mask) {
-  bitsliced_mm_step_1(2, __m256i, _mm256_and_si256, mm256_shift_left);
+  bitsliced_mm_step_1(SC_VERIFY, __m256i, _mm256_and_si256, mm256_shift_left);
 
   if (mpc_and_verify_avx(r0m, x0s, x1s, r2m, view, mask->x2, 0) ||
       mpc_and_verify_avx(r2m, x1s, x2m, r0s, view, mask->x2, 2) ||
@@ -392,7 +392,7 @@ _mpc_sbox_layer_bitsliced_avx_verify(mzd_t** out, mzd_t** in, view_t const* view
     return -1;
   }
 
-  bitsliced_mm_step_2(2, __m256i, _mm256_and_si256, _mm256_xor_si256, mm256_shift_right);
+  bitsliced_mm_step_2(SC_VERIFY, __m256i, _mm256_and_si256, _mm256_xor_si256, mm256_shift_right);
 
   return 0;
 }
@@ -502,27 +502,28 @@ static mzd_t** _mpc_lowmc_call(mpc_lowmc_t const* lowmc, mpc_lowmc_key_t* lowmc_
 static mzd_t** _mpc_lowmc_call_bitsliced(mpc_lowmc_t const* lowmc, mpc_lowmc_key_t* lowmc_key,
                                          mzd_t const* p, mzd_t* const* shared_p, view_t* views,
                                          mzd_t*** rvec, unsigned ch) {
-  mpc_copy(views->s, lowmc_key->shared, 3);
+  mpc_copy(views->s, lowmc_key->shared, SC_PROOF);
   ++views;
 
   sbox_vars_t vars;
-  sbox_vars_init(&vars, lowmc->n, 3);
+  sbox_vars_init(&vars, lowmc->n, SC_PROOF);
 
-  mzd_t** x = mpc_init_empty_share_vector(lowmc->n, 3);
-  mzd_t* y[3];
-  mzd_local_init_multiple(y, 3, 1, lowmc->n);
+  mzd_t** x = mpc_init_empty_share_vector(lowmc->n, SC_PROOF);
+  mzd_t* y[SC_PROOF];
+  mzd_local_init_multiple(y, SC_PROOF, 1, lowmc->n);
 
-  mpc_const_mat_mul(x, lowmc->k0_matrix, lowmc_key->shared, 3);
+  mpc_const_mat_mul(x, lowmc->k0_matrix, lowmc_key->shared, SC_PROOF);
   if (p) {
-    mpc_const_add(x, x, p, 3, ch);
+    mpc_const_add(x, x, p, SC_PROOF, ch);
   } else {
-    mpc_copy(y, shared_p, 3);
-    mpc_add(x, x, y, 3);
+    mpc_copy(y, shared_p, SC_PROOF);
+    mpc_add(x, x, y, SC_PROOF);
   }
 
   lowmc_round_t const* round = lowmc->rounds;
   for (unsigned i = 0; i < lowmc->r; ++i, ++views, ++round) {
-    mzd_t* r[3] = {rvec[0][i], rvec[1][i], rvec[2][i]};
+    // TODO: fix for SC_PROOF != 3
+    mzd_t* r[SC_PROOF] = {rvec[0][i], rvec[1][i], rvec[2][i]};
 
 #ifdef WITH_OPT
     if (CPU_SUPPORTS_SSE2 && lowmc->n <= 128) {
@@ -536,14 +537,14 @@ static mzd_t** _mpc_lowmc_call_bitsliced(mpc_lowmc_t const* lowmc, mpc_lowmc_key
     _mpc_sbox_layer_bitsliced(y, x, views, r, &lowmc->mask, &vars);
 #endif
 
-    mpc_const_mat_mul(x, round->l_matrix, y, 3);
-    mpc_const_add(x, x, round->constant, 3, ch);
-    mpc_const_mat_mul(y, round->k_matrix, lowmc_key->shared, 3);
-    mpc_add(x, x, y, 3);
+    mpc_const_mat_mul(x, round->l_matrix, y, SC_PROOF);
+    mpc_const_add(x, x, round->constant, SC_PROOF, ch);
+    mpc_const_mat_mul(y, round->k_matrix, lowmc_key->shared, SC_PROOF);
+    mpc_add(x, x, y, SC_PROOF);
   }
 
-  mpc_copy(views->s, x, 3);
-  sbox_vars_clear(&vars, 3);
+  mpc_copy(views->s, x, SC_PROOF);
+  sbox_vars_clear(&vars);
 
   mzd_local_free_multiple(y);
   return x;
@@ -556,23 +557,24 @@ static mzd_t** _mpc_lowmc_call_bitsliced_verify(mpc_lowmc_t const* lowmc,
   ++views;
 
   sbox_vars_t vars;
-  sbox_vars_init(&vars, lowmc->n, 2);
+  sbox_vars_init(&vars, lowmc->n, SC_VERIFY);
 
-  mzd_t** x = mpc_init_empty_share_vector(lowmc->n, 2);
-  mzd_t* y[2];
-  mzd_local_init_multiple(y, 2, 1, lowmc->n);
+  mzd_t** x = mpc_init_empty_share_vector(lowmc->n, SC_VERIFY);
+  mzd_t* y[SC_VERIFY];
+  mzd_local_init_multiple(y, SC_VERIFY, 1, lowmc->n);
 
-  mpc_const_mat_mul(x, lowmc->k0_matrix, lowmc_key->shared, 2);
+  mpc_const_mat_mul(x, lowmc->k0_matrix, lowmc_key->shared, SC_VERIFY);
   if (p) {
-    mpc_const_add(x, x, p, 2, ch);
+    mpc_const_add(x, x, p, SC_VERIFY, ch);
   } else {
-    mpc_copy(y, shared_p, 2);
-    mpc_add(x, x, y, 2);
+    mpc_copy(y, shared_p, SC_VERIFY);
+    mpc_add(x, x, y, SC_VERIFY);
   }
 
   lowmc_round_t const* round = lowmc->rounds;
   for (unsigned i = 0; i < lowmc->r; ++i, ++views, ++round) {
-    mzd_t* r[2] = {rvec[0][i], rvec[1][i]};
+    // TODO: fix for SC_VERIFY != 2
+    mzd_t* r[SC_VERIFY] = {rvec[0][i], rvec[1][i]};
 
     int ret = 0;
 #ifdef WITH_OPT
@@ -587,19 +589,19 @@ static mzd_t** _mpc_lowmc_call_bitsliced_verify(mpc_lowmc_t const* lowmc,
     ret = _mpc_sbox_layer_bitsliced_verify(y, x, views, r, &lowmc->mask, &vars);
 #endif
     if (ret) {
-      mpc_free(x, 2);
+      mpc_free(x, SC_VERIFY);
       x       = NULL;
       *status = -1;
       break;
     }
 
-    mpc_const_mat_mul(x, round->l_matrix, y, 2);
-    mpc_const_add(x, x, round->constant, 2, ch);
-    mpc_const_mat_mul(y, round->k_matrix, lowmc_key->shared, 2);
-    mpc_add(x, x, y, 2);
+    mpc_const_mat_mul(x, round->l_matrix, y, SC_VERIFY);
+    mpc_const_add(x, x, round->constant, SC_VERIFY, ch);
+    mpc_const_mat_mul(y, round->k_matrix, lowmc_key->shared, SC_VERIFY);
+    mpc_add(x, x, y, SC_VERIFY);
   }
 
-  sbox_vars_clear(&vars, 2);
+  sbox_vars_clear(&vars);
   mzd_local_free_multiple(y);
   return x;
 }
@@ -629,15 +631,18 @@ static mzd_t** _mpc_lowmc_call_verify_shared_p(mpc_lowmc_t const* lowmc, mpc_low
 
 #define mpc_lowmc_verify_template(f)                                                               \
   mpc_lowmc_key_t lowmc_key;                                                                       \
-  mzd_shared_from_shares(&lowmc_key, views[0].s, 2);                                               \
+  mzd_shared_from_shares(&lowmc_key, views[0].s, SC_VERIFY);                                       \
                                                                                                    \
   int status = 0;                                                                                  \
   mzd_t** v  = (f)(lowmc, &lowmc_key, p, views, rvec, &status, c);                                 \
   if (v) {                                                                                         \
-    if (mzd_equal(views[lowmc->r + 1].s[0], v[0]) || mzd_equal(views[lowmc->r + 1].s[1], v[1])) {  \
-      status = 1;                                                                                  \
+    for (unsigned int i = 0; i < SC_VERIFY; ++i) {                                                 \
+      if (mzd_equal(views[lowmc->r + 1].s[i], v[i])) {                                             \
+        status = 1;                                                                                \
+        break;                                                                                     \
+      }                                                                                            \
     }                                                                                              \
-    mpc_free(v, 2);                                                                                \
+    mpc_free(v, SC_VERIFY);                                                                        \
   }                                                                                                \
   mzd_shared_clear(&lowmc_key);                                                                    \
                                                                                                    \
@@ -653,7 +658,7 @@ int mpc_lowmc_verify_shared_p(mpc_lowmc_t const* lowmc, mzd_shared_t const* p, v
   mpc_lowmc_verify_template(_mpc_lowmc_call_verify_shared_p);
 }
 
-void sbox_vars_clear(sbox_vars_t* vars, unsigned int sc) {
+void sbox_vars_clear(sbox_vars_t* vars) {
   if (vars->storage) {
     mzd_local_free_multiple(vars->storage);
     free(vars->storage);
@@ -692,10 +697,11 @@ sbox_vars_t* sbox_vars_init(sbox_vars_t* vars, rci_t n, unsigned sc) {
 }
 
 void clear_proof(mpc_lowmc_t const* lowmc, proof_t const* proof) {
-  for (unsigned i = 0; i < NUM_ROUNDS; i++) {
-    for (unsigned j = 0; j < 2 + lowmc->r; j++) {
-      mzd_local_free(proof->views[i][j].s[0]);
-      mzd_local_free(proof->views[i][j].s[1]);
+  for (unsigned int i = 0; i < NUM_ROUNDS; ++i) {
+    for (unsigned int j = 0; j < 2 + lowmc->r; ++j) {
+      for (unsigned int k = 0; k < SC_VERIFY; ++k) {
+        mzd_local_free(proof->views[i][j].s[k]);
+      }
       free(proof->views[i][j].s);
     }
     free(proof->views[i]);

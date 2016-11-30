@@ -31,4 +31,9 @@
 #define FIS_NUM_ROUNDS NUM_ROUNDS
 #define BG_NUM_ROUNDS NUM_ROUNDS
 
+// Share count for proofs
+#define SC_PROOF 3
+// Share count for verification
+#define SC_VERIFY 2
+
 #endif
