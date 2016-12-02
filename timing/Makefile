@@ -32,7 +32,8 @@ graphs-preq:
 graphs-postq:
 	python3 graphs.py -p pq-timings default \
 		--fs-blocksize 256 --fs-keysize 256 --fs-annotate 20-31 \
-		--bg-blocksize 256 --bg-keysize 256 --bg-annotate 20-31
+		--bg-blocksize 256 --bg-keysize 256 --bg-annotate 20-31 \
+		--sha-proof 237 --sha-verify 137 --sha-size 2672.484375
 
 graphs-omp:
 	python3 graphs.py -p omp-timings omp --bg-blocksize 128 --bg-keysize 128 -t $(MAXTHREADS)

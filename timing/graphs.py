@@ -314,10 +314,15 @@ def create_graph(prefix, fis_n, bg_n, fis_k, bg_k, fis_data, bg_data, fis_labels
 
   # grid and ticks
   ax.xaxis.set_major_locator(plticker.MultipleLocator(50))
-  ax.yaxis.set_major_locator(plticker.MultipleLocator(10 if bg_n == 128 else 25))
+  ax.yaxis.set_major_locator(plticker.MultipleLocator(10 if bg_n == 128 else 50))
   ax.xaxis.set_major_formatter(MultiScalarFormatterLim([0, 200, 600, 1000], [200, 600, 1000, 10000],
     [50, 100, 200, 500]))
-  ax.yaxis.set_major_formatter(ScalarFormatterLim(0, 50 if bg_n == 128 else 100, 100))
+  if bg_n == 128:
+    ax.yaxis.set_major_formatter(ScalarFormatterLim(0, 50, 100))
+  else:
+    ax.yaxis.set_major_formatter(MultiScalarFormatterLim([0, 200, 600, 1000], [200, 600, 1000, 10000],
+    [50, 100, 200, 500]))
+
   ax.grid(True, axis='y', which='both')
 
   plt.savefig('{0}.eps'.format(prefix))
