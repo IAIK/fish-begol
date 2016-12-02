@@ -29,7 +29,7 @@ from operator import itemgetter
 import json
 
 
-# from ZKBoo
+# from ZKBoo (SHA-256, 219 rounds)
 mpc_sha256_proof = 187
 mpc_sha256_verify = 89
 mpc_sha256_size = 1368312 / 1024.0
@@ -179,7 +179,7 @@ class Annotation(object):
 
 
 def create_graph(prefix, fis_n, bg_n, fis_k, bg_k, fis_data, bg_data, fis_labels, bg_labels,
-                 fis_annotate=None, bg_annotate=None, include_sha=True, style={}):
+                 fis_annotate=None, bg_annotate=None, include_sha=True, style={}, **kwargs):
   colors = sns.color_palette('Greys_d', n_colors=5)
   annotation_color = colors[0]
   annotation_color_e = 'r'
@@ -255,17 +255,23 @@ def create_graph(prefix, fis_n, bg_n, fis_k, bg_k, fis_data, bg_data, fis_labels
                              (t_bg_size[bg_index], t_bg_verify[bg_index]),
                              annotation_color_b))
 
-  if include_sha:
+  combined_time = t_fis_sign + t_fis_verify + t_bg_sign + t_bg_verify
+  combined_size = t_fis_size + t_bg_size
+
+  if include_sha and 'sha_proof' in kwargs and 'sha_verify' in kwargs and 'sha_size' in kwargs:
+    sha_proof = kwargs['sha_proof']
+    sha_verify = kwargs['sha_verify']
+    sha_size = kwargs['sha_size']
+
     annotate.append(Annotation('SHA256 proof',
-                               (mpc_sha256_size, mpc_sha256_proof),
+                               (sha_size, sha_proof),
                                annotation_color, horizontalalignment='right'))
     annotate.append(Annotation('SHA256 verify',
-                               (mpc_sha256_size, mpc_sha256_verify),
+                               (sha_size, sha_verify),
                                annotation_color, horizontalalignment='right'))
 
-  combined_time = t_fis_sign + t_fis_verify + t_bg_sign + t_bg_verify + [mpc_sha256_proof,
-      mpc_sha256_verify]
-  combined_size = t_fis_size + t_bg_size + [mpc_sha256_size]
+    combined_time += [sha_proof, sha_verify]
+    combined_size += [sha_size]
 
   ylim = (0, round_up_log(max(combined_time)))
   xlim = (round_down_log(min(combined_size)), round_up_log(max(combined_size)))
@@ -416,7 +422,8 @@ def create_graphs(args, style=None):
     bg_sum = np.array(timings.get('bg_mean'))
 
   create_graph('{0}'.format(prefix), fis_n, bg_n, fis_k, bg_k, fis_sum, bg_sum, fis_labels,
-      bg_labels, args.fs_annotate, args.bg_annotate, style=style)
+      bg_labels, args.fs_annotate, args.bg_annotate, style=style, sha_size=args.sha_size,
+      sha_verify=args.sha_verify, sha_proof=args.sha_proof)
 
 
 def create_qh_graphs(args, style=None):
@@ -595,6 +602,12 @@ def main():
                               dest='bg_annotate')
   default_parser.add_argument('--fs-annotate', help='Pick FS instance to annotate',
                               dest='fs_annotate')
+  default_parser.add_argument('--sha-size', help='Size of the proof for SHA-256',
+                              dest='sha_size', default=mpc_sha256_size, type=float)
+  default_parser.add_argument('--sha-verify', help='Runtime of the proof verification for SHA-256',
+                              dest='sha_verify', default=mpc_sha256_verify, type=float)
+  default_parser.add_argument('--sha-proof', help='Runtime of the proof generation for SHA-256',
+                              dest='sha_proof', default=mpc_sha256_proof, type=float)
 
   qh_parser = subparsers.add_parser('qH', help='graphs for rising q_H')
   qh_parser.set_defaults(func=create_qh_graphs)
