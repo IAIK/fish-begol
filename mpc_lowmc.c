@@ -57,7 +57,7 @@ unsigned char* proof_to_char_array(mpc_lowmc_t* lowmc, proof_t* proof, unsigned*
   unsigned full_mzd_size    = lowmc->n / 8;
   unsigned single_mzd_bytes = ((3 * lowmc->m) + 7) / 8;
   unsigned mzd_bytes        = 2 * (lowmc->r * single_mzd_bytes + first_view_bytes + full_mzd_size);
-  *len = NUM_ROUNDS * (COMMITMENT_LENGTH + 2 * (COMMITMENT_RAND_LENGTH + 16) + mzd_bytes) +
+  *len = NUM_ROUNDS * (COMMITMENT_LENGTH + 2 * (COMMITMENT_RAND_LENGTH + PRNG_KEYSIZE) + mzd_bytes) +
          (store_ch ? ((NUM_ROUNDS + 3) / 4) : 0);
   unsigned char* result = (unsigned char*)malloc(*len * sizeof(unsigned char));
 
@@ -71,10 +71,10 @@ unsigned char* proof_to_char_array(mpc_lowmc_t* lowmc, proof_t* proof, unsigned*
     memcpy(temp, proof->r[i][1], COMMITMENT_RAND_LENGTH * sizeof(unsigned char));
     temp += COMMITMENT_RAND_LENGTH;
 
-    memcpy(temp, proof->keys[i][0], 16 * sizeof(unsigned char));
-    temp += 16;
-    memcpy(temp, proof->keys[i][1], 16 * sizeof(unsigned char));
-    temp += 16;
+    memcpy(temp, proof->keys[i][0], PRNG_KEYSIZE * sizeof(unsigned char));
+    temp += PRNG_KEYSIZE;
+    memcpy(temp, proof->keys[i][1], PRNG_KEYSIZE * sizeof(unsigned char));
+    temp += PRNG_KEYSIZE;
 
     unsigned char* v0 = mzd_to_char_array(proof->views[i][0].s[0], first_view_bytes);
     unsigned char* v1 = mzd_to_char_array(proof->views[i][0].s[1], first_view_bytes);
@@ -127,7 +127,7 @@ proof_t* proof_from_char_array(mpc_lowmc_t* lowmc, proof_t* proof, unsigned char
   unsigned full_mzd_size    = lowmc->n / 8;
   unsigned single_mzd_bytes = ((3 * lowmc->m) + 7) / 8;
   unsigned mzd_bytes        = 2 * (lowmc->r * single_mzd_bytes + first_view_bytes + full_mzd_size);
-  *len = NUM_ROUNDS * (COMMITMENT_LENGTH + 2 * (COMMITMENT_RAND_LENGTH + 16) + mzd_bytes) +
+  *len = NUM_ROUNDS * (COMMITMENT_LENGTH + 2 * (COMMITMENT_RAND_LENGTH + PRNG_KEYSIZE) + mzd_bytes) +
          (contains_ch ? ((NUM_ROUNDS + 3) / 4) : 0);
 
   unsigned char* temp = data;
@@ -145,10 +145,10 @@ proof_t* proof_from_char_array(mpc_lowmc_t* lowmc, proof_t* proof, unsigned char
     memcpy(proof->r[i][1], temp, COMMITMENT_RAND_LENGTH * sizeof(unsigned char));
     temp += COMMITMENT_RAND_LENGTH;
 
-    memcpy(proof->keys[i][0], temp, 16 * sizeof(char));
-    temp += 16;
-    memcpy(proof->keys[i][1], temp, 16 * sizeof(char));
-    temp += 16;
+    memcpy(proof->keys[i][0], temp, PRNG_KEYSIZE * sizeof(char));
+    temp += PRNG_KEYSIZE;
+    memcpy(proof->keys[i][1], temp, PRNG_KEYSIZE * sizeof(char));
+    temp += PRNG_KEYSIZE;
 
     proof->views[i]         = (view_t*)malloc((2 + lowmc->r) * sizeof(view_t));
     proof->views[i][0].s    = (mzd_t**)malloc(2 * sizeof(mzd_t*));
@@ -177,10 +177,10 @@ proof_t* proof_from_char_array(mpc_lowmc_t* lowmc, proof_t* proof, unsigned char
 }
 
 proof_t* create_proof(proof_t* proof, mpc_lowmc_t const* lowmc,
-                      unsigned char hashes[NUM_ROUNDS][3][COMMITMENT_LENGTH],
+                      unsigned char hashes[NUM_ROUNDS][SC_PROOF][COMMITMENT_LENGTH],
                       unsigned char ch[NUM_ROUNDS],
-                      unsigned char r[NUM_ROUNDS][3][COMMITMENT_RAND_LENGTH],
-                      unsigned char keys[NUM_ROUNDS][3][16], view_t* const views[NUM_ROUNDS]) {
+                      unsigned char r[NUM_ROUNDS][SC_PROOF][COMMITMENT_RAND_LENGTH],
+                      unsigned char keys[NUM_ROUNDS][SC_PROOF][PRNG_KEYSIZE], view_t* const views[NUM_ROUNDS]) {
   if (!proof)
     proof = calloc(sizeof(proof_t), 1);
 
@@ -198,8 +198,8 @@ proof_t* create_proof(proof_t* proof, mpc_lowmc_t const* lowmc,
     memcpy(proof->r[i][0], r[i][a], COMMITMENT_RAND_LENGTH * sizeof(char));
     memcpy(proof->r[i][1], r[i][b], COMMITMENT_RAND_LENGTH * sizeof(char));
 
-    memcpy(proof->keys[i][0], keys[i][a], 16 * sizeof(char));
-    memcpy(proof->keys[i][1], keys[i][b], 16 * sizeof(char));
+    memcpy(proof->keys[i][0], keys[i][a], PRNG_KEYSIZE * sizeof(char));
+    memcpy(proof->keys[i][1], keys[i][b], PRNG_KEYSIZE * sizeof(char));
 
     proof->views[i] = (view_t*)malloc((2 + lowmc->r) * sizeof(view_t));
     for (unsigned j = 0; j < 2 + lowmc->r; j++) {
@@ -350,7 +350,7 @@ _mpc_sbox_layer_bitsliced_sse(mzd_t** out, mzd_t* const* in, view_t const* view,
   mpc_and_sse(r2m, x1s, x2m, r0s, view, 2);
   mpc_and_sse(r1m, x0s, x2m, r1s, view, 1);
 
-  bitsliced_mm_step_2(SC_VERIFY, __m128i, _mm_and_si128, _mm_xor_si128, mm128_shift_right);
+  bitsliced_mm_step_2(SC_PROOF, __m128i, _mm_and_si128, _mm_xor_si128, mm128_shift_right);
 }
 
 __attribute__((target("sse2"))) static int

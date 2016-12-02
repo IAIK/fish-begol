@@ -22,20 +22,20 @@
 #include "mpc_lowmc.h"
 #include "parameters.h"
 
-void H(const unsigned char k[16], mzd_t* y[3], view_t const* v, unsigned vidx, unsigned vcnt,
+void H(const unsigned char k[PRNG_KEYSIZE], mzd_t* y[SC_PROOF], view_t const* v, unsigned vidx, unsigned vcnt,
        const unsigned char r[COMMITMENT_RAND_LENGTH], unsigned char hash[COMMITMENT_LENGTH]);
 
-void fis_H3(unsigned char const h[NUM_ROUNDS][3][COMMITMENT_LENGTH], const char* m, unsigned m_len,
+void fis_H3(unsigned char const h[NUM_ROUNDS][SC_PROOF][COMMITMENT_LENGTH], const char* m, unsigned m_len,
             unsigned char* ch);
 
-void fis_H3_verify(unsigned char const h[NUM_ROUNDS][2][COMMITMENT_LENGTH],
+void fis_H3_verify(unsigned char const h[NUM_ROUNDS][SC_VERIFY][COMMITMENT_LENGTH],
                    unsigned char const hp[NUM_ROUNDS][COMMITMENT_LENGTH],
                    unsigned char const ch_in[(NUM_ROUNDS + 3) / 4], const char* m, unsigned m_len,
                    unsigned char* ch);
 
 void bg_H3(const mzd_t* beta, const mzd_t* c, const mzd_t* m, const mzd_t* y,
-           const unsigned char c1[NUM_ROUNDS][3][COMMITMENT_LENGTH],
-           const unsigned char c2[NUM_ROUNDS][3][COMMITMENT_LENGTH], unsigned char* ch);
+           const unsigned char c1[NUM_ROUNDS][SC_PROOF][COMMITMENT_LENGTH],
+           const unsigned char c2[NUM_ROUNDS][SC_PROOF][COMMITMENT_LENGTH], unsigned char* ch);
 
 void bg_H3_verify(const mzd_t* beta, const mzd_t* c, const mzd_t* m, const mzd_t* y,
                   unsigned char const h1[NUM_ROUNDS][2][COMMITMENT_LENGTH],

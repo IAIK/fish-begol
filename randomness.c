@@ -17,6 +17,7 @@
  */
 
 #include "randomness.h"
+#include "parameters.h"
 
 #include <openssl/rand.h>
 
@@ -86,7 +87,7 @@ void aes_prng_get_randomness(aes_prng_t* aes_prng, unsigned char* dst, size_t co
 static aes_prng_t aes_prng;
 
 void init_rand_bytes(void) {
-  unsigned char key[16];
+  unsigned char key[PRNG_KEYSIZE];
   RAND_bytes(key, sizeof(key));
 
   aes_prng_init(&aes_prng, key);

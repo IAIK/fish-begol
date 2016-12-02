@@ -62,13 +62,13 @@ static void hash_mzd(SHA256_CTX* ctx, mzd_t const* v) {
  * Computes the SHA256 hash of a view using openssl (similar as in
  * https://github.com/Sobuno/ZKBoo/blob/master/MPC_SHA256/shared.h)
  */
-void H(const unsigned char k[16], mzd_t* y[3], const view_t* v, unsigned vidx, unsigned vcnt,
+void H(const unsigned char k[PRNG_KEYSIZE], mzd_t* y[SC_PROOF], const view_t* v, unsigned vidx, unsigned vcnt,
        const unsigned char r[COMMITMENT_RAND_LENGTH], unsigned char hash[COMMITMENT_LENGTH]) {
   commitment_ctx ctx;
   commitment_init(&ctx);
-  commitment_update(&ctx, k, 16);
+  commitment_update(&ctx, k, PRNG_KEYSIZE);
 
-  for (unsigned i = 0; i < 3; ++i) {
+  for (unsigned i = 0; i < SC_PROOF; ++i) {
     commit_mzd(&ctx, y[i]);
   }
   for (unsigned i = 0; i < vcnt; ++i) {
@@ -137,13 +137,13 @@ void fis_H3_verify(unsigned char const h[NUM_ROUNDS][2][COMMITMENT_LENGTH],
 /**
  * Computes the challenge.
  */
-void fis_H3(unsigned char const h[NUM_ROUNDS][3][COMMITMENT_LENGTH], const char* m, unsigned m_len,
+void fis_H3(unsigned char const h[NUM_ROUNDS][SC_PROOF][COMMITMENT_LENGTH], const char* m, unsigned m_len,
             unsigned char* ch) {
 
   unsigned char hash[SHA256_DIGEST_LENGTH];
   SHA256_CTX ctx;
   SHA256_Init(&ctx);
-  SHA256_Update(&ctx, h, 3 * COMMITMENT_LENGTH * NUM_ROUNDS);
+  SHA256_Update(&ctx, h, SC_PROOF * COMMITMENT_LENGTH * NUM_ROUNDS);
   SHA256_Update(&ctx, m, m_len);
   SHA256_Final(hash, &ctx);
 
@@ -213,13 +213,13 @@ void bg_H3_verify(const mzd_t* beta, const mzd_t* c, const mzd_t* m, const mzd_t
 }
 
 void bg_H3(const mzd_t* beta, const mzd_t* c, const mzd_t* m, const mzd_t* y,
-           const unsigned char h1[NUM_ROUNDS][3][COMMITMENT_LENGTH],
-           const unsigned char h2[NUM_ROUNDS][3][COMMITMENT_LENGTH], unsigned char* ch) {
+           const unsigned char h1[NUM_ROUNDS][SC_PROOF][COMMITMENT_LENGTH],
+           const unsigned char h2[NUM_ROUNDS][SC_PROOF][COMMITMENT_LENGTH], unsigned char* ch) {
   unsigned char hash[SHA256_DIGEST_LENGTH];
   SHA256_CTX ctx;
   SHA256_Init(&ctx);
-  SHA256_Update(&ctx, h1, 3 * COMMITMENT_LENGTH * NUM_ROUNDS);
-  SHA256_Update(&ctx, h2, 3 * COMMITMENT_LENGTH * NUM_ROUNDS);
+  SHA256_Update(&ctx, h1, SC_PROOF * COMMITMENT_LENGTH * NUM_ROUNDS);
+  SHA256_Update(&ctx, h2, SC_PROOF * COMMITMENT_LENGTH * NUM_ROUNDS);
   hash_mzd(&ctx, beta);
   hash_mzd(&ctx, c);
   hash_mzd(&ctx, m);

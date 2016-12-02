@@ -36,22 +36,22 @@ void destroy_instance(public_parameters_t* pp) {
 void init_view(mpc_lowmc_t const* mpc_lowmc, view_t* views[NUM_ROUNDS]) {
   const unsigned int view_count = 2 + mpc_lowmc->r;
 
-  unsigned char* buffer = calloc(view_count * NUM_ROUNDS, sizeof(view_t*) + 3 * sizeof(mzd_t*));
+  unsigned char* buffer = calloc(view_count * NUM_ROUNDS, sizeof(view_t*) + SC_PROOF * sizeof(mzd_t*));
 
   for (unsigned int i = 0; i < NUM_ROUNDS; i++) {
     views[i] = (view_t*)buffer;
     buffer += view_count * sizeof(view_t*);
 
     views[i][0].s = (mzd_t**)buffer;
-    buffer += 3 * sizeof(mzd_t*);
-    for (unsigned m = 0; m < 3; m++) {
+    buffer += SC_PROOF * sizeof(mzd_t*);
+    for (unsigned m = 0; m < SC_PROOF; ++m) {
       views[i][0].s[m] = mzd_local_init(1, mpc_lowmc->k);
     }
 
     for (unsigned n = 1; n < view_count; n++) {
       views[i][n].s = (mzd_t**)buffer;
-      buffer += 3 * sizeof(mzd_t*);
-      for (unsigned m = 0; m < 3; m++) {
+      buffer += SC_PROOF * sizeof(mzd_t*);
+      for (unsigned m = 0; m < SC_PROOF; m++) {
         views[i][n].s[m] = mzd_local_init(1, mpc_lowmc->n);
       }
     }

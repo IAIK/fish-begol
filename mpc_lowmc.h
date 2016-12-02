@@ -34,8 +34,8 @@ typedef struct { mzd_t** s; } view_t;
 
 typedef struct {
   view_t** views;
-  unsigned char keys[NUM_ROUNDS][2][16];
-  unsigned char r[NUM_ROUNDS][2][COMMITMENT_RAND_LENGTH];
+  unsigned char keys[NUM_ROUNDS][SC_VERIFY][PRNG_KEYSIZE];
+  unsigned char r[NUM_ROUNDS][SC_VERIFY][COMMITMENT_RAND_LENGTH];
   unsigned char hashes[NUM_ROUNDS][COMMITMENT_LENGTH];
   unsigned char ch[(NUM_ROUNDS + 3) / 4];
 } proof_t;
@@ -47,10 +47,10 @@ unsigned char* proof_to_char_array(mpc_lowmc_t* lowmc, proof_t* proof, unsigned*
                                    bool store_ch);
 
 proof_t* create_proof(proof_t* proof, mpc_lowmc_t const* lowmc,
-                      unsigned char hashes[NUM_ROUNDS][3][COMMITMENT_LENGTH],
+                      unsigned char hashes[NUM_ROUNDS][SC_PROOF][COMMITMENT_LENGTH],
                       unsigned char ch[NUM_ROUNDS],
-                      unsigned char r[NUM_ROUNDS][3][COMMITMENT_RAND_LENGTH],
-                      unsigned char keys[NUM_ROUNDS][3][16], view_t* const views[NUM_ROUNDS]);
+                      unsigned char r[NUM_ROUNDS][SC_PROOF][COMMITMENT_RAND_LENGTH],
+                      unsigned char keys[NUM_ROUNDS][SC_PROOF][PRNG_KEYSIZE], view_t* const views[NUM_ROUNDS]);
 
 void clear_proof(mpc_lowmc_t const* lowmc, proof_t const* proof);
 void free_proof(mpc_lowmc_t const* lowmc, proof_t* proof);
