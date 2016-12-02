@@ -8,9 +8,9 @@ timings-preq:
 	python timing.py lowmc-inst-512-512-512.txt -k 512 -i $(ITER)
 
 timings-postq:
-	python timing.py pq-lowmc-inst-256-256-256.txt -k 256 -i $(ITER) -p pq-timings
-	python timing.py pq-lowmc-inst-384-384-384.txt -k 384 -i $(ITER) -p pq-timings
-	python timing.py pq-lowmc-inst-512-512-512.txt -k 512 -i $(ITER) -p pq-timings
+	python timing.py pq-lowmc-inst-256-256-256.txt -k 256 -i $(ITER) -p pq-timings -x ../mpc_lowmc_pq
+	python timing.py pq-lowmc-inst-384-384-384.txt -k 384 -i $(ITER) -p pq-timings -x ../mpc_lowmc_pq
+	python timing.py pq-lowmc-inst-512-512-512.txt -k 512 -i $(ITER) -p pq-timings -x ../mpc_lowmc_pq
 
 timings-omp:
 	# before running this benchmark, make sure to disable HyperThreading as it
