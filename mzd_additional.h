@@ -19,8 +19,8 @@
 #ifndef MZD_ADDITIONAL_H
 #define MZD_ADDITIONAL_H
 
-#include "randomness.h"
 #include "parameters.h"
+#include "randomness.h"
 
 #include <m4ri/m4ri.h>
 
@@ -57,7 +57,8 @@ mzd_t* mzd_init_random_vector_prng(rci_t n, aes_prng_t* aes_prng);
 
 void mzd_randomize_ssl(mzd_t* val);
 
-mzd_t** mzd_init_random_vectors_from_seed(const unsigned char key[PRNG_KEYSIZE], rci_t n, unsigned count);
+mzd_t** mzd_init_random_vectors_from_seed(const unsigned char key[PRNG_KEYSIZE], rci_t n,
+                                          unsigned count);
 
 void mzd_shift_right(mzd_t* res, mzd_t const* val, unsigned count);
 

@@ -36,7 +36,8 @@ void destroy_instance(public_parameters_t* pp) {
 void init_view(mpc_lowmc_t const* mpc_lowmc, view_t* views[NUM_ROUNDS]) {
   const unsigned int view_count = 2 + mpc_lowmc->r;
 
-  unsigned char* buffer = calloc(view_count * NUM_ROUNDS, sizeof(view_t*) + SC_PROOF * sizeof(mzd_t*));
+  unsigned char* buffer =
+      calloc(view_count * NUM_ROUNDS, sizeof(view_t*) + SC_PROOF * sizeof(mzd_t*));
 
   for (unsigned int i = 0; i < NUM_ROUNDS; i++) {
     views[i] = (view_t*)buffer;

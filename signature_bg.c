@@ -178,7 +178,8 @@ static bg_signature_t* bg_prove(public_parameters_t* pp, bg_private_key_t* priva
 #pragma omp parallel for
   for (unsigned int i = 0; i < BG_NUM_ROUNDS; ++i) {
     c_mpc_y[i] = mpc_lowmc_call(lowmc, &lowmc_key_s[i], p, true, views_y[i], rvec_y[i]);
-    c_mpc_c[i] = mpc_lowmc_call(lowmc, &lowmc_key_s[i], private_key->beta, true, views_c[i], rvec_c[i]);
+    c_mpc_c[i] =
+        mpc_lowmc_call(lowmc, &lowmc_key_s[i], private_key->beta, true, views_c[i], rvec_c[i]);
   }
   signature->y = mpc_reconstruct_from_share(NULL, c_mpc_y[0]);
   mzd_t* c     = mpc_reconstruct_from_share(NULL, c_mpc_c[0]);

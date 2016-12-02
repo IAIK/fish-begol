@@ -57,8 +57,9 @@ unsigned char* proof_to_char_array(mpc_lowmc_t* lowmc, proof_t* proof, unsigned*
   unsigned full_mzd_size    = lowmc->n / 8;
   unsigned single_mzd_bytes = ((3 * lowmc->m) + 7) / 8;
   unsigned mzd_bytes        = 2 * (lowmc->r * single_mzd_bytes + first_view_bytes + full_mzd_size);
-  *len = NUM_ROUNDS * (COMMITMENT_LENGTH + 2 * (COMMITMENT_RAND_LENGTH + PRNG_KEYSIZE) + mzd_bytes) +
-         (store_ch ? ((NUM_ROUNDS + 3) / 4) : 0);
+  *len =
+      NUM_ROUNDS * (COMMITMENT_LENGTH + 2 * (COMMITMENT_RAND_LENGTH + PRNG_KEYSIZE) + mzd_bytes) +
+      (store_ch ? ((NUM_ROUNDS + 3) / 4) : 0);
   unsigned char* result = (unsigned char*)malloc(*len * sizeof(unsigned char));
 
   unsigned char* temp = result;
@@ -127,8 +128,9 @@ proof_t* proof_from_char_array(mpc_lowmc_t* lowmc, proof_t* proof, unsigned char
   unsigned full_mzd_size    = lowmc->n / 8;
   unsigned single_mzd_bytes = ((3 * lowmc->m) + 7) / 8;
   unsigned mzd_bytes        = 2 * (lowmc->r * single_mzd_bytes + first_view_bytes + full_mzd_size);
-  *len = NUM_ROUNDS * (COMMITMENT_LENGTH + 2 * (COMMITMENT_RAND_LENGTH + PRNG_KEYSIZE) + mzd_bytes) +
-         (contains_ch ? ((NUM_ROUNDS + 3) / 4) : 0);
+  *len =
+      NUM_ROUNDS * (COMMITMENT_LENGTH + 2 * (COMMITMENT_RAND_LENGTH + PRNG_KEYSIZE) + mzd_bytes) +
+      (contains_ch ? ((NUM_ROUNDS + 3) / 4) : 0);
 
   unsigned char* temp = data;
 
@@ -180,7 +182,8 @@ proof_t* create_proof(proof_t* proof, mpc_lowmc_t const* lowmc,
                       unsigned char hashes[NUM_ROUNDS][SC_PROOF][COMMITMENT_LENGTH],
                       unsigned char ch[NUM_ROUNDS],
                       unsigned char r[NUM_ROUNDS][SC_PROOF][COMMITMENT_RAND_LENGTH],
-                      unsigned char keys[NUM_ROUNDS][SC_PROOF][PRNG_KEYSIZE], view_t* const views[NUM_ROUNDS]) {
+                      unsigned char keys[NUM_ROUNDS][SC_PROOF][PRNG_KEYSIZE],
+                      view_t* const views[NUM_ROUNDS]) {
   if (!proof)
     proof = calloc(sizeof(proof_t), 1);
 
@@ -500,8 +503,8 @@ static mzd_t** _mpc_lowmc_call(mpc_lowmc_t const* lowmc, mpc_lowmc_key_t* lowmc_
 #endif
 
 static mzd_t** _mpc_lowmc_call_bitsliced(mpc_lowmc_t const* lowmc, mpc_lowmc_key_t* lowmc_key,
-                                         mzd_t const* p, bool xor_p, view_t* views,
-                                         mzd_t*** rvec, unsigned ch) {
+                                         mzd_t const* p, bool xor_p, view_t* views, mzd_t*** rvec,
+                                         unsigned ch) {
   mpc_copy(views->s, lowmc_key->shared, SC_PROOF);
   ++views;
 
@@ -551,8 +554,8 @@ static mzd_t** _mpc_lowmc_call_bitsliced(mpc_lowmc_t const* lowmc, mpc_lowmc_key
 
 static mzd_t** _mpc_lowmc_call_bitsliced_verify(mpc_lowmc_t const* lowmc,
                                                 mpc_lowmc_key_t* lowmc_key, mzd_t const* p,
-                                                bool xor_p, view_t const* views,
-                                                mzd_t*** rvec, unsigned ch, int* status) {
+                                                bool xor_p, view_t const* views, mzd_t*** rvec,
+                                                unsigned ch, int* status) {
   ++views;
 
   sbox_vars_t vars;
@@ -599,7 +602,6 @@ static mzd_t** _mpc_lowmc_call_bitsliced_verify(mpc_lowmc_t const* lowmc,
     mpc_const_add(x, x, p, SC_VERIFY, ch);
   }
 
-
   sbox_vars_clear(&vars);
   mzd_local_free_multiple(y);
   return x;
@@ -611,8 +613,8 @@ mzd_t** mpc_lowmc_call(mpc_lowmc_t const* lowmc, mpc_lowmc_key_t* lowmc_key, mzd
 }
 
 static mzd_t** _mpc_lowmc_call_verify(mpc_lowmc_t const* lowmc, mpc_lowmc_key_t* lowmc_key,
-                                      mzd_t const* p, bool xor_p, view_t const* views, mzd_t*** rvec,
-                                      int* status, int c) {
+                                      mzd_t const* p, bool xor_p, view_t const* views,
+                                      mzd_t*** rvec, int* status, int c) {
   return _mpc_lowmc_call_bitsliced_verify(lowmc, lowmc_key, p, xor_p, views, rvec, c, status);
 }
 
@@ -621,7 +623,7 @@ static mzd_t** _mpc_lowmc_call_verify(mpc_lowmc_t const* lowmc, mpc_lowmc_key_t*
   mzd_shared_from_shares(&lowmc_key, views[0].s, SC_VERIFY);                                       \
                                                                                                    \
   int status = 0;                                                                                  \
-  mzd_t** v  = (f)(lowmc, &lowmc_key, p, xor_p, views, rvec, &status, c);                                 \
+  mzd_t** v  = (f)(lowmc, &lowmc_key, p, xor_p, views, rvec, &status, c);                          \
   if (v) {                                                                                         \
     for (unsigned int i = 0; i < SC_VERIFY; ++i) {                                                 \
       if (mzd_equal(views[lowmc->r + 1].s[i], v[i])) {                                             \
@@ -635,8 +637,8 @@ static mzd_t** _mpc_lowmc_call_verify(mpc_lowmc_t const* lowmc, mpc_lowmc_key_t*
                                                                                                    \
   return status
 
-int mpc_lowmc_verify(mpc_lowmc_t const* lowmc, mzd_t const* p, bool xor_p, view_t const* views, mzd_t*** rvec,
-                     int c) {
+int mpc_lowmc_verify(mpc_lowmc_t const* lowmc, mzd_t const* p, bool xor_p, view_t const* views,
+                     mzd_t*** rvec, int c) {
   mpc_lowmc_verify_template(_mpc_lowmc_call_verify);
 }
 

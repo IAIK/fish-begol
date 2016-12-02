@@ -50,7 +50,8 @@ proof_t* create_proof(proof_t* proof, mpc_lowmc_t const* lowmc,
                       unsigned char hashes[NUM_ROUNDS][SC_PROOF][COMMITMENT_LENGTH],
                       unsigned char ch[NUM_ROUNDS],
                       unsigned char r[NUM_ROUNDS][SC_PROOF][COMMITMENT_RAND_LENGTH],
-                      unsigned char keys[NUM_ROUNDS][SC_PROOF][PRNG_KEYSIZE], view_t* const views[NUM_ROUNDS]);
+                      unsigned char keys[NUM_ROUNDS][SC_PROOF][PRNG_KEYSIZE],
+                      view_t* const views[NUM_ROUNDS]);
 
 void clear_proof(mpc_lowmc_t const* lowmc, proof_t const* proof);
 void free_proof(mpc_lowmc_t const* lowmc, proof_t* proof);
@@ -80,7 +81,7 @@ mzd_t** mpc_lowmc_call(mpc_lowmc_t const* lowmc, mpc_lowmc_key_t* lowmc_key, mzd
  * \param  rvec      the randomness vector
  * \return           0 on success and a value != 0 otherwise
  */
-int mpc_lowmc_verify(mpc_lowmc_t const* lowmc, mzd_t const* p, bool xor_p, view_t const* views, mzd_t*** rvec,
-                     int c);
+int mpc_lowmc_verify(mpc_lowmc_t const* lowmc, mzd_t const* p, bool xor_p, view_t const* views,
+                     mzd_t*** rvec, int c);
 
 #endif

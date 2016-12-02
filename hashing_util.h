@@ -22,11 +22,12 @@
 #include "mpc_lowmc.h"
 #include "parameters.h"
 
-void H(const unsigned char k[PRNG_KEYSIZE], mzd_t* y[SC_PROOF], view_t const* v, unsigned vidx, unsigned vcnt,
-       const unsigned char r[COMMITMENT_RAND_LENGTH], unsigned char hash[COMMITMENT_LENGTH]);
+void H(const unsigned char k[PRNG_KEYSIZE], mzd_t* y[SC_PROOF], view_t const* v, unsigned vidx,
+       unsigned vcnt, const unsigned char r[COMMITMENT_RAND_LENGTH],
+       unsigned char hash[COMMITMENT_LENGTH]);
 
-void fis_H3(unsigned char const h[NUM_ROUNDS][SC_PROOF][COMMITMENT_LENGTH], const char* m, unsigned m_len,
-            unsigned char* ch);
+void fis_H3(unsigned char const h[NUM_ROUNDS][SC_PROOF][COMMITMENT_LENGTH], const char* m,
+            unsigned m_len, unsigned char* ch);
 
 void fis_H3_verify(unsigned char const h[NUM_ROUNDS][SC_VERIFY][COMMITMENT_LENGTH],
                    unsigned char const hp[NUM_ROUNDS][COMMITMENT_LENGTH],
