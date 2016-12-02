@@ -1,3 +1,5 @@
+#!/usr/bin/python3
+
 # fish-begol - Implementation of the Fish and Begol signature schemes
 # Copyright (C) 2016 Graz University of Technology
 #

@@ -1,3 +1,5 @@
+#!/usr/bin/python3
+
 # fish-begol - Implementation of the Fish and Begol signature schemes
 # Copyright (C) 2016 Graz University of Technology
 #
@@ -344,6 +346,16 @@ def create_omp_graph(prefix, n, k, data, size, labels, max_num_threads, title=''
   plt.savefig('{0}-{1}-{2}.pdf'.format(prefix, n, k))
 
 
+def fix_h5py_strings(strings):
+  def f(s):
+    if isinstance(s, bytes):
+      return s.decode('utf-8')
+    else:
+      return s
+
+  return [f(s) for s in strings]
+
+
 def create_omp_graphs(args, style=None):
   prefix = args.prefix
   n = args.bg_blocksize
@@ -360,7 +372,7 @@ def create_omp_graphs(args, style=None):
 
   for threads in range(1, 1 + max_num_threads):
     with h5py.File('{0}-{1}-{2}-{3}.mat'.format(prefix, threads, n, k), 'r') as timings:
-      ol = list(timings.get('labels'))
+      ol = fix_h5py_strings(list(timings.get('labels')))
 
       fis_sum = np.array(timings.get('fis_mean'))
       bg_sum = np.array(timings.get('bg_mean'))
@@ -396,11 +408,11 @@ def create_graphs(args, style=None):
   bg_k = args.bg_keysize
 
   with h5py.File('{0}-{1}-{2}.mat'.format(prefix, fis_n, fis_k), 'r') as timings:
-    fis_labels = list(timings.get('labels'))
+    fis_labels = fix_h5py_strings(list(timings.get('labels')))
     fis_sum = np.array(timings.get('fis_mean'))
 
   with h5py.File('{0}-{1}-{2}.mat'.format(prefix, bg_n, bg_k), 'r') as timings:
-    bg_labels = list(timings.get('labels'))
+    bg_labels = fix_h5py_strings(list(timings.get('labels')))
     bg_sum = np.array(timings.get('bg_mean'))
 
   create_graph('{0}'.format(prefix), fis_n, bg_n, fis_k, bg_k, fis_sum, bg_sum, fis_labels,
@@ -416,7 +428,7 @@ def create_qh_graphs(args, style=None):
   annotate = []
 
   with h5py.File('{0}-{1}-{2}.mat'.format(prefix, bg_n, bg_k), 'r') as timings:
-    bg_labels = list(timings.get('labels'))
+    bg_labels = fix_h5py_strings(list(timings.get('labels')))
     bg_sum = np.array(timings.get('bg_mean'))
 
     bg_size, bg_sign, bg_verify, bg_label = prepare_data(bg_sum, bg_labels)
@@ -456,7 +468,7 @@ def create_qh_graphs(args, style=None):
   fs_annotations = args.fs_annotate.split(' ')
   for n in args.fsblocksizes:
     with h5py.File('{0}-{1}-{2}.mat'.format(prefix, n, n), 'r') as timings:
-      fis_labels = list(timings.get('labels'))
+      fis_labels = fix_h5py_strings(list(timings.get('labels')))
       fis_sum = np.array(timings.get('fis_mean'))
 
       size, sign, verify, label =  prepare_data(fis_sum, fis_labels)
