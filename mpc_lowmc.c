@@ -500,7 +500,7 @@ static mzd_t** _mpc_lowmc_call(mpc_lowmc_t const* lowmc, mpc_lowmc_key_t* lowmc_
 #endif
 
 static mzd_t** _mpc_lowmc_call_bitsliced(mpc_lowmc_t const* lowmc, mpc_lowmc_key_t* lowmc_key,
-                                         mzd_t const* p, mzd_t* const* shared_p, view_t* views,
+                                         mzd_t const* p, bool xor_p, view_t* views,
                                          mzd_t*** rvec, unsigned ch) {
   mpc_copy(views->s, lowmc_key->shared, SC_PROOF);
   ++views;
@@ -513,12 +513,7 @@ static mzd_t** _mpc_lowmc_call_bitsliced(mpc_lowmc_t const* lowmc, mpc_lowmc_key
   mzd_local_init_multiple(y, SC_PROOF, 1, lowmc->n);
 
   mpc_const_mat_mul(x, lowmc->k0_matrix, lowmc_key->shared, SC_PROOF);
-  if (p) {
-    mpc_const_add(x, x, p, SC_PROOF, ch);
-  } else {
-    mpc_copy(y, shared_p, SC_PROOF);
-    mpc_add(x, x, y, SC_PROOF);
-  }
+  mpc_const_add(x, x, p, SC_PROOF, ch);
 
   lowmc_round_t const* round = lowmc->rounds;
   for (unsigned i = 0; i < lowmc->r; ++i, ++views, ++round) {
@@ -543,6 +538,10 @@ static mzd_t** _mpc_lowmc_call_bitsliced(mpc_lowmc_t const* lowmc, mpc_lowmc_key
     mpc_add(x, x, y, SC_PROOF);
   }
 
+  if (xor_p) {
+    mpc_const_add(x, x, p, SC_PROOF, ch);
+  }
+
   mpc_copy(views->s, x, SC_PROOF);
   sbox_vars_clear(&vars);
 
@@ -552,7 +551,7 @@ static mzd_t** _mpc_lowmc_call_bitsliced(mpc_lowmc_t const* lowmc, mpc_lowmc_key
 
 static mzd_t** _mpc_lowmc_call_bitsliced_verify(mpc_lowmc_t const* lowmc,
                                                 mpc_lowmc_key_t* lowmc_key, mzd_t const* p,
-                                                mzd_t* const* shared_p, view_t const* views,
+                                                bool xor_p, view_t const* views,
                                                 mzd_t*** rvec, unsigned ch, int* status) {
   ++views;
 
@@ -564,12 +563,7 @@ static mzd_t** _mpc_lowmc_call_bitsliced_verify(mpc_lowmc_t const* lowmc,
   mzd_local_init_multiple(y, SC_VERIFY, 1, lowmc->n);
 
   mpc_const_mat_mul(x, lowmc->k0_matrix, lowmc_key->shared, SC_VERIFY);
-  if (p) {
-    mpc_const_add(x, x, p, SC_VERIFY, ch);
-  } else {
-    mpc_copy(y, shared_p, SC_VERIFY);
-    mpc_add(x, x, y, SC_VERIFY);
-  }
+  mpc_const_add(x, x, p, SC_VERIFY, ch);
 
   lowmc_round_t const* round = lowmc->rounds;
   for (unsigned i = 0; i < lowmc->r; ++i, ++views, ++round) {
@@ -601,32 +595,25 @@ static mzd_t** _mpc_lowmc_call_bitsliced_verify(mpc_lowmc_t const* lowmc,
     mpc_add(x, x, y, SC_VERIFY);
   }
 
+  if (xor_p) {
+    mpc_const_add(x, x, p, SC_VERIFY, ch);
+  }
+
+
   sbox_vars_clear(&vars);
   mzd_local_free_multiple(y);
   return x;
 }
 
 mzd_t** mpc_lowmc_call(mpc_lowmc_t const* lowmc, mpc_lowmc_key_t* lowmc_key, mzd_t const* p,
-                       view_t* views, mzd_t*** rvec) {
-  return _mpc_lowmc_call_bitsliced(lowmc, lowmc_key, p, NULL, views, rvec, 0);
-}
-
-mzd_t** mpc_lowmc_call_shared_p(mpc_lowmc_t const* lowmc, mpc_lowmc_key_t* lowmc_key,
-                                mzd_shared_t const* p, view_t* views, mzd_t*** rvec) {
-  return _mpc_lowmc_call_bitsliced(lowmc, lowmc_key, NULL, p->shared, views, rvec, 0);
+                       bool xor_p, view_t* views, mzd_t*** rvec) {
+  return _mpc_lowmc_call_bitsliced(lowmc, lowmc_key, p, xor_p, views, rvec, 0);
 }
 
 static mzd_t** _mpc_lowmc_call_verify(mpc_lowmc_t const* lowmc, mpc_lowmc_key_t* lowmc_key,
-                                      mzd_t const* p, view_t const* views, mzd_t*** rvec,
+                                      mzd_t const* p, bool xor_p, view_t const* views, mzd_t*** rvec,
                                       int* status, int c) {
-  return _mpc_lowmc_call_bitsliced_verify(lowmc, lowmc_key, p, NULL, views, rvec, c, status);
-}
-
-static mzd_t** _mpc_lowmc_call_verify_shared_p(mpc_lowmc_t const* lowmc, mpc_lowmc_key_t* lowmc_key,
-                                               mzd_shared_t const* p, view_t const* views,
-                                               mzd_t*** rvec, int* status, int c) {
-  return _mpc_lowmc_call_bitsliced_verify(lowmc, lowmc_key, NULL, p->shared, views, rvec, c,
-                                          status);
+  return _mpc_lowmc_call_bitsliced_verify(lowmc, lowmc_key, p, xor_p, views, rvec, c, status);
 }
 
 #define mpc_lowmc_verify_template(f)                                                               \
@@ -634,7 +621,7 @@ static mzd_t** _mpc_lowmc_call_verify_shared_p(mpc_lowmc_t const* lowmc, mpc_low
   mzd_shared_from_shares(&lowmc_key, views[0].s, SC_VERIFY);                                       \
                                                                                                    \
   int status = 0;                                                                                  \
-  mzd_t** v  = (f)(lowmc, &lowmc_key, p, views, rvec, &status, c);                                 \
+  mzd_t** v  = (f)(lowmc, &lowmc_key, p, xor_p, views, rvec, &status, c);                                 \
   if (v) {                                                                                         \
     for (unsigned int i = 0; i < SC_VERIFY; ++i) {                                                 \
       if (mzd_equal(views[lowmc->r + 1].s[i], v[i])) {                                             \
@@ -648,14 +635,9 @@ static mzd_t** _mpc_lowmc_call_verify_shared_p(mpc_lowmc_t const* lowmc, mpc_low
                                                                                                    \
   return status
 
-int mpc_lowmc_verify(mpc_lowmc_t const* lowmc, mzd_t const* p, view_t const* views, mzd_t*** rvec,
+int mpc_lowmc_verify(mpc_lowmc_t const* lowmc, mzd_t const* p, bool xor_p, view_t const* views, mzd_t*** rvec,
                      int c) {
   mpc_lowmc_verify_template(_mpc_lowmc_call_verify);
-}
-
-int mpc_lowmc_verify_shared_p(mpc_lowmc_t const* lowmc, mzd_shared_t const* p, view_t const* views,
-                              mzd_t*** rvec, int c) {
-  mpc_lowmc_verify_template(_mpc_lowmc_call_verify_shared_p);
 }
 
 void sbox_vars_clear(sbox_vars_t* vars) {

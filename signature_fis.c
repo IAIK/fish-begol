@@ -120,7 +120,7 @@ static proof_t* fis_prove(mpc_lowmc_t* lowmc, lowmc_key_t* lowmc_key, mzd_t* p, 
   mzd_t** c_mpc[FIS_NUM_ROUNDS];
 #pragma omp parallel for
   for (unsigned int i = 0; i < FIS_NUM_ROUNDS; ++i) {
-    c_mpc[i] = mpc_lowmc_call(lowmc, &s[i], p, views[i], rvec[i]);
+    c_mpc[i] = mpc_lowmc_call(lowmc, &s[i], p, false, views[i], rvec[i]);
   }
   END_TIMING(timing_and_size->sign.lowmc_enc);
 
@@ -223,7 +223,7 @@ static int fis_proof_verify(mpc_lowmc_t const* lowmc, mzd_t const* p, mzd_t cons
     rv[0] = mzd_init_random_vectors_from_seed(prf->keys[i][0], lowmc->n, lowmc->r);
     rv[1] = mzd_init_random_vectors_from_seed(prf->keys[i][1], lowmc->n, lowmc->r);
 
-    if (mpc_lowmc_verify(lowmc, p, prf->views[i], rv, ch[i])) {
+    if (mpc_lowmc_verify(lowmc, p, false, prf->views[i], rv, ch[i])) {
       view_verify_status |= -1;
     }
 
