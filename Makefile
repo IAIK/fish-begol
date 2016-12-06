@@ -22,7 +22,7 @@ all:
 	$(CC) $(CPPFLAGS) $(CFLAGS) $(SOURCES) $(LDFLAGS) $(LDLIBS) -o mpc_lowmc_openmp -fopenmp -DWITH_OPENMP
 
 clean:
-	rm -f *.o *.gch mpc_lowmc_pq mpc_lowmc_openmp
+	rm -f *.o *.gch mpc_lowmc mpc_lowmc_pq mpc_lowmc_openmp
 
 dist:
 	zip ../source.zip $(SOURCES) $(HEADERS) Makefile README.md \
