@@ -1,0 +1,26 @@
+Fish and Begol signature schemes
+================================
+
+This code represents an implementation of the Fish and Begol signature schemes
+It uses (a bit-sliced version of) LowMC [2,3] in the setting of ZKBoo [1]. Some
+methods for MPC computations are based on [4].
+
+Building
+--------
+
+To disable optimizations remove `-DWITH_OPT` from `CPPFLAGS` in `Makefile`.
+Verbose output can be enabled by adding `-DVERBOSE`.
+
+Dependencies
+------------
+
+* OpenSSL (libssl-dev)
+* m4ri (libm4ri-dev)
+
+References
+----------
+
+* [1] https://eprint.iacr.org/2016/163
+* [2] https://eprint.iacr.org/2016/687
+* [3] https://bitbucket.org/malb/lowmc-helib
+* [4] https://github.com/Sobuno/ZKBoo
