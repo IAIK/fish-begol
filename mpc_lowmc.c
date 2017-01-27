@@ -216,9 +216,9 @@ proof_t* create_proof(proof_t* proof, mpc_lowmc_t const* lowmc,
       int idx        = i / 4;
       proof->ch[idx] = 0;
       proof->ch[idx] |= (ch[i] & 3);
-      proof->ch[idx] |= (ch[i + 1] & 3) << 2;
-      proof->ch[idx] |= (ch[i + 2] & 3) << 4;
-      proof->ch[idx] |= (ch[i + 3] & 3) << 6;
+      proof->ch[idx] |= i + 1 < NUM_ROUNDS ? (ch[i + 1] & 3) << 2 : 0;
+      proof->ch[idx] |= i + 2 < NUM_ROUNDS ? (ch[i + 2] & 3) << 4 : 0;
+      proof->ch[idx] |= i + 3 < NUM_ROUNDS ? (ch[i + 3] & 3) << 6 : 0;
     }
   }
 
