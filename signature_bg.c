@@ -283,11 +283,11 @@ static int bg_proof_verify(public_parameters_t* pp, bg_public_key_t* pk, mzd_t* 
   unsigned char hash_y[BG_NUM_ROUNDS][2][COMMITMENT_LENGTH];
   unsigned char hash_c[BG_NUM_ROUNDS][2][COMMITMENT_LENGTH];
 
-  mzd_t* ys_y[NUM_ROUNDS][3];
-  mzd_t* ys_c[NUM_ROUNDS][3];
+  mzd_t* ys_y[NUM_ROUNDS][3] = { { NULL } };
+  mzd_t* ys_c[NUM_ROUNDS][3] = { { NULL } };
 
-  mzd_t* y_free_y[NUM_ROUNDS];
-  mzd_t* y_free_c[NUM_ROUNDS];
+  mzd_t* y_free_y[NUM_ROUNDS] = { NULL };
+  mzd_t* y_free_c[NUM_ROUNDS] = { NULL };
   mzd_local_init_multiple(y_free_y, NUM_ROUNDS, 1, lowmc->n);
   mzd_local_init_multiple(y_free_c, NUM_ROUNDS, 1, lowmc->n);
 
@@ -345,9 +345,6 @@ static int bg_proof_verify(public_parameters_t* pp, bg_public_key_t* pk, mzd_t* 
   }
   END_TIMING(timing_and_size->verify.output_shares);
 
-  mzd_local_free_multiple(y_free_c);
-  mzd_local_free_multiple(y_free_y);
-
   // TODO: probably unnecessary now
   START_TIMING;
 #pragma omp parallel for reduction(| : output_share_status)
@@ -363,6 +360,9 @@ static int bg_proof_verify(public_parameters_t* pp, bg_public_key_t* pk, mzd_t* 
     }
   }
   END_TIMING(timing_and_size->verify.output_views);
+
+  mzd_local_free_multiple(y_free_c);
+  mzd_local_free_multiple(y_free_y);
 
   START_TIMING;
   view_verify_status = verify_views(lowmc, p, pk->beta, proof_y, proof_c, ch);

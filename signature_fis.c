@@ -162,8 +162,8 @@ static int fis_proof_verify(mpc_lowmc_t const* lowmc, mzd_t const* p, mzd_t cons
   const unsigned int view_count      = lowmc->r + 2;
   const unsigned int last_view_index = lowmc->r + 1;
 
-  mzd_t* ys[NUM_ROUNDS][3];
-  mzd_t* ys_f[NUM_ROUNDS];
+  mzd_t* ys[NUM_ROUNDS][3] = { { NULL } };
+  mzd_t* ys_f[NUM_ROUNDS] = { NULL };
   mzd_local_init_multiple(ys_f, NUM_ROUNDS, 1, lowmc->n);
 
   START_TIMING;
@@ -203,8 +203,6 @@ static int fis_proof_verify(mpc_lowmc_t const* lowmc, mzd_t const* p, mzd_t cons
   }
   END_TIMING(timing_and_size->verify.output_shares);
 
-  mzd_local_free_multiple(ys_f);
-
   // TODO: probably unnecessary now
   START_TIMING;
 #pragma omp parallel for reduction(| : output_share_status)
@@ -215,6 +213,8 @@ static int fis_proof_verify(mpc_lowmc_t const* lowmc, mzd_t const* p, mzd_t cons
     }
   }
   END_TIMING(timing_and_size->verify.output_views);
+
+  mzd_local_free_multiple(ys_f);
 
   START_TIMING;
 #pragma omp parallel for reduction(| : view_verify_status)
