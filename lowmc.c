@@ -150,7 +150,7 @@ mzd_t* lowmc_call(lowmc_t* lowmc, lowmc_key_t* lowmc_key, mzd_t* p) {
   mzd_t* z = mzd_local_init(1, lowmc->n);
 
   mzd_local_copy(x, p);
-  mzd_addmul(x, lowmc_key, lowmc->k0_matrix, __M4RI_STRASSEN_MUL_CUTOFF);
+  mzd_addmul_v(x, lowmc_key, lowmc->k0_matrix);
 
   lowmc_round_t* round = lowmc->rounds;
   for (unsigned i = 0; i < lowmc->r; ++i, ++round) {
@@ -166,9 +166,9 @@ mzd_t* lowmc_call(lowmc_t* lowmc, lowmc_key_t* lowmc_key, mzd_t* p) {
     sbox_layer_bitsliced(y, x, lowmc->m, &lowmc->mask);
 #endif
 
-    mzd_mul(z, y, round->l_matrix, __M4RI_STRASSEN_MUL_CUTOFF);
+    mzd_mul_v(z, y, round->l_matrix);
     mzd_xor(z, z, round->constant);
-    mzd_addmul(z, lowmc_key, round->k_matrix, __M4RI_STRASSEN_MUL_CUTOFF);
+    mzd_addmul_v(z, lowmc_key, round->k_matrix);
     mzd_local_copy(x, z);
   }
 
