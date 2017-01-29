@@ -655,11 +655,12 @@ mzd_t* mzd_addmul_v(mzd_t* c, mzd_t const* v, mzd_t const* A) {
   }
 #endif
 
-  const unsigned int len   = A->width;
-  const word mask          = A->high_bitmask;
-  word* cptr               = c->rows[0];
-  word const* vptr         = v->rows[0];
-  const unsigned int width = v->width;
+  const unsigned int len       = A->width;
+  const word mask              = A->high_bitmask;
+  const unsigned int rowstride = A->rowstride;
+  word* cptr                   = c->rows[0];
+  word const* vptr             = v->rows[0];
+  const unsigned int width     = v->width;
 
   for (unsigned int w = 0; w < width; ++w, ++vptr) {
     word idx = *vptr;
@@ -673,7 +674,7 @@ mzd_t* mzd_addmul_v(mzd_t* c, mzd_t const* v, mzd_t const* A) {
         cptr[len - 1] = (cptr[len - 1] ^ Aptr[len - 1]) & mask;
       }
 
-      Aptr += A->rowstride;
+      Aptr += rowstride;
       idx >>= 1;
     }
   }
