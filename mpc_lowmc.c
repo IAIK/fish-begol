@@ -612,34 +612,26 @@ mzd_t** mpc_lowmc_call(mpc_lowmc_t const* lowmc, mpc_lowmc_key_t* lowmc_key, mzd
   return _mpc_lowmc_call_bitsliced(lowmc, lowmc_key, p, xor_p, views, rvec, 0);
 }
 
-static mzd_t** _mpc_lowmc_call_verify(mpc_lowmc_t const* lowmc, mpc_lowmc_key_t* lowmc_key,
-                                      mzd_t const* p, bool xor_p, view_t const* views,
-                                      mzd_t*** rvec, int* status, int c) {
-  return _mpc_lowmc_call_bitsliced_verify(lowmc, lowmc_key, p, xor_p, views, rvec, c, status);
-}
-
-#define mpc_lowmc_verify_template(f)                                                               \
-  mpc_lowmc_key_t lowmc_key;                                                                       \
-  mzd_shared_from_shares(&lowmc_key, views[0].s, SC_VERIFY);                                       \
-                                                                                                   \
-  int status = 0;                                                                                  \
-  mzd_t** v  = (f)(lowmc, &lowmc_key, p, xor_p, views, rvec, &status, c);                          \
-  if (v) {                                                                                         \
-    for (unsigned int i = 0; i < SC_VERIFY; ++i) {                                                 \
-      if (mzd_equal(views[lowmc->r + 1].s[i], v[i])) {                                             \
-        status = 1;                                                                                \
-        break;                                                                                     \
-      }                                                                                            \
-    }                                                                                              \
-    mpc_free(v, SC_VERIFY);                                                                        \
-  }                                                                                                \
-  mzd_shared_clear(&lowmc_key);                                                                    \
-                                                                                                   \
-  return status
-
 int mpc_lowmc_verify(mpc_lowmc_t const* lowmc, mzd_t const* p, bool xor_p, view_t const* views,
                      mzd_t*** rvec, int c) {
-  mpc_lowmc_verify_template(_mpc_lowmc_call_verify);
+  mpc_lowmc_key_t lowmc_key;
+  mzd_shared_from_shares(&lowmc_key, views[0].s, SC_VERIFY);
+
+  int status = 0;
+  mzd_t** v =
+      _mpc_lowmc_call_bitsliced_verify(lowmc, &lowmc_key, p, xor_p, views, rvec, c, &status);
+  if (v) {
+    for (unsigned int i = 0; i < SC_VERIFY; ++i) {
+      if (mzd_equal(views[lowmc->r + 1].s[i], v[i])) {
+        status = 1;
+        break;
+      }
+    }
+    mpc_free(v, SC_VERIFY);
+  }
+  mzd_shared_clear(&lowmc_key);
+
+  return status;
 }
 
 void sbox_vars_clear(sbox_vars_t* vars) {
