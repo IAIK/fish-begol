@@ -508,7 +508,7 @@ static mzd_t** _mpc_lowmc_call_bitsliced(mpc_lowmc_t const* lowmc, mpc_lowmc_key
   mpc_copy(views->s, lowmc_key->shared, SC_PROOF);
   ++views;
 
-  sbox_vars_t vars;
+  sbox_vars_t vars = {{NULL}};
   sbox_vars_init(&vars, lowmc->n, SC_PROOF);
 
   mzd_t** x = mpc_init_empty_share_vector(lowmc->n, SC_PROOF);
@@ -558,7 +558,7 @@ static mzd_t** _mpc_lowmc_call_bitsliced_verify(mpc_lowmc_t const* lowmc,
                                                 unsigned ch, int* status) {
   ++views;
 
-  sbox_vars_t vars;
+  sbox_vars_t vars = {{NULL}};
   sbox_vars_init(&vars, lowmc->n, SC_VERIFY);
 
   mzd_t** x           = mpc_init_empty_share_vector(lowmc->n, SC_VERIFY);
@@ -638,6 +638,7 @@ void sbox_vars_clear(sbox_vars_t* vars) {
   if (vars->storage) {
     mzd_local_free_multiple(vars->storage);
     free(vars->storage);
+    memset(vars, 0, sizeof(*vars));
   }
 }
 
