@@ -22,10 +22,10 @@
 #ifdef WITH_OPT
 #include "simd.h"
 
-static const unsigned int sse_bound = 128 / (8 * sizeof(word));
+static const unsigned int sse_bound      = 128 / (8 * sizeof(word));
 static const unsigned int word_size_bits = 8 * sizeof(word);
 #endif
-static const unsigned int avx_bound      = 256 / (8 * sizeof(word));
+static const unsigned int avx_bound = 256 / (8 * sizeof(word));
 
 static rci_t calculate_rowstride(rci_t width) {
   // As soon as we hit the AVX bound, use 32 byte alignment. Otherwise use 6

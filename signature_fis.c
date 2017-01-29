@@ -162,8 +162,8 @@ static int fis_proof_verify(mpc_lowmc_t const* lowmc, mzd_t const* p, mzd_t cons
   const unsigned int view_count      = lowmc->r + 2;
   const unsigned int last_view_index = lowmc->r + 1;
 
-  mzd_t* ys[NUM_ROUNDS][3] = { { NULL } };
-  mzd_t* ys_f[NUM_ROUNDS] = { NULL };
+  mzd_t* ys[NUM_ROUNDS][3] = {{NULL}};
+  mzd_t* ys_f[NUM_ROUNDS]  = {NULL};
   mzd_local_init_multiple(ys_f, NUM_ROUNDS, 1, lowmc->n);
 
   START_TIMING;

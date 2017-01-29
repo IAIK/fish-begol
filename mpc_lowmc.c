@@ -561,8 +561,8 @@ static mzd_t** _mpc_lowmc_call_bitsliced_verify(mpc_lowmc_t const* lowmc,
   sbox_vars_t vars;
   sbox_vars_init(&vars, lowmc->n, SC_VERIFY);
 
-  mzd_t** x = mpc_init_empty_share_vector(lowmc->n, SC_VERIFY);
-  mzd_t* y[SC_VERIFY] = { NULL };
+  mzd_t** x           = mpc_init_empty_share_vector(lowmc->n, SC_VERIFY);
+  mzd_t* y[SC_VERIFY] = {NULL};
   mzd_local_init_multiple(y, SC_VERIFY, 1, lowmc->n);
 
   mpc_const_mat_mul(x, lowmc->k0_matrix, lowmc_key->shared, SC_VERIFY);
