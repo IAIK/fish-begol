@@ -438,9 +438,9 @@ __attribute__((target("sse2"))) static inline mzd_t* mzd_addmul_v_sse(mzd_t* c, 
   __m128i* mcptr = __builtin_assume_aligned(cptr, 16);
 
   for (unsigned int w = 0; w < width; ++w, ++vptr) {
-    word idx         = *vptr;
-    word const* Aptr = A->rows[w * sizeof(word) * 8];
-    __m128i* mAptr   = __builtin_assume_aligned(Aptr, 16);
+    word idx             = *vptr;
+    word const* Aptr     = A->rows[w * sizeof(word) * 8];
+    __m128i const* mAptr = __builtin_assume_aligned(Aptr, 16);
 
     while (idx) {
       switch (idx & 0x0F) {
@@ -545,9 +545,9 @@ __attribute__((target("avx2"))) static inline mzd_t* mzd_addmul_v_avx(mzd_t* c, 
   __m256i* mcptr = __builtin_assume_aligned(cptr, 32);
 
   for (unsigned int w = 0; w < width; ++w, ++vptr) {
-    word idx         = *vptr;
-    word const* Aptr = A->rows[w * sizeof(word) * 8];
-    __m256i* mAptr   = __builtin_assume_aligned(Aptr, 32);
+    word idx             = *vptr;
+    word const* Aptr     = A->rows[w * sizeof(word) * 8];
+    __m256i const* mAptr = __builtin_assume_aligned(Aptr, 32);
 
     while (idx) {
       switch (idx & 0x0F) {
