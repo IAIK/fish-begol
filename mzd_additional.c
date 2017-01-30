@@ -648,10 +648,12 @@ mzd_t* mzd_addmul_v(mzd_t* c, mzd_t const* v, mzd_t const* A) {
   }
 
 #ifdef WITH_OPT
-  if (CPU_SUPPORTS_AVX2 && A->ncols % 256 == 0) {
-    return mzd_addmul_v_avx(c, v, A);
-  } else if (CPU_SUPPORTS_SSE2 && A->ncols % 128 == 0) {
-    return mzd_addmul_v_sse(c, v, A);
+  if (A->nrows % (sizeof(word) * 8) == 0) {
+    if (CPU_SUPPORTS_AVX2 && A->ncols % 256 == 0) {
+      return mzd_addmul_v_avx(c, v, A);
+    } else if (CPU_SUPPORTS_SSE2 && A->ncols % 128 == 0) {
+      return mzd_addmul_v_sse(c, v, A);
+    }
   }
 #endif
 
