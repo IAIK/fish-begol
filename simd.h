@@ -112,7 +112,7 @@ static inline void FN_ATTRIBUTES_SSE2_NP mm128_xor_region(__m128i* restrict dst,
 }
 
 /**
- * \brief xor multiple 128 bit values.
+ * \brief xor multiple 256 bit values.
  */
 static inline void FN_ATTRIBUTES_AVX2_NP mm256_xor_region(__m256i* restrict dst,
                                                           __m256i const* restrict src,
