@@ -80,8 +80,8 @@ void test_mzd_equal(void) {
 }
 
 void test_mzd_mul(void) {
-  for (unsigned int i = 1; i <= 2; ++i) {
-    for (unsigned int j = 1; j <= 2; ++j) {
+  for (unsigned int i = 1; i <= 10; ++i) {
+    for (unsigned int j = 1; j <= 10; ++j) {
       mzd_t* A = mzd_local_init(i * 64, j * 64);
       mzd_t* v = mzd_local_init(1, i * 64);
       mzd_t* c = mzd_local_init(1, j * 64);
@@ -93,25 +93,19 @@ void test_mzd_mul(void) {
       mzd_t* c2 = mzd_local_copy(NULL, c);
 
       for (unsigned int k = 0; k < 3; ++k) {
-        mzd_t* r  = mzd_addmul_v(c, v, A);
-        mzd_t* r2 = mzd_addmul(c2, v, A, __M4RI_STRASSEN_MUL_CUTOFF);
-
-        if (!r || !r2)
-          break;
+        mzd_t* r  = mzd_mul_v(c, v, A);
+        mzd_t* r2 = mzd_mul(c2, v, A, __M4RI_STRASSEN_MUL_CUTOFF);
 
         if (mzd_cmp(r, r2) == 0) {
           printf("mul: ok [%u x %u]\n", i * 64, j * 64);
         } else {
           printf("mul: fail [%u x %u]\n", i * 64, j * 64);
-          printf("r = ");
+          printf("r =  ");
           mzd_print(r);
           printf("r2 = ");
           mzd_print(r2);
-          break;
         }
       }
-
-      // mzd_print(A);
 
       mzd_local_free(A);
       mzd_local_free(v);
