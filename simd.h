@@ -24,6 +24,9 @@
 #define FN_ATTRIBUTES_AVX2 __attribute__((__always_inline__, target("avx2"), pure))
 #define FN_ATTRIBUTES_SSE2 __attribute__((__always_inline__, target("sse2"), pure))
 
+#define FN_ATTRIBUTES_AVX2_NP __attribute__((__always_inline__, target("avx2")))
+#define FN_ATTRIBUTES_SSE2_NP __attribute__((__always_inline__, target("sse2")))
+
 #define CPU_SUPPORTS_AVX2 __builtin_cpu_supports("avx2")
 #define CPU_SUPPORTS_SSE4 __builtin_cpu_supports("sse4.1")
 
@@ -100,9 +103,9 @@ static inline __m128i FN_ATTRIBUTES_SSE2 mm128_shift_right(__m128i data, unsigne
 /**
  * \brief xor multiple 128 bit values.
  */
-static inline void FN_ATTRIBUTES_SSE2 mm128_xor_region(__m128i* restrict dst,
-                                                       __m128i const* restrict src,
-                                                       unsigned int count) {
+static inline void FN_ATTRIBUTES_SSE2_NP mm128_xor_region(__m128i* restrict dst,
+                                                          __m128i const* restrict src,
+                                                          unsigned int count) {
   for (unsigned int i = count; i; --i, ++dst, ++src) {
     *dst = _mm_xor_si128(*dst, *src);
   }
@@ -111,9 +114,9 @@ static inline void FN_ATTRIBUTES_SSE2 mm128_xor_region(__m128i* restrict dst,
 /**
  * \brief xor multiple 128 bit values.
  */
-static inline void FN_ATTRIBUTES_AVX2 mm256_xor_region(__m256i* restrict dst,
-                                                       __m256i const* restrict src,
-                                                       unsigned int count) {
+static inline void FN_ATTRIBUTES_AVX2_NP mm256_xor_region(__m256i* restrict dst,
+                                                          __m256i const* restrict src,
+                                                          unsigned int count) {
   for (unsigned int i = count; i; --i, ++dst, ++src) {
     *dst = _mm256_xor_si256(*dst, *src);
   }
