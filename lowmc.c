@@ -141,8 +141,11 @@ __attribute__((target("avx2"))) static void sbox_layer_avx(mzd_t* out, mzd_t* in
 
 mzd_t* lowmc_call(lowmc_t* lowmc, lowmc_key_t* lowmc_key, mzd_t* p) {
   if (p->ncols > lowmc->n) {
-    printf("p larger than block size!");
+    printf("p larger than block size!\n");
     return NULL;
+  }
+  if (p->nrows != 1) {
+    printf("p needs to have exactly one row!\n");
   }
 
   mzd_t* x = mzd_local_init(1, lowmc->n);
