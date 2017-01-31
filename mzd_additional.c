@@ -42,9 +42,9 @@ static rci_t calculate_rowstride(rci_t width) {
 
 static size_t calculate_row_alignment(size_t width) {
   if (width >= avx_bound) {
-    return alignof(__m256i);
+    return 32;
   } else {
-    return alignof(__m128i);
+    return 16;
   }
 }
 
@@ -64,9 +64,9 @@ mzd_t* mzd_local_init(rci_t r, rci_t c) {
       mzd_flag_custom_layout | ((high_bitmask != m4ri_ffff) ? mzd_flag_nonzero_excess : 0);
 
   const size_t row_alignment = calculate_row_alignment(width);
-  const size_t buffer_size = r * rowstride * sizeof(word);
-  const size_t rows_size   = r * sizeof(word*);
-  const size_t mzd_t_size  = (sizeof(mzd_t) + row_alignment - 1) & ~(row_alignment - 1);
+  const size_t buffer_size   = r * rowstride * sizeof(word);
+  const size_t rows_size     = r * sizeof(word*);
+  const size_t mzd_t_size    = (sizeof(mzd_t) + row_alignment - 1) & ~(row_alignment - 1);
 
   unsigned char* buffer = aligned_alloc(32, (mzd_t_size + buffer_size + rows_size + 31) & ~31);
 
