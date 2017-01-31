@@ -40,6 +40,14 @@ static rci_t calculate_rowstride(rci_t width) {
   }
 }
 
+static size_t calculate_row_alignment(size_t width) {
+  if (width >= avx_bound) {
+    return alignof(__m256i);
+  } else {
+    return alignof(__m128i);
+  }
+}
+
 // Notes on the memory layout: mzd_init allocates multiple memory blocks (one
 // for mzd_t, one for rows and multiple for the buffers). We use one memory
 // block for mzd_t, rows and the buffer. This improves memory locality and
@@ -55,9 +63,10 @@ mzd_t* mzd_local_init(rci_t r, rci_t c) {
   const uint8_t flags =
       mzd_flag_custom_layout | ((high_bitmask != m4ri_ffff) ? mzd_flag_nonzero_excess : 0);
 
+  const size_t row_alignment = calculate_row_alignment(width);
   const size_t buffer_size = r * rowstride * sizeof(word);
   const size_t rows_size   = r * sizeof(word*);
-  const size_t mzd_t_size  = (sizeof(mzd_t) + rowstride - 1) & ~(rowstride - 1);
+  const size_t mzd_t_size  = (sizeof(mzd_t) + row_alignment - 1) & ~(row_alignment - 1);
 
   unsigned char* buffer = aligned_alloc(32, (mzd_t_size + buffer_size + rows_size + 31) & ~31);
 
@@ -98,9 +107,10 @@ void mzd_local_init_multiple(mzd_t** dst, size_t n, rci_t r, rci_t c) {
   const uint8_t flags =
       mzd_flag_custom_layout | ((high_bitmask != m4ri_ffff) ? mzd_flag_nonzero_excess : 0);
 
+  const size_t row_alignment = calculate_row_alignment(width);
   const size_t buffer_size   = r * rowstride * sizeof(word);
   const size_t rows_size     = r * sizeof(word*);
-  const size_t mzd_t_size    = (sizeof(mzd_t) + rowstride - 1) & ~(rowstride - 1);
+  const size_t mzd_t_size    = (sizeof(mzd_t) + row_alignment - 1) & ~(row_alignment - 1);
   const size_t size_per_elem = (mzd_t_size + buffer_size + rows_size + 31) & ~31;
 
   unsigned char* full_buffer = aligned_alloc(32, size_per_elem * n);
