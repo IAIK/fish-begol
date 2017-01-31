@@ -29,6 +29,6 @@
  * \param  p     the plaintext
  * \return       the ciphertext
  */
-mzd_t* lowmc_call(lowmc_t* lowmc, lowmc_key_t* lowmc_key, mzd_t* p);
+mzd_t* lowmc_call(lowmc_t const* lowmc, lowmc_key_t const* lowmc_key, mzd_t const* p);
 
 #endif
