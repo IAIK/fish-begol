@@ -19,6 +19,7 @@
 #ifndef SIGNATURE_COMMON_H
 #define SIGNATURE_COMMON_H
 
+#include <stdbool.h>
 #include <time.h>
 
 #include "lowmc_pars.h"
@@ -31,7 +32,7 @@ typedef struct {
   mpc_lowmc_t* lowmc;
 } public_parameters_t;
 
-void create_instance(public_parameters_t* pp, int m, int n, int r, int k);
+bool create_instance(public_parameters_t* pp, int m, int n, int r, int k);
 
 void destroy_instance(public_parameters_t* pp);
 

@@ -93,26 +93,35 @@ static void fis_sign_verify(int args[5]) {
     fis_private_key_t private_key;
     fis_public_key_t public_key;
 
-    create_instance(&pp, args[0], args[1], args[2], args[3]);
-    fis_create_key(&pp, &private_key, &public_key);
-
-    fis_signature_t* sig = fis_sign(&pp, &private_key, m);
-
-    unsigned len        = 0;
-    unsigned char* data = fis_sig_to_char_array(&pp, sig, &len);
-    timing_and_size->size =
-        fis_compute_sig_size(pp.lowmc->m, pp.lowmc->n, pp.lowmc->r, pp.lowmc->k);
-    fis_free_signature(&pp, sig);
-    sig = fis_sig_from_char_array(&pp, data);
-    free(data);
-
-    if (fis_verify(&pp, &public_key, m, sig)) {
-#ifndef VERBOSE
-      printf("error\n");
-#endif
+    if (!create_instance(&pp, args[0], args[1], args[2], args[3])) {
+      printf("Failed to create LowMC instance.\n");
+      break;
     }
 
-    fis_free_signature(&pp, sig);
+    if (!fis_create_key(&pp, &private_key, &public_key)) {
+      printf("Failed to create keys.\n");
+      destroy_instance(&pp);
+      break;
+    }
+
+    fis_signature_t* sig = fis_sign(&pp, &private_key, m);
+    if (sig) {
+      unsigned len        = 0;
+      unsigned char* data = fis_sig_to_char_array(&pp, sig, &len);
+      timing_and_size->size =
+          fis_compute_sig_size(pp.lowmc->m, pp.lowmc->n, pp.lowmc->r, pp.lowmc->k);
+      fis_free_signature(&pp, sig);
+      sig = fis_sig_from_char_array(&pp, data);
+      free(data);
+
+      if (fis_verify(&pp, &public_key, m, sig)) {
+        printf("fis_verify: failed\n");
+      }
+
+      fis_free_signature(&pp, sig);
+    } else {
+      printf("fis_sign: failed\n");
+    }
 
     destroy_instance(&pp);
     fis_destroy_key(&private_key, &public_key);
@@ -138,27 +147,37 @@ static void bg_sign_verify(int args[5]) {
     bg_private_key_t private_key;
     bg_public_key_t public_key;
 
-    create_instance(&pp, args[0], args[1], args[2], args[3]);
-    bg_create_key(&pp, &private_key, &public_key);
+    if (!create_instance(&pp, args[0], args[1], args[2], args[3])) {
+      printf("Failed to create LowMC instance.\n");
+      break;
+    }
+
+    if (!bg_create_key(&pp, &private_key, &public_key)) {
+      printf("Failed to create keys.\n");
+      destroy_instance(&pp);
+      break;
+    }
 
     mzd_t* m = mzd_init_random_vector(args[1]);
 
     bg_signature_t* signature = bg_sign(&pp, &private_key, m);
+    if (signature) {
+      unsigned len        = 0;
+      unsigned char* data = bg_sig_to_char_array(&pp, signature, &len);
+      timing_and_size->size =
+          bg_compute_sig_size(pp.lowmc->m, pp.lowmc->n, pp.lowmc->r, pp.lowmc->k);
+      bg_free_signature(&pp, signature);
+      signature = bg_sig_from_char_array(&pp, data);
+      free(data);
 
-    unsigned len          = 0;
-    unsigned char* data   = bg_sig_to_char_array(&pp, signature, &len);
-    timing_and_size->size = bg_compute_sig_size(pp.lowmc->m, pp.lowmc->n, pp.lowmc->r, pp.lowmc->k);
-    bg_free_signature(&pp, signature);
-    signature = bg_sig_from_char_array(&pp, data);
-    free(data);
+      if (bg_verify(&pp, &public_key, m, signature)) {
+        printf("bg_verify: failed!\n");
+      }
 
-    if (bg_verify(&pp, &public_key, m, signature)) {
-#ifndef VERBOSE
-      printf("error\n");
-#endif
+      bg_free_signature(&pp, signature);
+    } else {
+      printf("bg_sign: failed!\n");
     }
-
-    bg_free_signature(&pp, signature);
 
     mzd_local_free(m);
 

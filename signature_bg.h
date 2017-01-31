@@ -47,7 +47,7 @@ unsigned char* bg_sig_to_char_array(public_parameters_t* pp, bg_signature_t* sig
 
 bg_signature_t* bg_sig_from_char_array(public_parameters_t* pp, unsigned char* data);
 
-void bg_create_key(public_parameters_t* pp, bg_private_key_t* private_key,
+bool bg_create_key(public_parameters_t* pp, bg_private_key_t* private_key,
                    bg_public_key_t* public_key);
 
 void bg_destroy_key(bg_private_key_t* private_key, bg_public_key_t* public_key);

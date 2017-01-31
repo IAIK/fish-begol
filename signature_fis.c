@@ -48,7 +48,7 @@ fis_signature_t* fis_sig_from_char_array(public_parameters_t* pp, unsigned char*
   return sig;
 }
 
-void fis_create_key(public_parameters_t* pp, fis_private_key_t* private_key,
+bool fis_create_key(public_parameters_t* pp, fis_private_key_t* private_key,
                     fis_public_key_t* public_key) {
   TIME_FUNCTION;
 
@@ -56,11 +56,22 @@ void fis_create_key(public_parameters_t* pp, fis_private_key_t* private_key,
   private_key->k = lowmc_keygen(pp->lowmc);
   END_TIMING(timing_and_size->gen.keygen);
 
+  if (!private_key->k) {
+    return false;
+  }
+
+  mzd_t* p = mzd_local_init(1, pp->lowmc->n);
+  if (!p) {
+    return false;
+  }
+
   START_TIMING;
-  mzd_t* p       = mzd_local_init(1, pp->lowmc->n);
   public_key->pk = lowmc_call(pp->lowmc, private_key->k, p);
-  mzd_local_free(p);
   END_TIMING(timing_and_size->gen.pubkey);
+
+  mzd_local_free(p);
+
+  return public_key->pk != NULL;
 }
 
 void fis_destroy_key(fis_private_key_t* private_key, fis_public_key_t* public_key) {

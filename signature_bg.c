@@ -73,7 +73,7 @@ bg_signature_t* bg_sig_from_char_array(public_parameters_t* pp, unsigned char* d
   return sig;
 }
 
-void bg_create_key(public_parameters_t* pp, bg_private_key_t* private_key,
+bool bg_create_key(public_parameters_t* pp, bg_private_key_t* private_key,
                    bg_public_key_t* public_key) {
   TIME_FUNCTION;
 
@@ -83,11 +83,20 @@ void bg_create_key(public_parameters_t* pp, bg_private_key_t* private_key,
   private_key->s = lowmc_key_s;
   END_TIMING(timing_and_size->gen.keygen);
 
-  START_TIMING;
-  private_key->beta = public_key->beta = mzd_local_init(1, pp->lowmc->n);
-  public_key->c                        = lowmc_call(pp->lowmc, lowmc_key_s, public_key->beta);
+  if (!private_key->s) {
+    return false;
+  }
 
+  private_key->beta = public_key->beta = mzd_local_init(1, pp->lowmc->n);
+  if (!private_key->beta) {
+    return false;
+  }
+
+  START_TIMING;
+  public_key->c = lowmc_call(pp->lowmc, lowmc_key_s, public_key->beta);
   END_TIMING(timing_and_size->gen.pubkey);
+
+  return public_key->c != NULL;
 }
 
 void bg_destroy_key(bg_private_key_t* private_key, bg_public_key_t* public_key) {
