@@ -19,13 +19,16 @@
 #include "mzd_additional.h"
 #include "randomness.h"
 
+#include <assert.h>
+
 #ifdef WITH_OPT
 #include "simd.h"
 
 static const unsigned int sse_bound      = 128 / (8 * sizeof(word));
 static const unsigned int word_size_bits = 8 * sizeof(word);
 #endif
-static const unsigned int avx_bound = 256 / (8 * sizeof(word));
+static const unsigned int avx_bound         = 256 / (8 * sizeof(word));
+static const uint8_t mzd_flag_custom_layout = 0x40;
 
 static rci_t calculate_rowstride(rci_t width) {
   // As soon as we hit the AVX bound, use 32 byte alignment. Otherwise use 16
@@ -49,7 +52,8 @@ mzd_t* mzd_local_init(rci_t r, rci_t c) {
   const rci_t width       = (c + m4ri_radix - 1) / m4ri_radix;
   const rci_t rowstride   = calculate_rowstride(width);
   const word high_bitmask = __M4RI_LEFT_BITMASK(c % m4ri_radix);
-  const uint8_t flags     = (high_bitmask != m4ri_ffff) ? mzd_flag_nonzero_excess : 0;
+  const uint8_t flags =
+      mzd_flag_custom_layout | ((high_bitmask != m4ri_ffff) ? mzd_flag_nonzero_excess : 0);
 
   const size_t buffer_size = r * rowstride * sizeof(word);
   const size_t rows_size   = r * sizeof(word*);
@@ -82,6 +86,7 @@ mzd_t* mzd_local_init(rci_t r, rci_t c) {
 }
 
 void mzd_local_free(mzd_t* v) {
+  assert(!v || (v->flags & mzd_flag_custom_layout));
   free(v);
 }
 
@@ -89,7 +94,8 @@ void mzd_local_init_multiple(mzd_t** dst, size_t n, rci_t r, rci_t c) {
   const rci_t width       = (c + m4ri_radix - 1) / m4ri_radix;
   const rci_t rowstride   = calculate_rowstride(width);
   const word high_bitmask = __M4RI_LEFT_BITMASK(c % m4ri_radix);
-  const uint8_t flags     = (high_bitmask != m4ri_ffff) ? mzd_flag_nonzero_excess : 0;
+  const uint8_t flags =
+      mzd_flag_custom_layout | ((high_bitmask != m4ri_ffff) ? mzd_flag_nonzero_excess : 0);
 
   const size_t buffer_size   = r * rowstride * sizeof(word);
   const size_t rows_size     = r * sizeof(word*);
@@ -127,6 +133,7 @@ void mzd_local_init_multiple(mzd_t** dst, size_t n, rci_t r, rci_t c) {
 
 void mzd_local_free_multiple(mzd_t** vs) {
   if (vs) {
+    assert(!vs[0] || (vs[0]->flags & mzd_flag_custom_layout));
     free(vs[0]);
   }
 }
@@ -140,11 +147,12 @@ mzd_t* mzd_local_copy(mzd_t* dst, mzd_t const* src) {
     dst = mzd_local_init(src->nrows, src->ncols);
   }
 
-  if (dst->nrows >= src->nrows && dst->ncols == src->ncols) {
+  if ((dst->flags & mzd_flag_custom_layout) && dst->nrows >= src->nrows &&
+      dst->ncols == src->ncols) {
     // src can be a mzd_t* from mzd_init, so we can only copy row wise
     for (rci_t i = 0; i < src->nrows; ++i) {
       unsigned char* d       = __builtin_assume_aligned(dst->rows[i], 16);
-      unsigned char const* s = (unsigned char const*) src->rows[i];
+      unsigned char const* s = (unsigned char const*)src->rows[i];
 
       memcpy(d, s, src->width * sizeof(word));
     }
