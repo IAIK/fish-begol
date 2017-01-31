@@ -147,12 +147,11 @@ mzd_t* lowmc_call(lowmc_t* lowmc, lowmc_key_t* lowmc_key, mzd_t* p) {
 
   mzd_t* x = mzd_local_init(1, lowmc->n);
   mzd_t* y = mzd_local_init(1, lowmc->n);
-  mzd_t* z = mzd_local_init(1, lowmc->n);
 
   mzd_local_copy(x, p);
   mzd_addmul_v(x, lowmc_key, lowmc->k0_matrix);
 
-  lowmc_round_t* round = lowmc->rounds;
+  lowmc_round_t const* round = lowmc->rounds;
   for (unsigned i = 0; i < lowmc->r; ++i, ++round) {
 #ifdef WITH_OPT
     if (CPU_SUPPORTS_SSE2 && y->ncols == 128) {
@@ -166,13 +165,11 @@ mzd_t* lowmc_call(lowmc_t* lowmc, lowmc_key_t* lowmc_key, mzd_t* p) {
     sbox_layer_bitsliced(y, x, lowmc->m, &lowmc->mask);
 #endif
 
-    mzd_mul_v(z, y, round->l_matrix);
-    mzd_xor(z, z, round->constant);
-    mzd_addmul_v(z, lowmc_key, round->k_matrix);
-    mzd_local_copy(x, z);
+    mzd_mul_v(x, y, round->l_matrix);
+    mzd_xor(x, x, round->constant);
+    mzd_addmul_v(x, lowmc_key, round->k_matrix);
   }
 
-  mzd_local_free(z);
   mzd_local_free(y);
 
   return x;
