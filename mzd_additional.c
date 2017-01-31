@@ -57,11 +57,12 @@ mzd_t* mzd_local_init(rci_t r, rci_t c) {
 
   const size_t buffer_size = r * rowstride * sizeof(word);
   const size_t rows_size   = r * sizeof(word*);
+  const size_t mzd_t_size  = (sizeof(mzd_t) + rowstride - 1) & ~(rowstride - 1);
 
-  unsigned char* buffer = aligned_alloc(32, (sizeof(mzd_t) + buffer_size + rows_size + 31) & ~31);
+  unsigned char* buffer = aligned_alloc(32, (mzd_t_size + buffer_size + rows_size + 31) & ~31);
 
   mzd_t* A = (mzd_t*)buffer;
-  buffer += sizeof(mzd_t);
+  buffer += mzd_t_size;
 
   memset(buffer, 0, buffer_size);
 
@@ -99,7 +100,8 @@ void mzd_local_init_multiple(mzd_t** dst, size_t n, rci_t r, rci_t c) {
 
   const size_t buffer_size   = r * rowstride * sizeof(word);
   const size_t rows_size     = r * sizeof(word*);
-  const size_t size_per_elem = (sizeof(mzd_t) + buffer_size + rows_size + 31) & ~31;
+  const size_t mzd_t_size    = (sizeof(mzd_t) + rowstride - 1) & ~(rowstride - 1);
+  const size_t size_per_elem = (mzd_t_size + buffer_size + rows_size + 31) & ~31;
 
   unsigned char* full_buffer = aligned_alloc(32, size_per_elem * n);
 
@@ -108,7 +110,7 @@ void mzd_local_init_multiple(mzd_t** dst, size_t n, rci_t r, rci_t c) {
     mzd_t* A              = (mzd_t*)buffer;
     dst[s]                = A;
 
-    buffer += sizeof(mzd_t);
+    buffer += mzd_t_size;
 
     memset(buffer, 0, buffer_size);
 
