@@ -711,15 +711,15 @@ mzd_t* mzd_addmul_v(mzd_t* c, mzd_t const* v, mzd_t const* A) {
 }
 
 #ifdef WITH_OPT
-__attribute__((target("sse2"))) static inline bool mzd_equal_sse(mzd_t const* first,
-                                                                mzd_t const* second) {
-  unsigned int width    = first->width;
-  word const* firstptr  = first->rows[0];
-  word const* secondptr = second->rows[0];
+__attribute__((target("sse2"))) static inline bool mzd_equal_sse(mzd_t const* restrict first,
+                                                                 mzd_t const* restrict second) {
+  unsigned int width             = first->width;
+  word const* restrict firstptr  = first->rows[0];
+  word const* restrict secondptr = second->rows[0];
 
   if (width >= sse_bound) {
-    __m128i const* mfirstptr  = __builtin_assume_aligned(firstptr, 16);
-    __m128i const* msecondptr = __builtin_assume_aligned(secondptr, 16);
+    __m128i const* restrict mfirstptr  = __builtin_assume_aligned(firstptr, 16);
+    __m128i const* restrict msecondptr = __builtin_assume_aligned(secondptr, 16);
 
     do {
       const unsigned int notequal =
@@ -744,15 +744,15 @@ __attribute__((target("sse2"))) static inline bool mzd_equal_sse(mzd_t const* fi
   return true;
 }
 
-__attribute__((target("sse4.1"))) static inline bool mzd_equal_sse41(mzd_t const* first,
-                                                                    mzd_t const* second) {
-  unsigned int width    = first->width;
-  word const* firstptr  = first->rows[0];
-  word const* secondptr = second->rows[0];
+__attribute__((target("sse4.1"))) static inline bool mzd_equal_sse41(mzd_t const* restrict first,
+                                                                     mzd_t const* restrict second) {
+  unsigned int width             = first->width;
+  word const* restrict firstptr  = first->rows[0];
+  word const* restrict secondptr = second->rows[0];
 
   if (width >= sse_bound) {
-    __m128i const* mfirstptr  = __builtin_assume_aligned(firstptr, 16);
-    __m128i const* msecondptr = __builtin_assume_aligned(secondptr, 16);
+    __m128i const* restrict mfirstptr  = __builtin_assume_aligned(firstptr, 16);
+    __m128i const* restrict msecondptr = __builtin_assume_aligned(secondptr, 16);
 
     do {
       __m128i tmp = _mm_xor_si128(*mfirstptr++, *msecondptr++);
@@ -776,15 +776,15 @@ __attribute__((target("sse4.1"))) static inline bool mzd_equal_sse41(mzd_t const
   return true;
 }
 
-__attribute__((target("avx2"))) static inline bool mzd_equal_avx(mzd_t const* first,
-                                                                mzd_t const* second) {
-  unsigned int width    = first->width;
-  word const* firstptr  = first->rows[0];
-  word const* secondptr = second->rows[0];
+__attribute__((target("avx2"))) static inline bool mzd_equal_avx(mzd_t const* restrict first,
+                                                                 mzd_t const* restrict second) {
+  unsigned int width             = first->width;
+  word const* restrict firstptr  = first->rows[0];
+  word const* restrict secondptr = second->rows[0];
 
   if (width >= avx_bound) {
-    __m256i const* mfirstptr  = __builtin_assume_aligned(firstptr, 32);
-    __m256i const* msecondptr = __builtin_assume_aligned(secondptr, 32);
+    __m256i const* restrict mfirstptr  = __builtin_assume_aligned(firstptr, 32);
+    __m256i const* restrict msecondptr = __builtin_assume_aligned(secondptr, 32);
 
     do {
       __m256i tmp = _mm256_xor_si256(*mfirstptr++, *msecondptr++);
@@ -810,6 +810,9 @@ __attribute__((target("avx2"))) static inline bool mzd_equal_avx(mzd_t const* fi
 #endif
 
 bool mzd_local_equal(mzd_t const* first, mzd_t const* second) {
+  if (first == second) {
+    return true;
+  }
   if (first->ncols != second->ncols || first->nrows != second->nrows) {
     return false;
   }

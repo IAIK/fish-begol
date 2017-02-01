@@ -22,8 +22,8 @@
 #include "parameters.h"
 #include "randomness.h"
 
-#include <stdbool.h>
 #include <m4ri/m4ri.h>
+#include <stdbool.h>
 
 /**
  * Modified mzd_init calling malloc less often. Do not pass mzd_t instances
