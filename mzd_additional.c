@@ -711,7 +711,7 @@ mzd_t* mzd_addmul_v(mzd_t* c, mzd_t const* v, mzd_t const* A) {
 }
 
 #ifdef WITH_OPT
-__attribute__((target("sse2"))) static inline int mzd_equal_sse(mzd_t const* first,
+__attribute__((target("sse2"))) static inline bool mzd_equal_sse(mzd_t const* first,
                                                                 mzd_t const* second) {
   unsigned int width    = first->width;
   word const* firstptr  = first->rows[0];
@@ -725,7 +725,7 @@ __attribute__((target("sse2"))) static inline int mzd_equal_sse(mzd_t const* fir
       const unsigned int notequal =
           _mm_movemask_epi8(_mm_cmpeq_epi8(*mfirstptr++, *msecondptr++)) - 0xffff;
       if (notequal) {
-        return notequal;
+        return false;
       }
 
       width -= sizeof(__m128i) / sizeof(word);
@@ -737,14 +737,14 @@ __attribute__((target("sse2"))) static inline int mzd_equal_sse(mzd_t const* fir
 
   while (width--) {
     if (*firstptr++ != *secondptr++) {
-      return 1;
+      return false;
     }
   }
 
-  return 0;
+  return true;
 }
 
-__attribute__((target("sse4.1"))) static inline int mzd_equal_sse41(mzd_t const* first,
+__attribute__((target("sse4.1"))) static inline bool mzd_equal_sse41(mzd_t const* first,
                                                                     mzd_t const* second) {
   unsigned int width    = first->width;
   word const* firstptr  = first->rows[0];
@@ -757,7 +757,7 @@ __attribute__((target("sse4.1"))) static inline int mzd_equal_sse41(mzd_t const*
     do {
       __m128i tmp = _mm_xor_si128(*mfirstptr++, *msecondptr++);
       if (!_mm_testz_si128(tmp, tmp)) {
-        return 1;
+        return false;
       }
 
       width -= sizeof(__m128i) / sizeof(word);
@@ -769,14 +769,14 @@ __attribute__((target("sse4.1"))) static inline int mzd_equal_sse41(mzd_t const*
 
   while (width--) {
     if (*firstptr++ != *secondptr++) {
-      return 1;
+      return false;
     }
   }
 
-  return 0;
+  return true;
 }
 
-__attribute__((target("avx2"))) static inline int mzd_equal_avx(mzd_t const* first,
+__attribute__((target("avx2"))) static inline bool mzd_equal_avx(mzd_t const* first,
                                                                 mzd_t const* second) {
   unsigned int width    = first->width;
   word const* firstptr  = first->rows[0];
@@ -789,7 +789,7 @@ __attribute__((target("avx2"))) static inline int mzd_equal_avx(mzd_t const* fir
     do {
       __m256i tmp = _mm256_xor_si256(*mfirstptr++, *msecondptr++);
       if (!_mm256_testz_si256(tmp, tmp)) {
-        return 1;
+        return false;
       }
 
       width -= sizeof(__m256i) / sizeof(word);
@@ -801,17 +801,17 @@ __attribute__((target("avx2"))) static inline int mzd_equal_avx(mzd_t const* fir
 
   while (width--) {
     if (*firstptr++ != *secondptr++) {
-      return 1;
+      return false;
     }
   }
 
-  return 0;
+  return true;
 }
 #endif
 
-int mzd_local_equal(mzd_t const* first, mzd_t const* second) {
-  if (first->ncols != second->ncols) {
-    return 1;
+bool mzd_local_equal(mzd_t const* first, mzd_t const* second) {
+  if (first->ncols != second->ncols || first->nrows != second->nrows) {
+    return false;
   }
 
 #ifdef WITH_OPT
@@ -824,5 +824,5 @@ int mzd_local_equal(mzd_t const* first, mzd_t const* second) {
   }
 #endif
 
-  return mzd_cmp(first, second);
+  return mzd_cmp(first, second) == 0;
 }

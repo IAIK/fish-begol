@@ -119,7 +119,7 @@ void bg_free_signature(public_parameters_t* pp, bg_signature_t* signature) {
 }
 
 static bg_signature_t* bg_prove(public_parameters_t* pp, bg_private_key_t* private_key, mzd_t* p) {
-  if (mzd_local_equal(p, private_key->beta) == 0) {
+  if (mzd_local_equal(p, private_key->beta)) {
 #ifdef VERBOSE
     printf("p == beta, aborting\n");
 #endif
@@ -274,7 +274,7 @@ static int bg_proof_verify(public_parameters_t* pp, bg_public_key_t* pk, mzd_t* 
                            bg_signature_t* signature) {
   TIME_FUNCTION;
 
-  if (mzd_local_equal(p, pk->beta) == 0) {
+  if (mzd_local_equal(p, pk->beta)) {
 #ifdef VERBOSE
     printf("p == beta, aborting\n");
 #endif
@@ -342,12 +342,12 @@ static int bg_proof_verify(public_parameters_t* pp, bg_public_key_t* pk, mzd_t* 
 #pragma omp parallel for reduction(| : reconstruct_status)
   for (unsigned int i = 0; i < BG_NUM_ROUNDS; ++i) {
     mzd_t* c_mpcr = mpc_reconstruct_from_share(NULL, ys_y[i]);
-    if (mzd_local_equal(signature->y, c_mpcr) != 0) {
+    if (!mzd_local_equal(signature->y, c_mpcr)) {
       reconstruct_status |= -1;
     }
 
     c_mpcr = mpc_reconstruct_from_share(c_mpcr, ys_c[i]);
-    if (mzd_local_equal(pk->c, c_mpcr) != 0) {
+    if (!mzd_local_equal(pk->c, c_mpcr)) {
       reconstruct_status |= -1;
     }
     mzd_local_free(c_mpcr);
@@ -361,10 +361,10 @@ static int bg_proof_verify(public_parameters_t* pp, bg_public_key_t* pk, mzd_t* 
     const unsigned int a = ch[i];
     const unsigned int b = (a + 1) % 3;
 
-    if (mzd_local_equal(ys_y[i][a], proof_y->views[i][last_view_index].s[0]) ||
-        mzd_local_equal(ys_y[i][b], proof_y->views[i][last_view_index].s[1]) ||
-        mzd_local_equal(ys_c[i][a], proof_c->views[i][last_view_index].s[0]) ||
-        mzd_local_equal(ys_c[i][b], proof_c->views[i][last_view_index].s[1])) {
+    if (!mzd_local_equal(ys_y[i][a], proof_y->views[i][last_view_index].s[0]) ||
+        !mzd_local_equal(ys_y[i][b], proof_y->views[i][last_view_index].s[1]) ||
+        !mzd_local_equal(ys_c[i][a], proof_c->views[i][last_view_index].s[0]) ||
+        !mzd_local_equal(ys_c[i][b], proof_c->views[i][last_view_index].s[1])) {
       output_share_status |= -1;
     }
   }

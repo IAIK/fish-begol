@@ -66,12 +66,12 @@ void test_mzd_local_equal(void) {
     mzd_t* a = mzd_init_random_vector((i + 1) * 64);
     mzd_t* b = mzd_local_copy(NULL, a);
 
-    if (mzd_local_equal(a, b) == 0) {
+    if (mzd_local_equal(a, b)) {
       printf("equal: ok [%u]\n", (i + 1) * 64);
     }
 
     b = mzd_xor(b, b, a);
-    if (mzd_local_equal(a, b) != 0)
+    if (mzd_local_equal(a, b))
       printf("equal: ok [%u]\n", (i + 1) * 64);
 
     mzd_local_free(a);
