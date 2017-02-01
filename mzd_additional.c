@@ -69,7 +69,7 @@ mzd_t* mzd_local_init(rci_t r, rci_t c) {
   // sizeof(mzd_t) == 64 is only ensured after
   // a41f75a72f8a84d9318d44b6f01aac1453dfffe6, but a version including this
   // commit is not available any any recent Debian based distribution.
-  const size_t mzd_t_size    = (sizeof(mzd_t) + row_alignment - 1) & ~(row_alignment - 1);
+  const size_t mzd_t_size = (sizeof(mzd_t) + row_alignment - 1) & ~(row_alignment - 1);
 
   unsigned char* buffer = aligned_alloc(32, (mzd_t_size + buffer_size + rows_size + 31) & ~31);
 
@@ -809,7 +809,7 @@ __attribute__((target("avx2"))) static inline int mzd_equal_avx(mzd_t const* fir
 }
 #endif
 
-int mzd_equal(mzd_t const* first, mzd_t const* second) {
+int mzd_local_equal(mzd_t const* first, mzd_t const* second) {
   if (first->ncols != second->ncols) {
     return 1;
   }

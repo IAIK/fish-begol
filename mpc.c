@@ -215,7 +215,7 @@ int mpc_and_verify(mzd_t* const* res, mzd_t* const* first, mzd_t* const* second,
   for (unsigned m = 0; m < (SC_VERIFY - 1); ++m) {
     mzd_shift_left(b, view->s[m], viewshift);
     mzd_and(b, b, res[m]);
-    if (mzd_equal(b, res[m])) {
+    if (mzd_local_equal(b, res[m])) {
       return -1;
     }
   }

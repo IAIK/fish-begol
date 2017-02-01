@@ -78,7 +78,7 @@ mzd_t* mzd_xor(mzd_t* res, mzd_t const* first, mzd_t const* second);
  *          second vector
  * \returns 0 if both vectors are equal, non-zero otherwise.
  */
-int mzd_equal(mzd_t const* first, mzd_t const* second);
+int mzd_local_equal(mzd_t const* first, mzd_t const* second);
 
 /**
  * Compute v * A optimized for v being a vector.

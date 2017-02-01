@@ -68,7 +68,8 @@ static void sbox_layer_bitsliced(mzd_t* out, mzd_t* in, rci_t m, mask_t const* m
 }
 
 #ifdef WITH_OPT
-__attribute__((target("sse2"))) static void sbox_layer_sse(mzd_t* out, mzd_t* in, mask_t const* mask) {
+__attribute__((target("sse2"))) static void sbox_layer_sse(mzd_t* out, mzd_t* in,
+                                                           mask_t const* mask) {
   __m128i min = _mm_load_si128((__m128i*)in->rows[0]);
 
   __m128i x0m = _mm_and_si128(min, _mm_load_si128((__m128i*)mask->x0->rows[0]));
@@ -105,7 +106,8 @@ __attribute__((target("sse2"))) static void sbox_layer_sse(mzd_t* out, mzd_t* in
  * AVX2 version of LowMC. It assumes that mzd_t's row[0] is always 32 byte
  * aligned.
  */
-__attribute__((target("avx2"))) static void sbox_layer_avx(mzd_t* out, mzd_t* in, mask_t const* mask) {
+__attribute__((target("avx2"))) static void sbox_layer_avx(mzd_t* out, mzd_t* in,
+                                                           mask_t const* mask) {
   __m256i min = _mm256_load_si256((__m256i*)in->rows[0]);
 
   __m256i x0m = _mm256_and_si256(min, _mm256_load_si256((__m256i*)mask->x0->rows[0]));

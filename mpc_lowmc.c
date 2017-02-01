@@ -622,7 +622,7 @@ int mpc_lowmc_verify(mpc_lowmc_t const* lowmc, mzd_t const* p, bool xor_p, view_
       _mpc_lowmc_call_bitsliced_verify(lowmc, &lowmc_key, p, xor_p, views, rvec, c, &status);
   if (v) {
     for (unsigned int i = 0; i < SC_VERIFY; ++i) {
-      if (mzd_equal(views[lowmc->r + 1].s[i], v[i])) {
+      if (mzd_local_equal(views[lowmc->r + 1].s[i], v[i])) {
         status = 1;
         break;
       }

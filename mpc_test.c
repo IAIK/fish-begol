@@ -61,17 +61,17 @@ void test_mpc_add() {
   mzd_local_free(cmp);
 }
 
-void test_mzd_equal(void) {
+void test_mzd_local_equal(void) {
   for (unsigned int i = 0; i < 10; ++i) {
     mzd_t* a = mzd_init_random_vector((i + 1) * 64);
     mzd_t* b = mzd_local_copy(NULL, a);
 
-    if (mzd_equal(a, b) == 0) {
+    if (mzd_local_equal(a, b) == 0) {
       printf("equal: ok [%u]\n", (i + 1) * 64);
     }
 
     b = mzd_xor(b, b, a);
-    if (mzd_equal(a, b) != 0)
+    if (mzd_local_equal(a, b) != 0)
       printf("equal: ok [%u]\n", (i + 1) * 64);
 
     mzd_local_free(a);
