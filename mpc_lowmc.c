@@ -286,14 +286,14 @@ static int _mpc_sbox_layer_bitsliced_verify(mzd_t** out, mzd_t* const* in, view_
 
 #ifdef WITH_OPT
 #define bitsliced_mm_step_1(sc, type, and, shift_left)                                             \
-  type r0m[sc];                                                                                    \
-  type r0s[sc];                                                                                    \
-  type r1m[sc];                                                                                    \
-  type r1s[sc];                                                                                    \
-  type r2m[sc];                                                                                    \
-  type x0s[sc];                                                                                    \
-  type x1s[sc];                                                                                    \
-  type x2m[sc];                                                                                    \
+  type r0m[sc] __attribute__((aligned(alignof(type))));                                            \
+  type r0s[sc] __attribute__((aligned(alignof(type))));                                            \
+  type r1m[sc] __attribute__((aligned(alignof(type))));                                            \
+  type r1s[sc] __attribute__((aligned(alignof(type))));                                            \
+  type r2m[sc] __attribute__((aligned(alignof(type))));                                            \
+  type x0s[sc] __attribute__((aligned(alignof(type))));                                            \
+  type x1s[sc] __attribute__((aligned(alignof(type))));                                            \
+  type x2m[sc] __attribute__((aligned(alignof(type))));                                            \
   do {                                                                                             \
     const type* mx0 = __builtin_assume_aligned(mask->x0->rows[0], alignof(type));                  \
     const type* mx1 = __builtin_assume_aligned(mask->x1->rows[0], alignof(type));                  \
@@ -528,7 +528,7 @@ static mzd_t** _mpc_lowmc_call_bitsliced(mpc_lowmc_t const* lowmc, mpc_lowmc_key
 
 #ifdef WITH_OPT
 #ifdef WITH_SSE2
-    if (CPU_SUPPORTS_SSE2 && lowmc->n == 128) {
+    if (CPU_SUPPORTS_SSE2 && lowmc->n <= 128) {
       _mpc_sbox_layer_bitsliced_sse(y, x, views, r, &lowmc->mask);
     } else
 #endif
@@ -583,12 +583,12 @@ static mzd_t** _mpc_lowmc_call_bitsliced_verify(mpc_lowmc_t const* lowmc,
     int ret = 0;
 #ifdef WITH_OPT
 #ifdef WITH_SSE2
-    if (CPU_SUPPORTS_SSE2 && lowmc->n > 64 && lowmc->n <= 128) {
+    if (CPU_SUPPORTS_SSE2 && lowmc->n <= 128) {
       ret = _mpc_sbox_layer_bitsliced_sse_verify(y, x, views, r, &lowmc->mask);
     } else
 #endif
 #ifdef WITH_AVX2
-    if (CPU_SUPPORTS_AVX2 && lowmc->n > 192 && lowmc->n <= 256) {
+    if (CPU_SUPPORTS_AVX2 && lowmc->n <= 256) {
       ret = _mpc_sbox_layer_bitsliced_avx_verify(y, x, views, r, &lowmc->mask);
     } else
 #endif
@@ -656,13 +656,13 @@ void sbox_vars_clear(sbox_vars_t* vars) {
 sbox_vars_t* sbox_vars_init(sbox_vars_t* vars, rci_t n, unsigned sc) {
 #ifdef WITH_OPT
 #ifdef WITH_AVX2
-  if (CPU_SUPPORTS_AVX2 && n > 192 && n <= 256) {
+  if (CPU_SUPPORTS_AVX2 && n <= 256) {
     vars->storage = NULL;
     return vars;
   }
 #endif
 #ifdef WITH_SSE2
-  if (CPU_SUPPORTS_SSE2 && n > 64 && n <= 128) {
+  if (CPU_SUPPORTS_SSE2 && n <= 128) {
     vars->storage = NULL;
     return vars;
   }
