@@ -24,8 +24,12 @@
 #ifdef WITH_OPT
 #include "simd.h"
 
+#ifdef WITH_SSE2
 static const unsigned int sse_bound      = 128 / (8 * sizeof(word));
+#endif
+#if defined(WITH_SSE2) || defined(WITH_AVX2)
 static const unsigned int word_size_bits = 8 * sizeof(word);
+#endif
 #endif
 static const unsigned int avx_bound         = 256 / (8 * sizeof(word));
 static const uint8_t mzd_flag_custom_layout = 0x40;
@@ -263,6 +267,7 @@ void mzd_shift_left(mzd_t* res, mzd_t const* val, unsigned count) {
 }
 
 #ifdef WITH_OPT
+#ifdef WITH_SSE2
 __attribute__((target("sse2"))) static inline mzd_t* mzd_and_sse(mzd_t* res, mzd_t const* first,
                                                                  mzd_t const* second) {
   unsigned int width    = first->width;
@@ -291,7 +296,9 @@ __attribute__((target("sse2"))) static inline mzd_t* mzd_and_sse(mzd_t* res, mzd
 
   return res;
 }
+#endif
 
+#ifdef WITH_AVX2
 __attribute__((target("avx2"))) static inline mzd_t* mzd_and_avx(mzd_t* res, mzd_t const* first,
                                                                  mzd_t const* second) {
   unsigned int width    = first->width;
@@ -321,6 +328,7 @@ __attribute__((target("avx2"))) static inline mzd_t* mzd_and_avx(mzd_t* res, mzd
   return res;
 }
 #endif
+#endif
 
 mzd_t* mzd_and(mzd_t* res, mzd_t const* first, mzd_t const* second) {
   if (res == 0) {
@@ -328,11 +336,16 @@ mzd_t* mzd_and(mzd_t* res, mzd_t const* first, mzd_t const* second) {
   }
 
 #ifdef WITH_OPT
+#ifdef WITH_AVX2
   if (CPU_SUPPORTS_AVX2 && first->ncols >= 256 && first->ncols % word_size_bits == 0) {
     return mzd_and_avx(res, first, second);
-  } else if (CPU_SUPPORTS_SSE2 && first->ncols % word_size_bits == 0) {
+  }
+#endif
+#ifdef WITH_SSE2
+  if (CPU_SUPPORTS_SSE2 && first->ncols % word_size_bits == 0) {
     return mzd_and_sse(res, first, second);
   }
+#endif
 #endif
 
   unsigned int width    = first->width;
@@ -350,6 +363,7 @@ mzd_t* mzd_and(mzd_t* res, mzd_t const* first, mzd_t const* second) {
 }
 
 #ifdef WITH_OPT
+#ifdef WITH_SSE2
 __attribute__((target("sse2"))) static inline mzd_t* mzd_xor_sse(mzd_t* res, mzd_t const* first,
                                                                  mzd_t const* second) {
   unsigned int width    = first->width;
@@ -378,7 +392,9 @@ __attribute__((target("sse2"))) static inline mzd_t* mzd_xor_sse(mzd_t* res, mzd
 
   return res;
 }
+#endif
 
+#ifdef WITH_AVX2
 __attribute__((target("avx2"))) static inline mzd_t* mzd_xor_avx(mzd_t* res, mzd_t const* first,
                                                                  mzd_t const* second) {
   unsigned int width    = first->width;
@@ -408,6 +424,7 @@ __attribute__((target("avx2"))) static inline mzd_t* mzd_xor_avx(mzd_t* res, mzd
   return res;
 }
 #endif
+#endif
 
 mzd_t* mzd_xor(mzd_t* res, mzd_t const* first, mzd_t const* second) {
   if (!res) {
@@ -415,11 +432,16 @@ mzd_t* mzd_xor(mzd_t* res, mzd_t const* first, mzd_t const* second) {
   }
 
 #ifdef WITH_OPT
+#ifdef WITH_AVX2
   if (CPU_SUPPORTS_AVX2 && first->ncols >= 256 && first->ncols % word_size_bits == 0) {
     return mzd_xor_avx(res, first, second);
-  } else if (CPU_SUPPORTS_SSE2 && first->ncols % word_size_bits == 0) {
+  }
+#endif
+#ifdef WITH_SSE2
+  if (CPU_SUPPORTS_SSE2 && first->ncols % word_size_bits == 0) {
     return mzd_xor_sse(res, first, second);
   }
+#endif
 #endif
 
   unsigned int width    = first->width;
@@ -452,6 +474,7 @@ mzd_t* mzd_mul_v(mzd_t* c, mzd_t const* v, mzd_t const* At) {
 }
 
 #ifdef WITH_OPT
+#ifdef WITH_SSE2
 __attribute__((target("sse2"))) static inline mzd_t* mzd_addmul_v_sse(mzd_t* c, mzd_t const* v,
                                                                       mzd_t const* A) {
   const unsigned int len        = A->width * sizeof(word) / sizeof(__m128i);
@@ -558,7 +581,9 @@ __attribute__((target("sse2"))) static inline mzd_t* mzd_addmul_v_sse(mzd_t* c, 
 
   return c;
 }
+#endif
 
+#ifdef WITH_AVX2
 __attribute__((target("avx2"))) static inline mzd_t* mzd_addmul_v_avx(mzd_t* c, mzd_t const* v,
                                                                       mzd_t const* A) {
   const unsigned int len        = A->width * sizeof(word) / sizeof(__m256i);
@@ -666,6 +691,7 @@ __attribute__((target("avx2"))) static inline mzd_t* mzd_addmul_v_avx(mzd_t* c, 
   return c;
 }
 #endif
+#endif
 
 mzd_t* mzd_addmul_v(mzd_t* c, mzd_t const* v, mzd_t const* A) {
   if (A->ncols != c->ncols || A->nrows != v->ncols) {
@@ -675,11 +701,16 @@ mzd_t* mzd_addmul_v(mzd_t* c, mzd_t const* v, mzd_t const* A) {
 
 #ifdef WITH_OPT
   if (A->nrows % (sizeof(word) * 8) == 0) {
+#ifdef WITH_AVX2
     if (CPU_SUPPORTS_AVX2 && (A->ncols & 0xff) == 0) {
       return mzd_addmul_v_avx(c, v, A);
-    } else if (CPU_SUPPORTS_SSE2 && (A->ncols & 0x7f) == 0) {
+    }
+#endif
+#ifdef WITH_SSE2
+    if (CPU_SUPPORTS_SSE2 && (A->ncols & 0x7f) == 0) {
       return mzd_addmul_v_sse(c, v, A);
     }
+#endif
   }
 #endif
 
@@ -711,6 +742,7 @@ mzd_t* mzd_addmul_v(mzd_t* c, mzd_t const* v, mzd_t const* A) {
 }
 
 #ifdef WITH_OPT
+#ifdef WITH_SSE2
 __attribute__((target("sse2"))) static inline bool mzd_equal_sse(mzd_t const* restrict first,
                                                                  mzd_t const* restrict second) {
   unsigned int width             = first->width;
@@ -743,7 +775,9 @@ __attribute__((target("sse2"))) static inline bool mzd_equal_sse(mzd_t const* re
 
   return true;
 }
+#endif
 
+#ifdef WITH_SSE4_1
 __attribute__((target("sse4.1"))) static inline bool mzd_equal_sse41(mzd_t const* restrict first,
                                                                      mzd_t const* restrict second) {
   unsigned int width             = first->width;
@@ -775,7 +809,9 @@ __attribute__((target("sse4.1"))) static inline bool mzd_equal_sse41(mzd_t const
 
   return true;
 }
+#endif
 
+#ifdef WITH_AVX2
 __attribute__((target("avx2"))) static inline bool mzd_equal_avx(mzd_t const* restrict first,
                                                                  mzd_t const* restrict second) {
   unsigned int width             = first->width;
@@ -808,6 +844,7 @@ __attribute__((target("avx2"))) static inline bool mzd_equal_avx(mzd_t const* re
   return true;
 }
 #endif
+#endif
 
 bool mzd_local_equal(mzd_t const* first, mzd_t const* second) {
   if (first == second) {
@@ -818,13 +855,21 @@ bool mzd_local_equal(mzd_t const* first, mzd_t const* second) {
   }
 
 #ifdef WITH_OPT
+#ifdef WITH_AVX2
   if (CPU_SUPPORTS_AVX2 && first->ncols >= 256) {
     return mzd_equal_avx(first, second);
-  } else if (CPU_SUPPORTS_SSE4) {
+  }
+#endif
+#ifdef WITH_SSE4_1
+  if (CPU_SUPPORTS_SSE4_1) {
     return mzd_equal_sse41(first, second);
-  } else if (CPU_SUPPORTS_SSE2) {
+  }
+#endif
+#ifdef WITH_SSE2
+  if (CPU_SUPPORTS_SSE2) {
     return mzd_equal_sse(first, second);
   }
+#endif
 #endif
 
   return mzd_cmp(first, second) == 0;

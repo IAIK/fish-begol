@@ -49,6 +49,7 @@ void mpc_xor(mzd_t* const* res, mzd_t* const* first, mzd_t* const* second, unsig
 }
 
 #ifdef WITH_OPT
+#ifdef WITH_SSE2
 __attribute__((target("sse2"))) int mpc_and_sse(__m128i* res, __m128i const* first,
                                                 __m128i const* second, __m128i const* r,
                                                 view_t const* view, unsigned viewshift) {
@@ -71,7 +72,9 @@ __attribute__((target("sse2"))) int mpc_and_sse(__m128i* res, __m128i const* fir
 
   return 0;
 }
+#endif
 
+#ifdef WITH_AVX2
 __attribute__((target("avx2"))) int mpc_and_avx(__m256i* res, __m256i const* first,
                                                 __m256i const* second, __m256i const* r,
                                                 view_t const* view, unsigned viewshift) {
@@ -94,6 +97,7 @@ __attribute__((target("avx2"))) int mpc_and_avx(__m256i* res, __m256i const* fir
 
   return 0;
 }
+#endif
 #endif
 
 int mpc_and(mzd_t* const* res, mzd_t* const* first, mzd_t* const* second, mzd_t* const* r,
@@ -121,6 +125,7 @@ int mpc_and(mzd_t* const* res, mzd_t* const* first, mzd_t* const* second, mzd_t*
 }
 
 #ifdef WITH_OPT
+#ifdef WITH_SSE2
 __attribute__((target("sse2"))) int mpc_and_verify_sse(__m128i* res, __m128i const* first,
                                                        __m128i const* second, __m128i const* r,
                                                        view_t const* view, mzd_t const* mask,
@@ -155,7 +160,9 @@ __attribute__((target("sse2"))) int mpc_and_verify_sse(__m128i* res, __m128i con
 
   return 0;
 }
+#endif
 
+#ifdef WITH_AVX2
 __attribute__((target("avx2"))) int mpc_and_verify_avx(__m256i* res, __m256i const* first,
                                                        __m256i const* second, __m256i const* r,
                                                        view_t const* view, mzd_t const* mask,
@@ -190,6 +197,7 @@ __attribute__((target("avx2"))) int mpc_and_verify_avx(__m256i* res, __m256i con
 
   return 0;
 }
+#endif
 #endif
 
 int mpc_and_verify(mzd_t* const* res, mzd_t* const* first, mzd_t* const* second, mzd_t* const* r,

@@ -68,6 +68,7 @@ static void sbox_layer_bitsliced(mzd_t* out, mzd_t* in, rci_t m, mask_t const* m
 }
 
 #ifdef WITH_OPT
+#ifdef WITH_SSE2
 __attribute__((target("sse2"))) static void sbox_layer_sse(mzd_t* out, mzd_t* in,
                                                            mask_t const* mask) {
   __m128i min = _mm_load_si128((__m128i*)in->rows[0]);
@@ -101,7 +102,9 @@ __attribute__((target("sse2"))) static void sbox_layer_sse(mzd_t* out, mzd_t* in
   mout = _mm_xor_si128(mout, t0);
   _mm_store_si128((__m128i*)out->rows[0], mout);
 }
+#endif
 
+#ifdef WITH_AVX2
 /**
  * AVX2 version of LowMC. It assumes that mzd_t's row[0] is always 32 byte
  * aligned.
@@ -140,6 +143,7 @@ __attribute__((target("avx2"))) static void sbox_layer_avx(mzd_t* out, mzd_t* in
   _mm256_store_si256((__m256i*)out->rows[0], mout);
 }
 #endif
+#endif
 
 mzd_t* lowmc_call(lowmc_t const* lowmc, lowmc_key_t const* lowmc_key, mzd_t const* p) {
   if (p->ncols > lowmc->n) {
@@ -159,16 +163,20 @@ mzd_t* lowmc_call(lowmc_t const* lowmc, lowmc_key_t const* lowmc_key, mzd_t cons
   lowmc_round_t const* round = lowmc->rounds;
   for (unsigned i = 0; i < lowmc->r; ++i, ++round) {
 #ifdef WITH_OPT
-    if (CPU_SUPPORTS_SSE2 && y->ncols == 128) {
+#ifdef WITH_SSE2
+    if (CPU_SUPPORTS_SSE2 && lowmc->n == 128) {
       sbox_layer_sse(y, x, &lowmc->mask);
-    } else if (CPU_SUPPORTS_AVX2 && y->ncols == 256) {
+    } else
+#endif
+#ifdef WITH_AVX2
+    if (CPU_SUPPORTS_AVX2 && lowmc->n == 256) {
       sbox_layer_avx(y, x, &lowmc->mask);
-    } else {
+    } else
+#endif
+#endif
+    {
       sbox_layer_bitsliced(y, x, lowmc->m, &lowmc->mask);
     }
-#else
-    sbox_layer_bitsliced(y, x, lowmc->m, &lowmc->mask);
-#endif
 
     mzd_mul_v(x, y, round->l_matrix);
     mzd_xor(x, x, round->constant);

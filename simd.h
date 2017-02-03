@@ -28,7 +28,7 @@
 #define FN_ATTRIBUTES_SSE2_NP __attribute__((__always_inline__, target("sse2")))
 
 #define CPU_SUPPORTS_AVX2 __builtin_cpu_supports("avx2")
-#define CPU_SUPPORTS_SSE4 __builtin_cpu_supports("sse4.1")
+#define CPU_SUPPORTS_SSE4_1 __builtin_cpu_supports("sse4.1")
 
 #ifdef __x86_64__
 #define CPU_SUPPORTS_SSE2 1
@@ -36,6 +36,7 @@
 #define CPU_SUPPORTS_SSE2 __builtin_cpu_supports("sse2")
 #endif
 
+#ifdef WITH_AVX2
 /**
  * \brief Perform a left shift on a 256 bit value.
  */
@@ -66,6 +67,19 @@ static inline __m256i FN_ATTRIBUTES_AVX2 mm256_shift_right(__m256i data, unsigne
   return _mm256_or_si256(data, carry);
 }
 
+/**
+ * \brief xor multiple 256 bit values.
+ */
+static inline void FN_ATTRIBUTES_AVX2_NP mm256_xor_region(__m256i* restrict dst,
+                                                          __m256i const* restrict src,
+                                                          unsigned int count) {
+  for (unsigned int i = count; i; --i, ++dst, ++src) {
+    *dst = _mm256_xor_si256(*dst, *src);
+  }
+}
+#endif
+
+#ifdef WITH_SSE2
 /**
  * \brief Perform a left shift on a 128 bit value.
  */
@@ -110,16 +124,6 @@ static inline void FN_ATTRIBUTES_SSE2_NP mm128_xor_region(__m128i* restrict dst,
     *dst = _mm_xor_si128(*dst, *src);
   }
 }
-
-/**
- * \brief xor multiple 256 bit values.
- */
-static inline void FN_ATTRIBUTES_AVX2_NP mm256_xor_region(__m256i* restrict dst,
-                                                          __m256i const* restrict src,
-                                                          unsigned int count) {
-  for (unsigned int i = count; i; --i, ++dst, ++src) {
-    *dst = _mm256_xor_si256(*dst, *src);
-  }
-}
+#endif
 
 #endif

@@ -344,6 +344,7 @@ static int _mpc_sbox_layer_bitsliced_verify(mzd_t** out, mzd_t* const* in, view_
     }                                                                                              \
   } while (0)
 
+#ifdef WITH_SSE2
 __attribute__((target("sse2"))) static void
 _mpc_sbox_layer_bitsliced_sse(mzd_t** out, mzd_t* const* in, view_t const* view, mzd_t* const* rvec,
                               mask_t const* mask) {
@@ -371,7 +372,9 @@ _mpc_sbox_layer_bitsliced_sse_verify(mzd_t** out, mzd_t* const* in, view_t const
 
   return 0;
 }
+#endif
 
+#ifdef WITH_AVX2
 __attribute__((target("avx2"))) static void
 _mpc_sbox_layer_bitsliced_avx(mzd_t** out, mzd_t* const* in, view_t const* view, mzd_t* const* rvec,
                               mask_t const* mask) {
@@ -399,7 +402,7 @@ _mpc_sbox_layer_bitsliced_avx_verify(mzd_t** out, mzd_t** in, view_t const* view
 
   return 0;
 }
-
+#endif
 #endif
 
 #if 0
@@ -524,16 +527,20 @@ static mzd_t** _mpc_lowmc_call_bitsliced(mpc_lowmc_t const* lowmc, mpc_lowmc_key
     mzd_t* r[SC_PROOF] = {rvec[0][i], rvec[1][i], rvec[2][i]};
 
 #ifdef WITH_OPT
-    if (CPU_SUPPORTS_SSE2 && lowmc->n <= 128) {
+#ifdef WITH_SSE2
+    if (CPU_SUPPORTS_SSE2 && lowmc->n == 128) {
       _mpc_sbox_layer_bitsliced_sse(y, x, views, r, &lowmc->mask);
-    } else if (CPU_SUPPORTS_AVX2 && lowmc->n <= 256) {
+    } else
+#endif
+#ifdef WITH_AVX2
+    if (CPU_SUPPORTS_AVX2 && lowmc->n <= 256) {
       _mpc_sbox_layer_bitsliced_avx(y, x, views, r, &lowmc->mask);
-    } else {
+    } else
+#endif
+#endif
+    {
       _mpc_sbox_layer_bitsliced(y, x, views, r, &lowmc->mask, &vars);
     }
-#else
-    _mpc_sbox_layer_bitsliced(y, x, views, r, &lowmc->mask, &vars);
-#endif
 
     mpc_const_mat_mul(x, round->l_matrix, y, SC_PROOF);
     mpc_const_add(x, x, round->constant, SC_PROOF, ch);
@@ -575,16 +582,20 @@ static mzd_t** _mpc_lowmc_call_bitsliced_verify(mpc_lowmc_t const* lowmc,
 
     int ret = 0;
 #ifdef WITH_OPT
-    if (CPU_SUPPORTS_SSE2 && lowmc->n <= 128) {
+#ifdef WITH_SSE2
+    if (CPU_SUPPORTS_SSE2 && lowmc->n > 64 && lowmc->n <= 128) {
       ret = _mpc_sbox_layer_bitsliced_sse_verify(y, x, views, r, &lowmc->mask);
-    } else if (CPU_SUPPORTS_AVX2 && lowmc->n <= 256) {
+    } else
+#endif
+#ifdef WITH_AVX2
+    if (CPU_SUPPORTS_AVX2 && lowmc->n > 192 && lowmc->n <= 256) {
       ret = _mpc_sbox_layer_bitsliced_avx_verify(y, x, views, r, &lowmc->mask);
-    } else {
+    } else
+#endif
+#endif
+    {
       ret = _mpc_sbox_layer_bitsliced_verify(y, x, views, r, &lowmc->mask, &vars);
     }
-#else
-    ret = _mpc_sbox_layer_bitsliced_verify(y, x, views, r, &lowmc->mask, &vars);
-#endif
     if (ret) {
       mpc_free(x, SC_VERIFY);
       x       = NULL;
@@ -644,13 +655,18 @@ void sbox_vars_clear(sbox_vars_t* vars) {
 
 sbox_vars_t* sbox_vars_init(sbox_vars_t* vars, rci_t n, unsigned sc) {
 #ifdef WITH_OPT
-  if (CPU_SUPPORTS_AVX2 && n <= 256) {
-    vars->storage = NULL;
-    return vars;
-  } else if (CPU_SUPPORTS_SSE2 && n <= 128) {
+#ifdef WITH_AVX2
+  if (CPU_SUPPORTS_AVX2 && n > 192 && n <= 256) {
     vars->storage = NULL;
     return vars;
   }
+#endif
+#ifdef WITH_SSE2
+  if (CPU_SUPPORTS_SSE2 && n > 64 && n <= 128) {
+    vars->storage = NULL;
+    return vars;
+  }
+#endif
 #endif
 
   vars->storage = calloc(11 * sc, sizeof(mzd_t*));
