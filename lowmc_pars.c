@@ -25,10 +25,8 @@
 #include <stdbool.h>
 
 mask_t* prepare_masks(mask_t* mask, rci_t n, rci_t m) {
-  if (0 != n % (8 * sizeof(word)))
-    return 0;
-  if (mask == 0)
-    mask = (mask_t*)malloc(sizeof(mask_t));
+  if (!mask)
+    mask = malloc(sizeof(mask_t));
 
   mask->x0   = mzd_local_init(1, n);
   mask->x1   = mzd_local_init(1, n);
@@ -100,7 +98,10 @@ lowmc_t* lowmc_init(size_t m, size_t n, size_t r, size_t k) {
     lowmc->rounds[i].constant = mzd_init_random_vector(n);
   }
 
-  prepare_masks(&lowmc->mask, n, m);
+  if (!prepare_masks(&lowmc->mask, n, m)) {
+    lowmc_free(lowmc);
+    return NULL;
+  }
 
   return lowmc;
 }
