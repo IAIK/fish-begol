@@ -20,6 +20,7 @@
 #include "randomness.h"
 
 #include <assert.h>
+#include <stdlib.h>
 
 #ifdef WITH_OPT
 #include "simd.h"
