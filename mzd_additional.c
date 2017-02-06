@@ -100,6 +100,15 @@ mzd_t* mzd_local_init(rci_t r, rci_t c) {
   A->high_bitmask  = high_bitmask;
   A->blocks        = NULL;
 
+#if M4RI_VERSION < 20130808
+  A->offset = 0;
+  if (width == 1) {
+    A->low_bitmask = A->high_bitmask = __M4RI_MIDDLE_BITMASK(c, 0);
+  } else {
+    A->low_bitmask = m4ri_ffff;
+  }
+#endif
+
   return A;
 }
 
@@ -148,6 +157,15 @@ void mzd_local_init_multiple(mzd_t** dst, size_t n, rci_t r, rci_t c) {
     A->blockrows_log = 0;
     A->high_bitmask  = high_bitmask;
     A->blocks        = NULL;
+
+#if M4RI_VERSION < 20130808
+    A->offset = 0;
+    if (width == 1) {
+      A->low_bitmask = A->high_bitmask = __M4RI_MIDDLE_BITMASK(c, 0);
+    } else {
+      A->low_bitmask = m4ri_ffff;
+    }
+#endif
   }
 }
 
