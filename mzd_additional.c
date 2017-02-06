@@ -26,7 +26,7 @@
 #include "simd.h"
 
 #ifdef WITH_SSE2
-static const unsigned int sse_bound      = 128 / (8 * sizeof(word));
+static const unsigned int sse_bound = 128 / (8 * sizeof(word));
 #endif
 #if defined(WITH_SSE2) || defined(WITH_AVX2)
 static const unsigned int word_size_bits = 8 * sizeof(word);
@@ -101,6 +101,7 @@ mzd_t* mzd_local_init(rci_t r, rci_t c) {
   A->blocks        = NULL;
 
 #if M4RI_VERSION < 20130808
+  // workaround for old m4ri versions (untested)
   A->offset = 0;
   if (width == 1) {
     A->low_bitmask = A->high_bitmask = __M4RI_MIDDLE_BITMASK(c, 0);
@@ -159,6 +160,7 @@ void mzd_local_init_multiple(mzd_t** dst, size_t n, rci_t r, rci_t c) {
     A->blocks        = NULL;
 
 #if M4RI_VERSION < 20130808
+    // workaround for old m4ri versions (untested)
     A->offset = 0;
     if (width == 1) {
       A->low_bitmask = A->high_bitmask = __M4RI_MIDDLE_BITMASK(c, 0);
