@@ -24,10 +24,7 @@
 #include <m4ri/m4ri.h>
 #include <stdbool.h>
 
-mask_t* prepare_masks(mask_t* mask, rci_t n, rci_t m) {
-  if (!mask)
-    mask = malloc(sizeof(mask_t));
-
+static mask_t* prepare_masks(mask_t* mask, rci_t n, rci_t m) {
   mask->x0   = mzd_local_init(1, n);
   mask->x1   = mzd_local_init(1, n);
   mask->x2   = mzd_local_init(1, n);
