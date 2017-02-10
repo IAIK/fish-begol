@@ -48,10 +48,10 @@ int mpc_and_avx(__m256i* res, __m256i const* first, __m256i const* second, __m25
                 view_t const* view, unsigned viewshift);
 
 int mpc_and_verify_sse(__m128i* res, __m128i const* first, __m128i const* second, __m128i const* r,
-                       view_t const* view, mzd_t const* mask, unsigned viewshift);
+                       view_t const* view, __m128i const mask, unsigned viewshift);
 
 int mpc_and_verify_avx(__m256i* res, __m256i const* first, __m256i const* second, __m256i const* r,
-                       view_t const* view, mzd_t const* mask, unsigned viewshift);
+                       view_t const* view, __m256i const mask, unsigned viewshift);
 #endif
 
 /**

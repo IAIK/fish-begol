@@ -128,7 +128,7 @@ int mpc_and(mzd_t* const* res, mzd_t* const* first, mzd_t* const* second, mzd_t*
 #ifdef WITH_SSE2
 __attribute__((target("sse2"))) int mpc_and_verify_sse(__m128i* res, __m128i const* first,
                                                        __m128i const* second, __m128i const* r,
-                                                       view_t const* view, mzd_t const* mask,
+                                                       view_t const* view, __m128i const mask,
                                                        unsigned viewshift) {
   for (unsigned m = 0; m < (SC_VERIFY - 1); ++m) {
     const unsigned j = (m + 1);
@@ -153,10 +153,9 @@ __attribute__((target("sse2"))) int mpc_and_verify_sse(__m128i* res, __m128i con
   }
 
   __m128i const* s1 = __builtin_assume_aligned(CONST_FIRST_ROW(view->s[SC_VERIFY - 1]), 16);
-  __m128i const* m  = __builtin_assume_aligned(CONST_FIRST_ROW(mask), 16);
 
   __m128i rsc        = mm128_shift_left(*s1, viewshift);
-  res[SC_VERIFY - 1] = _mm_and_si128(rsc, *m);
+  res[SC_VERIFY - 1] = _mm_and_si128(rsc, mask);
 
   return 0;
 }
@@ -165,7 +164,7 @@ __attribute__((target("sse2"))) int mpc_and_verify_sse(__m128i* res, __m128i con
 #ifdef WITH_AVX2
 __attribute__((target("avx2"))) int mpc_and_verify_avx(__m256i* res, __m256i const* first,
                                                        __m256i const* second, __m256i const* r,
-                                                       view_t const* view, mzd_t const* mask,
+                                                       view_t const* view, __m256i const mask,
                                                        unsigned viewshift) {
   for (unsigned m = 0; m < (SC_VERIFY - 1); ++m) {
     const unsigned j = (m + 1);
@@ -189,11 +188,9 @@ __attribute__((target("avx2"))) int mpc_and_verify_avx(__m256i* res, __m256i con
     }
   }
 
-  __m256i const* s1 = __builtin_assume_aligned(CONST_FIRST_ROW(view->s[SC_VERIFY - 1]), 32);
-  __m256i const* m  = __builtin_assume_aligned(CONST_FIRST_ROW(mask), 32);
-
+  __m256i const* s1  = __builtin_assume_aligned(CONST_FIRST_ROW(view->s[SC_VERIFY - 1]), 32);
   __m256i rsc        = mm256_shift_left(*s1, viewshift);
-  res[SC_VERIFY - 1] = _mm256_and_si256(rsc, *m);
+  res[SC_VERIFY - 1] = _mm256_and_si256(rsc, mask);
 
   return 0;
 }

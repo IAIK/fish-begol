@@ -913,7 +913,7 @@ bool mzd_local_equal(mzd_t const* first, mzd_t const* second) {
 #endif
     return memcmp(__builtin_assume_aligned(CONST_FIRST_ROW(first), 32),
                   __builtin_assume_aligned(CONST_FIRST_ROW(second), 32),
-             first->nrows * sizeof(word) * first->width) == 0;
+                  first->nrows * sizeof(word) * first->width) == 0;
   }
 
   return mzd_cmp(first, second) == 0;

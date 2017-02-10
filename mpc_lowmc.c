@@ -294,25 +294,30 @@ static int _mpc_sbox_layer_bitsliced_verify(mzd_t** out, mzd_t* const* in, view_
   type x0s[sc] __attribute__((aligned(alignof(type))));                                            \
   type x1s[sc] __attribute__((aligned(alignof(type))));                                            \
   type x2m[sc] __attribute__((aligned(alignof(type))));                                            \
+  const type mx2 __attribute__((aligned(alignof(type)))) =                                         \
+      *((const type*)__builtin_assume_aligned(CONST_FIRST_ROW(mask->x2), alignof(type)));          \
   do {                                                                                             \
-    const type* mx0 = __builtin_assume_aligned(CONST_FIRST_ROW(mask->x0), alignof(type));          \
-    const type* mx1 = __builtin_assume_aligned(CONST_FIRST_ROW(mask->x1), alignof(type));          \
-    const type* mx2 = __builtin_assume_aligned(CONST_FIRST_ROW(mask->x2), alignof(type));          \
+    const type mx0 __attribute__((aligned(alignof(type)))) =                                       \
+        *((const type*)__builtin_assume_aligned(CONST_FIRST_ROW(mask->x0), alignof(type)));        \
+    const type mx1 __attribute__((aligned(alignof(type)))) =                                       \
+        *((const type*)__builtin_assume_aligned(CONST_FIRST_ROW(mask->x1), alignof(type)));        \
                                                                                                    \
     for (unsigned int m = 0; m < (sc); ++m) {                                                      \
-      const type* inm   = __builtin_assume_aligned(CONST_FIRST_ROW(in[m]), alignof(type));         \
-      const type* rvecm = __builtin_assume_aligned(CONST_FIRST_ROW(rvec[m]), alignof(type));       \
+      const type inm __attribute__((aligned(alignof(type)))) =                                     \
+          *((const type*)__builtin_assume_aligned(CONST_FIRST_ROW(in[m]), alignof(type)));         \
+      const type rvecm __attribute__((aligned(alignof(type)))) =                                   \
+          *((const type*)__builtin_assume_aligned(CONST_FIRST_ROW(rvec[m]), alignof(type)));       \
                                                                                                    \
-      type tmp1 = (and)(*inm, *mx0);                                                               \
-      type tmp2 = (and)(*inm, *mx1);                                                               \
-      x2m[m]    = (and)(*inm, *mx2);                                                               \
+      type tmp1 = (and)(inm, mx0);                                                                 \
+      type tmp2 = (and)(inm, mx1);                                                                 \
+      x2m[m]    = (and)(inm, mx2);                                                                 \
                                                                                                    \
       x0s[m] = (shift_left)(tmp1, 2);                                                              \
       x1s[m] = (shift_left)(tmp2, 1);                                                              \
                                                                                                    \
-      r0m[m] = tmp1 = (and)(*rvecm, *mx0);                                                         \
-      r1m[m] = tmp2 = (and)(*rvecm, *mx1);                                                         \
-      r2m[m]        = (and)(*rvecm, *mx2);                                                         \
+      r0m[m] = tmp1 = (and)(rvecm, mx0);                                                           \
+      r1m[m] = tmp2 = (and)(rvecm, mx1);                                                           \
+      r2m[m]        = (and)(rvecm, mx2);                                                           \
                                                                                                    \
       r0s[m] = (shift_left)(tmp1, 2);                                                              \
       r1s[m] = (shift_left)(tmp2, 1);                                                              \
@@ -321,16 +326,18 @@ static int _mpc_sbox_layer_bitsliced_verify(mzd_t** out, mzd_t* const* in, view_
 
 #define bitsliced_mm_step_2(sc, type, and, xor, shift_right)                                       \
   do {                                                                                             \
-    const type* maskm = __builtin_assume_aligned(CONST_FIRST_ROW(mask->mask), alignof(type));      \
+    const type maskm __attribute__((aligned(alignof(type)))) =                                     \
+        *((const type*)__builtin_assume_aligned(CONST_FIRST_ROW(mask->mask), alignof(type)));      \
     for (unsigned int m = 0; m < sc; ++m) {                                                        \
-      const type* inm = __builtin_assume_aligned(CONST_FIRST_ROW(in[m]), alignof(type));           \
-      type* outm      = __builtin_assume_aligned(CONST_FIRST_ROW(out[m]), alignof(type));          \
+      const type inm __attribute__((aligned(alignof(type)))) =                                     \
+          *((const type*)__builtin_assume_aligned(CONST_FIRST_ROW(in[m]), alignof(type)));         \
+      type* outm = __builtin_assume_aligned(CONST_FIRST_ROW(out[m]), alignof(type));               \
                                                                                                    \
       type tmp1 = (xor)(r2m[m], x0s[m]);                                                           \
       type tmp2 = (xor)(x0s[m], x1s[m]);                                                           \
       type tmp3 = (xor)(tmp2, r1m[m]);                                                             \
                                                                                                    \
-      type mout = (and)(*maskm, *inm);                                                             \
+      type mout = (and)(maskm, inm);                                                               \
                                                                                                    \
       type tmp4 = (xor)(tmp2, r0m[m]);                                                             \
       tmp4      = (xor)(tmp4, x2m[m]);                                                             \
@@ -362,9 +369,9 @@ _mpc_sbox_layer_bitsliced_sse_verify(mzd_t** out, mzd_t* const* in, view_t const
                                      mzd_t** rvec, mask_t const* mask) {
   bitsliced_mm_step_1(SC_VERIFY, __m128i, _mm_and_si128, mm128_shift_left);
 
-  if (mpc_and_verify_sse(r0m, x0s, x1s, r2m, view, mask->x2, 0) ||
-      mpc_and_verify_sse(r2m, x1s, x2m, r0s, view, mask->x2, 2) ||
-      mpc_and_verify_sse(r1m, x0s, x2m, r1s, view, mask->x2, 1)) {
+  if (mpc_and_verify_sse(r0m, x0s, x1s, r2m, view, mx2, 0) ||
+      mpc_and_verify_sse(r2m, x1s, x2m, r0s, view, mx2, 2) ||
+      mpc_and_verify_sse(r1m, x0s, x2m, r1s, view, mx2, 1)) {
     return -1;
   }
 
@@ -392,9 +399,9 @@ _mpc_sbox_layer_bitsliced_avx_verify(mzd_t** out, mzd_t** in, view_t const* view
                                      mzd_t* const* rvec, mask_t const* mask) {
   bitsliced_mm_step_1(SC_VERIFY, __m256i, _mm256_and_si256, mm256_shift_left);
 
-  if (mpc_and_verify_avx(r0m, x0s, x1s, r2m, view, mask->x2, 0) ||
-      mpc_and_verify_avx(r2m, x1s, x2m, r0s, view, mask->x2, 2) ||
-      mpc_and_verify_avx(r1m, x0s, x2m, r1s, view, mask->x2, 1)) {
+  if (mpc_and_verify_avx(r0m, x0s, x1s, r2m, view, mx2, 0) ||
+      mpc_and_verify_avx(r2m, x1s, x2m, r0s, view, mx2, 2) ||
+      mpc_and_verify_avx(r1m, x0s, x2m, r1s, view, mx2, 1)) {
     return -1;
   }
 
