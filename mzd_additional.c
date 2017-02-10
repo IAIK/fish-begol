@@ -190,8 +190,8 @@ mzd_t* mzd_local_copy(mzd_t* dst, mzd_t const* src) {
   if ((dst->flags & mzd_flag_custom_layout) && dst->nrows >= src->nrows &&
       dst->ncols == src->ncols) {
     if (src->flags & mzd_flag_custom_layout) {
-      memcpy(__builtin_assume_aligned(FIRST_ROW(dst), 16),
-             __builtin_assume_aligned(CONST_FIRST_ROW(src), 16),
+      memcpy(__builtin_assume_aligned(FIRST_ROW(dst), 32),
+             __builtin_assume_aligned(CONST_FIRST_ROW(src), 32),
              src->nrows * sizeof(word) * src->width);
     } else {
       // src can be a mzd_t* from mzd_init, so we can only copy row wise
@@ -785,8 +785,8 @@ mzd_t* mzd_addmul_v(mzd_t* c, mzd_t const* v, mzd_t const* A) {
 __attribute__((target("sse2"))) static inline bool mzd_equal_sse(mzd_t const* restrict first,
                                                                  mzd_t const* restrict second) {
   unsigned int width             = first->width;
-  word const* restrict firstptr  = first->rows[0];
-  word const* restrict secondptr = second->rows[0];
+  word const* restrict firstptr  = CONST_FIRST_ROW(first);
+  word const* restrict secondptr = CONST_FIRST_ROW(second);
 
   if (width >= sse_bound) {
     __m128i const* restrict mfirstptr  = __builtin_assume_aligned(firstptr, 16);
@@ -820,8 +820,8 @@ __attribute__((target("sse2"))) static inline bool mzd_equal_sse(mzd_t const* re
 __attribute__((target("sse4.1"))) static inline bool mzd_equal_sse41(mzd_t const* restrict first,
                                                                      mzd_t const* restrict second) {
   unsigned int width             = first->width;
-  word const* restrict firstptr  = first->rows[0];
-  word const* restrict secondptr = second->rows[0];
+  word const* restrict firstptr  = CONST_FIRST_ROW(first);
+  word const* restrict secondptr = CONST_FIRST_ROW(second);
 
   if (width >= sse_bound) {
     __m128i const* restrict mfirstptr  = __builtin_assume_aligned(firstptr, 16);
@@ -854,8 +854,8 @@ __attribute__((target("sse4.1"))) static inline bool mzd_equal_sse41(mzd_t const
 __attribute__((target("avx2"))) static inline bool mzd_equal_avx(mzd_t const* restrict first,
                                                                  mzd_t const* restrict second) {
   unsigned int width             = first->width;
-  word const* restrict firstptr  = first->rows[0];
-  word const* restrict secondptr = second->rows[0];
+  word const* restrict firstptr  = CONST_FIRST_ROW(first);
+  word const* restrict secondptr = CONST_FIRST_ROW(second);
 
   if (width >= avx_bound) {
     __m256i const* restrict mfirstptr  = __builtin_assume_aligned(firstptr, 32);
@@ -893,23 +893,28 @@ bool mzd_local_equal(mzd_t const* first, mzd_t const* second) {
     return false;
   }
 
+  if ((first->flags & mzd_flag_custom_layout) && (second->flags & mzd_flag_custom_layout)) {
 #ifdef WITH_OPT
 #ifdef WITH_AVX2
-  if (CPU_SUPPORTS_AVX2 && first->ncols >= 256) {
-    return mzd_equal_avx(first, second);
-  }
+    if (CPU_SUPPORTS_AVX2) {
+      return mzd_equal_avx(first, second);
+    }
 #endif
 #ifdef WITH_SSE4_1
-  if (CPU_SUPPORTS_SSE4_1) {
-    return mzd_equal_sse41(first, second);
-  }
+    if (CPU_SUPPORTS_SSE4_1) {
+      return mzd_equal_sse41(first, second);
+    }
 #endif
 #ifdef WITH_SSE2
-  if (CPU_SUPPORTS_SSE2) {
-    return mzd_equal_sse(first, second);
+    if (CPU_SUPPORTS_SSE2) {
+      return mzd_equal_sse(first, second);
+    }
+#endif
+#endif
+    return memcmp(__builtin_assume_aligned(CONST_FIRST_ROW(first), 32),
+                  __builtin_assume_aligned(CONST_FIRST_ROW(second), 32),
+             first->nrows * sizeof(word) * first->width) == 0;
   }
-#endif
-#endif
 
   return mzd_cmp(first, second) == 0;
 }
@@ -978,17 +983,17 @@ __attribute__((target("sse2"))) static inline mzd_t* mzd_addmul_vl_sse(mzd_t* c,
   const unsigned int width      = v->width;
   const unsigned int rowstride  = A->rowstride;
   const unsigned int mrowstride = rowstride * sizeof(word) / sizeof(__m128i);
-  const unsigned int moff1      = sizeof(word) * 8 * 32 * mrowstride;
+  const unsigned int moff1      = sizeof(word) * 256 * mrowstride;
   const unsigned int moff2      = 256 * mrowstride;
 
   __m128i* mcptr       = __builtin_assume_aligned(FIRST_ROW(c), 16);
   __m128i const* mAptr = __builtin_assume_aligned(CONST_FIRST_ROW(A), 16);
 
-  for (unsigned int w = 0; w < width; ++w, ++vptr, mAptr += moff1) {
+  for (unsigned int w = width; w; --w, ++vptr, mAptr += moff1) {
     word idx = *vptr;
 
     __m128i const* mAptri = mAptr;
-    for (unsigned int s = 0; s < sizeof(word) && idx; ++s, idx >>= 8, mAptri += moff2) {
+    for (unsigned int s = 0; s < sizeof(word); ++s, idx >>= 8, mAptri += moff2) {
       const word comb = idx & 0xff;
       mm128_xor_region(mcptr, mAptri + comb * mrowstride, len);
     }
@@ -1006,17 +1011,17 @@ __attribute__((target("avx2"))) static inline mzd_t* mzd_addmul_vl_avx(mzd_t* c,
   const unsigned int width      = v->width;
   const unsigned int rowstride  = A->rowstride;
   const unsigned int mrowstride = rowstride * sizeof(word) / sizeof(__m256i);
-  const unsigned int moff1      = sizeof(word) * 8 * 32 * mrowstride;
+  const unsigned int moff1      = sizeof(word) * 256 * mrowstride;
   const unsigned int moff2      = 256 * mrowstride;
 
   __m256i* mcptr       = __builtin_assume_aligned(FIRST_ROW(c), 32);
   __m256i const* mAptr = __builtin_assume_aligned(CONST_FIRST_ROW(A), 32);
 
-  for (unsigned int w = 0; w < width; ++w, ++vptr, mAptr += moff1) {
+  for (unsigned int w = width; w; --w, ++vptr, mAptr += moff1) {
     word idx = *vptr;
 
     __m256i const* mAptri = mAptr;
-    for (unsigned int s = 0; s < sizeof(word) && idx; ++s, idx >>= 8, mAptri += moff2) {
+    for (unsigned int s = 0; s < sizeof(word); ++s, idx >>= 8, mAptri += moff2) {
       const word comb = idx & 0xff;
       mm256_xor_region(mcptr, mAptri + comb * mrowstride, len);
     }
