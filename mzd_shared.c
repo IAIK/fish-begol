@@ -41,11 +41,13 @@ void mzd_shared_share_from_keys(mzd_shared_t* shared_value,
                                 const unsigned char keys[2][16]) {
   shared_value->share_count = 3;
 
-  shared_value->shared[1] = mzd_init_random_vector_from_seed(keys[0], shared_value->shared[0]->ncols);
-  shared_value->shared[2] = mzd_init_random_vector_from_seed(keys[1], shared_value->shared[0]->ncols);
+  shared_value->shared[2] = shared_value->shared[0];
+
+  shared_value->shared[0] = mzd_init_random_vector_from_seed(keys[0], shared_value->shared[0]->ncols);
+  shared_value->shared[1] = mzd_init_random_vector_from_seed(keys[1], shared_value->shared[0]->ncols);
   
-  mzd_xor(shared_value->shared[0], shared_value->shared[0], shared_value->shared[1]);
-  mzd_xor(shared_value->shared[0], shared_value->shared[0], shared_value->shared[2]);
+  mzd_xor(shared_value->shared[2], shared_value->shared[0], shared_value->shared[2]);
+  mzd_xor(shared_value->shared[2], shared_value->shared[1], shared_value->shared[2]);
 }
 
 void mzd_shared_share(mzd_shared_t* shared_value) {
