@@ -234,6 +234,18 @@ mzd_t* mzd_init_random_vector_prng(rci_t n, aes_prng_t* aes_prng) {
   return v;
 }
 
+mzd_t* mzd_init_random_vector_from_seed(const unsigned char key[16], rci_t n) {
+  aes_prng_t aes_prng;
+  aes_prng_init(&aes_prng, key);
+
+  mzd_t* vector = mzd_local_init(1, n);
+  mzd_randomize_aes_prng(vector, &aes_prng);
+
+  aes_prng_clear(&aes_prng);
+  return vector;
+}
+
+
 mzd_t** mzd_init_random_vectors_from_seed(const unsigned char key[16], rci_t n,
                                           unsigned int count) {
   aes_prng_t aes_prng;
