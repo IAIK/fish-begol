@@ -189,12 +189,17 @@ mzd_t* mzd_local_copy(mzd_t* dst, mzd_t const* src) {
 
   if ((dst->flags & mzd_flag_custom_layout) && dst->nrows >= src->nrows &&
       dst->ncols == src->ncols) {
-    // src can be a mzd_t* from mzd_init, so we can only copy row wise
-    for (rci_t i = 0; i < src->nrows; ++i) {
-      unsigned char* d       = __builtin_assume_aligned(dst->rows[i], 16);
-      unsigned char const* s = (unsigned char const*)src->rows[i];
+    if (src->flags & mzd_flag_custom_layout) {
+      memcpy(__builtin_assume_aligned(dst->rows[0], 16), __builtin_assume_aligned(src->rows[0], 16),
+             src->nrows * sizeof(word) * src->width);
+    } else {
+      // src can be a mzd_t* from mzd_init, so we can only copy row wise
+      for (rci_t i = 0; i < src->nrows; ++i) {
+        unsigned char* d       = __builtin_assume_aligned(dst->rows[i], 16);
+        unsigned char const* s = (unsigned char const*)src->rows[i];
 
-      memcpy(d, s, src->width * sizeof(word));
+        memcpy(d, s, src->width * sizeof(word));
+      }
     }
     return dst;
   } else {
