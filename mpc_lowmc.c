@@ -295,13 +295,13 @@ static int _mpc_sbox_layer_bitsliced_verify(mzd_t** out, mzd_t* const* in, view_
   type x1s[sc] __attribute__((aligned(alignof(type))));                                            \
   type x2m[sc] __attribute__((aligned(alignof(type))));                                            \
   do {                                                                                             \
-    const type* mx0 = __builtin_assume_aligned(mask->x0->rows[0], alignof(type));                  \
-    const type* mx1 = __builtin_assume_aligned(mask->x1->rows[0], alignof(type));                  \
-    const type* mx2 = __builtin_assume_aligned(mask->x2->rows[0], alignof(type));                  \
+    const type* mx0 = __builtin_assume_aligned(CONST_FIRST_ROW(mask->x0), alignof(type));          \
+    const type* mx1 = __builtin_assume_aligned(CONST_FIRST_ROW(mask->x1), alignof(type));          \
+    const type* mx2 = __builtin_assume_aligned(CONST_FIRST_ROW(mask->x2), alignof(type));          \
                                                                                                    \
     for (unsigned int m = 0; m < (sc); ++m) {                                                      \
-      const type* inm   = __builtin_assume_aligned(in[m]->rows[0], alignof(type));                 \
-      const type* rvecm = __builtin_assume_aligned(rvec[m]->rows[0], alignof(type));               \
+      const type* inm   = __builtin_assume_aligned(CONST_FIRST_ROW(in[m]), alignof(type));         \
+      const type* rvecm = __builtin_assume_aligned(CONST_FIRST_ROW(rvec[m]), alignof(type));       \
                                                                                                    \
       type tmp1 = (and)(*inm, *mx0);                                                               \
       type tmp2 = (and)(*inm, *mx1);                                                               \
@@ -321,10 +321,10 @@ static int _mpc_sbox_layer_bitsliced_verify(mzd_t** out, mzd_t* const* in, view_
 
 #define bitsliced_mm_step_2(sc, type, and, xor, shift_right)                                       \
   do {                                                                                             \
-    const type* maskm = __builtin_assume_aligned(mask->mask->rows[0], alignof(type));              \
+    const type* maskm = __builtin_assume_aligned(CONST_FIRST_ROW(mask->mask), alignof(type));      \
     for (unsigned int m = 0; m < sc; ++m) {                                                        \
-      const type* inm = __builtin_assume_aligned(in[m]->rows[0], alignof(type));                   \
-      type* outm      = __builtin_assume_aligned(out[m]->rows[0], alignof(type));                  \
+      const type* inm = __builtin_assume_aligned(CONST_FIRST_ROW(in[m]), alignof(type));           \
+      type* outm      = __builtin_assume_aligned(CONST_FIRST_ROW(out[m]), alignof(type));          \
                                                                                                    \
       type tmp1 = (xor)(r2m[m], x0s[m]);                                                           \
       type tmp2 = (xor)(x0s[m], x1s[m]);                                                           \
@@ -518,7 +518,11 @@ static mzd_t** _mpc_lowmc_call_bitsliced(mpc_lowmc_t const* lowmc, mpc_lowmc_key
   mzd_t* y[SC_PROOF];
   mzd_local_init_multiple(y, SC_PROOF, 1, lowmc->n);
 
+#ifdef NOSCR
+  mpc_const_mat_mul_l(x, lowmc->k0_lookup, lowmc_key->shared, SC_PROOF);
+#else
   mpc_const_mat_mul(x, lowmc->k0_matrix, lowmc_key->shared, SC_PROOF);
+#endif
   mpc_const_add(x, x, p, SC_PROOF, ch);
 
   lowmc_round_t const* round = lowmc->rounds;
@@ -542,9 +546,17 @@ static mzd_t** _mpc_lowmc_call_bitsliced(mpc_lowmc_t const* lowmc, mpc_lowmc_key
       _mpc_sbox_layer_bitsliced(y, x, views, r, &lowmc->mask, &vars);
     }
 
+#ifdef NOSCR
+    mpc_const_mat_mul_l(x, round->l_lookup, y, SC_PROOF);
+#else
     mpc_const_mat_mul(x, round->l_matrix, y, SC_PROOF);
+#endif
     mpc_const_add(x, x, round->constant, SC_PROOF, ch);
+#ifdef NOSCR
+    mpc_const_mat_mul_l(y, round->k_lookup, lowmc_key->shared, SC_PROOF);
+#else
     mpc_const_mat_mul(y, round->k_matrix, lowmc_key->shared, SC_PROOF);
+#endif
     mpc_add(x, x, y, SC_PROOF);
   }
 
@@ -572,7 +584,11 @@ static mzd_t** _mpc_lowmc_call_bitsliced_verify(mpc_lowmc_t const* lowmc,
   mzd_t* y[SC_VERIFY] = {NULL};
   mzd_local_init_multiple(y, SC_VERIFY, 1, lowmc->n);
 
+#ifdef NOSCR
+  mpc_const_mat_mul_l(x, lowmc->k0_lookup, lowmc_key->shared, SC_VERIFY);
+#else
   mpc_const_mat_mul(x, lowmc->k0_matrix, lowmc_key->shared, SC_VERIFY);
+#endif
   mpc_const_add(x, x, p, SC_VERIFY, ch);
 
   lowmc_round_t const* round = lowmc->rounds;
@@ -603,9 +619,17 @@ static mzd_t** _mpc_lowmc_call_bitsliced_verify(mpc_lowmc_t const* lowmc,
       break;
     }
 
+#ifdef NOSCR
+    mpc_const_mat_mul_l(x, round->l_lookup, y, SC_VERIFY);
+#else
     mpc_const_mat_mul(x, round->l_matrix, y, SC_VERIFY);
+#endif
     mpc_const_add(x, x, round->constant, SC_VERIFY, ch);
+#ifdef NOSCR
+    mpc_const_mat_mul_l(y, round->k_lookup, lowmc_key->shared, SC_VERIFY);
+#else
     mpc_const_mat_mul(y, round->k_matrix, lowmc_key->shared, SC_VERIFY);
+#endif
     mpc_add(x, x, y, SC_VERIFY);
   }
 

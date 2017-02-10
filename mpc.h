@@ -186,6 +186,19 @@ mzd_t** mpc_const_add(mzd_t** result, mzd_t** first, mzd_t const* second, unsign
 mzd_t** mpc_const_mat_mul(mzd_t** result, mzd_t const* matrix, mzd_t** vector, unsigned sc);
 
 /**
+ * Computes result = first * second in GF(2) of a
+ * secret shared vector and a matrix according to
+ * https://eprint.iacr.org/2016/163.pdf
+ *
+ * \param  result the result of the computation
+ * \param  matrix the matrix
+ * \param  vector the secret shared vector
+ * \param  sc     the share count
+ * \return        the result of the computation
+ */
+mzd_t** mpc_const_mat_mul_l(mzd_t** result, mzd_t const* matrix, mzd_t** vector, unsigned sc);
+
+/**
  * Deep copies a secret shared vector
  *
  * \param out the destination

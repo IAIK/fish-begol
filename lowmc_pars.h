@@ -35,6 +35,11 @@ typedef struct {
   mzd_t* k_matrix;
   mzd_t* l_matrix;
   mzd_t* constant;
+
+#ifdef NOSCR
+  mzd_t* k_lookup;
+  mzd_t* l_lookup;
+#endif
 } lowmc_round_t;
 
 /**
@@ -50,6 +55,9 @@ typedef struct {
   mask_t mask;
 
   mzd_t* k0_matrix;
+#ifdef NOSCR
+  mzd_t* k0_lookup;
+#endif
   lowmc_round_t* rounds;
 } lowmc_t;
 
