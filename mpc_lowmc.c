@@ -655,9 +655,19 @@ mzd_t** mpc_lowmc_call(mpc_lowmc_t const* lowmc, mpc_lowmc_key_t* lowmc_key, mzd
 }
 
 int mpc_lowmc_verify(mpc_lowmc_t const* lowmc, mzd_t const* p, bool xor_p, view_t const* views,
-                     mzd_t*** rvec, int c) {
+                     mzd_t*** rvec, int c, const unsigned char keys[2][16]) {
   mpc_lowmc_key_t lowmc_key;
-  mzd_shared_from_shares(&lowmc_key, views[0].s, SC_VERIFY);
+  lowmc_key.share_count = 2;
+  if(c == 0) {
+    lowmc_key.shared[0] = mzd_init_random_vector_from_seed(keys[0], lowmc->n);
+    lowmc_key.shared[1] = mzd_init_random_vector_from_seed(keys[1], lowmc->n);
+  } else if(c == 1) {
+    lowmc_key.shared[0] = mzd_init_random_vector_from_seed(keys[0], lowmc->n);
+    lowmc_key.shared[1] = mzd_local_copy(NULL, views[0].s[1]);
+  } else {
+    lowmc_key.shared[0] = mzd_local_copy(NULL, views[0].s[0]);
+    lowmc_key.shared[1] = mzd_init_random_vector_from_seed(keys[1], lowmc->n);
+  }
 
   int status = 0;
   mzd_t** v =

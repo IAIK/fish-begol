@@ -24,6 +24,8 @@
 #include "randomness.h"
 #include "timing.h"
 
+#define VERBOSE
+
 unsigned fis_compute_sig_size(unsigned m, unsigned n, unsigned r, unsigned k) {
   unsigned first_view_size = k;
   unsigned full_view_size  = n;
@@ -231,7 +233,7 @@ static int fis_proof_verify(mpc_lowmc_t const* lowmc, mzd_t const* p, mzd_t cons
     rv[0] = mzd_init_random_vectors_from_seed(prf->keys[i][0], lowmc->n, lowmc->r);
     rv[1] = mzd_init_random_vectors_from_seed(prf->keys[i][1], lowmc->n, lowmc->r);
 
-    if (mpc_lowmc_verify(lowmc, p, false, prf->views[i], rv, ch[i])) {
+    if (mpc_lowmc_verify(lowmc, p, false, prf->views[i], rv, ch[i], prf->keys[i])) {
       view_verify_status |= -1;
     }
 

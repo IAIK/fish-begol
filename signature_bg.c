@@ -252,8 +252,8 @@ static int verify_views(mpc_lowmc_t const* lowmc, mzd_t const* p, mzd_t const* b
     rv_c[0] = mzd_init_random_vectors_from_seed(proof_c->keys[i][0], lowmc->n, lowmc->r);
     rv_c[1] = mzd_init_random_vectors_from_seed(proof_c->keys[i][1], lowmc->n, lowmc->r);
 
-    if (mpc_lowmc_verify(lowmc, p, true, proof_y->views[i], rv_y, ch[i]) ||
-        mpc_lowmc_verify(lowmc, beta, true, proof_c->views[i], rv_c, ch[i])) {
+    if (mpc_lowmc_verify(lowmc, p, true, proof_y->views[i], rv_y, ch[i], proof_y->keys[i]) ||
+        mpc_lowmc_verify(lowmc, beta, true, proof_c->views[i], rv_c, ch[i], proof_c->keys[i])) {
       view_verify_status |= -1;
     }
 

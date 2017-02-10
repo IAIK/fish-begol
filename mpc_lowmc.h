@@ -82,6 +82,6 @@ mzd_t** mpc_lowmc_call(mpc_lowmc_t const* lowmc, mpc_lowmc_key_t* lowmc_key, mzd
  * \return           0 on success and a value != 0 otherwise
  */
 int mpc_lowmc_verify(mpc_lowmc_t const* lowmc, mzd_t const* p, bool xor_p, view_t const* views,
-                     mzd_t*** rvec, int c);
+                     mzd_t*** rvec, int c, const unsigned char keys[2][16]);
 
 #endif
