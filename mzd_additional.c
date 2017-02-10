@@ -19,7 +19,7 @@
 #include "mzd_additional.h"
 #include "randomness.h"
 
-#include <assert.h>
+// #include <assert.h>
 #include <stdlib.h>
 
 #ifdef WITH_OPT
@@ -114,7 +114,7 @@ mzd_t* mzd_local_init(rci_t r, rci_t c) {
 }
 
 void mzd_local_free(mzd_t* v) {
-  assert(!v || (v->flags & mzd_flag_custom_layout));
+  // assert(!v || (v->flags & mzd_flag_custom_layout));
   free(v);
 }
 
@@ -173,7 +173,7 @@ void mzd_local_init_multiple(mzd_t** dst, size_t n, rci_t r, rci_t c) {
 
 void mzd_local_free_multiple(mzd_t** vs) {
   if (vs) {
-    assert(!vs[0] || (vs[0]->flags & mzd_flag_custom_layout));
+    // assert(!vs[0] || (vs[0]->flags & mzd_flag_custom_layout));
     free(vs[0]);
   }
 }
