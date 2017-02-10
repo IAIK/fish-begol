@@ -71,12 +71,12 @@ static void sbox_layer_bitsliced(mzd_t* out, mzd_t* in, rci_t m, mask_t const* m
 #ifdef WITH_SSE2
 __attribute__((target("sse2"))) static void sbox_layer_sse(mzd_t* out, mzd_t* in,
                                                            mask_t const* mask) {
-  __m128i const* ip = __builtin_assume_aligned(in->rows[0], 16);
+  __m128i const* ip = __builtin_assume_aligned(CONST_FIRST_ROW(in), 16);
   __m128i const min = *ip;
 
-  __m128i const* x0p = __builtin_assume_aligned(mask->x0->rows[0], 16);
-  __m128i const* x1p = __builtin_assume_aligned(mask->x1->rows[0], 16);
-  __m128i const* x2p = __builtin_assume_aligned(mask->x2->rows[0], 16);
+  __m128i const* x0p = __builtin_assume_aligned(CONST_FIRST_ROW(mask->x0), 16);
+  __m128i const* x1p = __builtin_assume_aligned(CONST_FIRST_ROW(mask->x1), 16);
+  __m128i const* x2p = __builtin_assume_aligned(CONST_FIRST_ROW(mask->x2), 16);
 
   __m128i x0m = _mm_and_si128(min, *x0p);
   __m128i x1m = _mm_and_si128(min, *x1p);
@@ -100,8 +100,8 @@ __attribute__((target("sse2"))) static void sbox_layer_sse(mzd_t* out, mzd_t* in
   t0 = mm128_shift_right(t0, 2);
   t1 = mm128_shift_right(t1, 1);
 
-  __m128i const* xmp = __builtin_assume_aligned(mask->mask->rows[0], 16);
-  __m128i* op        = __builtin_assume_aligned(out->rows[0], 16);
+  __m128i const* xmp = __builtin_assume_aligned(CONST_FIRST_ROW(mask->mask), 16);
+  __m128i* op        = __builtin_assume_aligned(FIRST_ROW(out), 16);
 
   __m128i mout = _mm_and_si128(min, *xmp);
 
@@ -118,12 +118,12 @@ __attribute__((target("sse2"))) static void sbox_layer_sse(mzd_t* out, mzd_t* in
  */
 __attribute__((target("avx2"))) static void sbox_layer_avx(mzd_t* out, mzd_t* in,
                                                            mask_t const* mask) {
-  __m256i const* ip = __builtin_assume_aligned(in->rows[0], 32);
+  __m256i const* ip = __builtin_assume_aligned(CONST_FIRST_ROW(in), 32);
   __m256i const min = *ip;
 
-  __m256i const* x0p = __builtin_assume_aligned(mask->x0->rows[0], 32);
-  __m256i const* x1p = __builtin_assume_aligned(mask->x1->rows[0], 32);
-  __m256i const* x2p = __builtin_assume_aligned(mask->x2->rows[0], 32);
+  __m256i const* x0p = __builtin_assume_aligned(CONST_FIRST_ROW(mask->x0), 32);
+  __m256i const* x1p = __builtin_assume_aligned(CONST_FIRST_ROW(mask->x1), 32);
+  __m256i const* x2p = __builtin_assume_aligned(CONST_FIRST_ROW(mask->x2), 32);
 
   __m256i x0m = _mm256_and_si256(min, *x0p);
   __m256i x1m = _mm256_and_si256(min, *x1p);
@@ -147,8 +147,8 @@ __attribute__((target("avx2"))) static void sbox_layer_avx(mzd_t* out, mzd_t* in
   t0 = mm256_shift_right(t0, 2);
   t1 = mm256_shift_right(t1, 1);
 
-  __m256i const* xmp = __builtin_assume_aligned(mask->mask->rows[0], 32);
-  __m256i* op        = __builtin_assume_aligned(out->rows[0], 32);
+  __m256i const* xmp = __builtin_assume_aligned(CONST_FIRST_ROW(mask->mask), 32);
+  __m256i* op        = __builtin_assume_aligned(FIRST_ROW(out), 32);
 
   __m256i mout = _mm256_and_si256(min, *xmp);
 

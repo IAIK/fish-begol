@@ -107,4 +107,7 @@ mzd_t* mzd_addmul_vl(mzd_t* c, mzd_t const* v, mzd_t const* At);
  */
 mzd_t* mzd_precompute_matrix_lookup(mzd_t const* A);
 
+#define FIRST_ROW(v) ((word*) (((void*) (v)) + 64))
+#define CONST_FIRST_ROW(v) ((word const*) (((void const*) (v)) + 64))
+
 #endif

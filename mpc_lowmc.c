@@ -295,13 +295,13 @@ static int _mpc_sbox_layer_bitsliced_verify(mzd_t** out, mzd_t* const* in, view_
   type x1s[sc] __attribute__((aligned(alignof(type))));                                            \
   type x2m[sc] __attribute__((aligned(alignof(type))));                                            \
   do {                                                                                             \
-    const type* mx0 = __builtin_assume_aligned(mask->x0->rows[0], alignof(type));                  \
-    const type* mx1 = __builtin_assume_aligned(mask->x1->rows[0], alignof(type));                  \
-    const type* mx2 = __builtin_assume_aligned(mask->x2->rows[0], alignof(type));                  \
+    const type* mx0 = __builtin_assume_aligned(CONST_FIRST_ROW(mask->x0), alignof(type));          \
+    const type* mx1 = __builtin_assume_aligned(CONST_FIRST_ROW(mask->x1), alignof(type));          \
+    const type* mx2 = __builtin_assume_aligned(CONST_FIRST_ROW(mask->x2), alignof(type));          \
                                                                                                    \
     for (unsigned int m = 0; m < (sc); ++m) {                                                      \
-      const type* inm   = __builtin_assume_aligned(in[m]->rows[0], alignof(type));                 \
-      const type* rvecm = __builtin_assume_aligned(rvec[m]->rows[0], alignof(type));               \
+      const type* inm   = __builtin_assume_aligned(CONST_FIRST_ROW(in[m]), alignof(type));         \
+      const type* rvecm = __builtin_assume_aligned(CONST_FIRST_ROW(rvec[m]), alignof(type));       \
                                                                                                    \
       type tmp1 = (and)(*inm, *mx0);                                                               \
       type tmp2 = (and)(*inm, *mx1);                                                               \
@@ -321,10 +321,10 @@ static int _mpc_sbox_layer_bitsliced_verify(mzd_t** out, mzd_t* const* in, view_
 
 #define bitsliced_mm_step_2(sc, type, and, xor, shift_right)                                       \
   do {                                                                                             \
-    const type* maskm = __builtin_assume_aligned(mask->mask->rows[0], alignof(type));              \
+    const type* maskm = __builtin_assume_aligned(CONST_FIRST_ROW(mask->mask), alignof(type));      \
     for (unsigned int m = 0; m < sc; ++m) {                                                        \
-      const type* inm = __builtin_assume_aligned(in[m]->rows[0], alignof(type));                   \
-      type* outm      = __builtin_assume_aligned(out[m]->rows[0], alignof(type));                  \
+      const type* inm = __builtin_assume_aligned(CONST_FIRST_ROW(in[m]), alignof(type));           \
+      type* outm      = __builtin_assume_aligned(CONST_FIRST_ROW(out[m]), alignof(type));          \
                                                                                                    \
       type tmp1 = (xor)(r2m[m], x0s[m]);                                                           \
       type tmp2 = (xor)(x0s[m], x1s[m]);                                                           \

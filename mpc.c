@@ -56,7 +56,7 @@ __attribute__((target("sse2"))) int mpc_and_sse(__m128i* res, __m128i const* fir
   for (unsigned m = 0; m < SC_PROOF; ++m) {
     const unsigned j = (m + 1) % SC_PROOF;
 
-    __m128i* sm = __builtin_assume_aligned(view->s[m]->rows[0], 16);
+    __m128i* sm = __builtin_assume_aligned(FIRST_ROW(view->s[m]), 16);
 
     __m128i tmp1 = _mm_xor_si128(second[m], second[j]);
     __m128i tmp2 = _mm_and_si128(first[j], second[m]);
@@ -81,7 +81,7 @@ __attribute__((target("avx2"))) int mpc_and_avx(__m256i* res, __m256i const* fir
   for (unsigned m = 0; m < SC_PROOF; ++m) {
     const unsigned j = (m + 1) % SC_PROOF;
 
-    __m256i* sm = __builtin_assume_aligned(view->s[m]->rows[0], 32);
+    __m256i* sm = __builtin_assume_aligned(FIRST_ROW(view->s[m]), 32);
 
     __m256i tmp1 = _mm256_xor_si256(second[m], second[j]);
     __m256i tmp2 = _mm256_and_si256(first[j], second[m]);
@@ -133,7 +133,7 @@ __attribute__((target("sse2"))) int mpc_and_verify_sse(__m128i* res, __m128i con
   for (unsigned m = 0; m < (SC_VERIFY - 1); ++m) {
     const unsigned j = (m + 1);
 
-    __m128i const* sm = __builtin_assume_aligned(view->s[m]->rows[0], 16);
+    __m128i const* sm = __builtin_assume_aligned(CONST_FIRST_ROW(view->s[m]), 16);
 
     __m128i tmp1 = _mm_xor_si128(second[m], second[j]);
     __m128i tmp2 = _mm_and_si128(first[j], second[m]);
@@ -152,8 +152,8 @@ __attribute__((target("sse2"))) int mpc_and_verify_sse(__m128i* res, __m128i con
     }
   }
 
-  __m128i const* s1 = __builtin_assume_aligned(view->s[SC_VERIFY - 1]->rows[0], 16);
-  __m128i const* m  = __builtin_assume_aligned(mask->rows[0], 16);
+  __m128i const* s1 = __builtin_assume_aligned(CONST_FIRST_ROW(view->s[SC_VERIFY - 1]), 16);
+  __m128i const* m  = __builtin_assume_aligned(CONST_FIRST_ROW(mask), 16);
 
   __m128i rsc        = mm128_shift_left(*s1, viewshift);
   res[SC_VERIFY - 1] = _mm_and_si128(rsc, *m);
@@ -170,7 +170,7 @@ __attribute__((target("avx2"))) int mpc_and_verify_avx(__m256i* res, __m256i con
   for (unsigned m = 0; m < (SC_VERIFY - 1); ++m) {
     const unsigned j = (m + 1);
 
-    __m256i const* sm = __builtin_assume_aligned(view->s[m]->rows[0], 32);
+    __m256i const* sm = __builtin_assume_aligned(CONST_FIRST_ROW(view->s[m]), 32);
 
     __m256i tmp1 = _mm256_xor_si256(second[m], second[j]);
     __m256i tmp2 = _mm256_and_si256(first[j], second[m]);
@@ -189,8 +189,8 @@ __attribute__((target("avx2"))) int mpc_and_verify_avx(__m256i* res, __m256i con
     }
   }
 
-  __m256i const* s1 = __builtin_assume_aligned(view->s[SC_VERIFY - 1]->rows[0], 32);
-  __m256i const* m  = __builtin_assume_aligned(mask->rows[0], 32);
+  __m256i const* s1 = __builtin_assume_aligned(CONST_FIRST_ROW(view->s[SC_VERIFY - 1]), 32);
+  __m256i const* m  = __builtin_assume_aligned(CONST_FIRST_ROW(mask), 32);
 
   __m256i rsc        = mm256_shift_left(*s1, viewshift);
   res[SC_VERIFY - 1] = _mm256_and_si256(rsc, *m);

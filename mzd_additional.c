@@ -190,7 +190,8 @@ mzd_t* mzd_local_copy(mzd_t* dst, mzd_t const* src) {
   if ((dst->flags & mzd_flag_custom_layout) && dst->nrows >= src->nrows &&
       dst->ncols == src->ncols) {
     if (src->flags & mzd_flag_custom_layout) {
-      memcpy(__builtin_assume_aligned(dst->rows[0], 16), __builtin_assume_aligned(src->rows[0], 16),
+      memcpy(__builtin_assume_aligned(FIRST_ROW(dst), 16),
+             __builtin_assume_aligned(CONST_FIRST_ROW(src), 16),
              src->nrows * sizeof(word) * src->width);
     } else {
       // src can be a mzd_t* from mzd_init, so we can only copy row wise
@@ -263,8 +264,8 @@ void mzd_shift_right(mzd_t* res, mzd_t const* val, unsigned count) {
   const unsigned int nwords     = val->width;
   const unsigned int left_count = 8 * sizeof(word) - count;
 
-  word* resptr       = res->rows[0];
-  word const* valptr = val->rows[0];
+  word* resptr       = FIRST_ROW(res);
+  word const* valptr = CONST_FIRST_ROW(val);
 
   for (unsigned int i = nwords - 1; i; --i, ++resptr) {
     const word tmp = *valptr >> count;
@@ -282,8 +283,8 @@ void mzd_shift_left(mzd_t* res, mzd_t const* val, unsigned count) {
   const unsigned int nwords      = val->width;
   const unsigned int right_count = 8 * sizeof(word) - count;
 
-  word* resptr       = res->rows[0] + nwords - 1;
-  word const* valptr = val->rows[0] + nwords - 1;
+  word* resptr       = FIRST_ROW(res) + nwords - 1;
+  word const* valptr = CONST_FIRST_ROW(val) + nwords - 1;
 
   for (unsigned int i = nwords - 1; i; --i, --resptr) {
     const word tmp = *valptr << count;
@@ -297,9 +298,9 @@ void mzd_shift_left(mzd_t* res, mzd_t const* val, unsigned count) {
 __attribute__((target("sse2"))) static inline mzd_t* mzd_and_sse(mzd_t* res, mzd_t const* first,
                                                                  mzd_t const* second) {
   unsigned int width    = first->width;
-  word* resptr          = res->rows[0];
-  word const* firstptr  = first->rows[0];
-  word const* secondptr = second->rows[0];
+  word* resptr          = FIRST_ROW(res);
+  word const* firstptr  = CONST_FIRST_ROW(first);
+  word const* secondptr = CONST_FIRST_ROW(second);
 
   if (width >= sse_bound) {
     __m128i* mresptr          = __builtin_assume_aligned(resptr, 16);
@@ -328,9 +329,9 @@ __attribute__((target("sse2"))) static inline mzd_t* mzd_and_sse(mzd_t* res, mzd
 __attribute__((target("avx2"))) static inline mzd_t* mzd_and_avx(mzd_t* res, mzd_t const* first,
                                                                  mzd_t const* second) {
   unsigned int width    = first->width;
-  word* resptr          = res->rows[0];
-  word const* firstptr  = first->rows[0];
-  word const* secondptr = second->rows[0];
+  word* resptr          = FIRST_ROW(res);
+  word const* firstptr  = CONST_FIRST_ROW(first);
+  word const* secondptr = CONST_FIRST_ROW(second);
 
   if (width >= avx_bound) {
     __m256i* mresptr          = __builtin_assume_aligned(resptr, 32);
@@ -376,9 +377,9 @@ mzd_t* mzd_and(mzd_t* res, mzd_t const* first, mzd_t const* second) {
 
   unsigned int width    = first->width;
   const word mask       = first->high_bitmask;
-  word const* firstptr  = first->rows[0];
-  word const* secondptr = second->rows[0];
-  word* resptr          = res->rows[0];
+  word* resptr          = FIRST_ROW(res);
+  word const* firstptr  = CONST_FIRST_ROW(first);
+  word const* secondptr = CONST_FIRST_ROW(second);
 
   while (width--) {
     *resptr++ = *firstptr++ & *secondptr++;
@@ -393,9 +394,9 @@ mzd_t* mzd_and(mzd_t* res, mzd_t const* first, mzd_t const* second) {
 __attribute__((target("sse2"))) static inline mzd_t* mzd_xor_sse(mzd_t* res, mzd_t const* first,
                                                                  mzd_t const* second) {
   unsigned int width    = first->width;
-  word* resptr          = res->rows[0];
-  word const* firstptr  = first->rows[0];
-  word const* secondptr = second->rows[0];
+  word* resptr          = FIRST_ROW(res);
+  word const* firstptr  = CONST_FIRST_ROW(first);
+  word const* secondptr = CONST_FIRST_ROW(second);
 
   if (width >= sse_bound) {
     __m128i* mresptr          = __builtin_assume_aligned(resptr, 16);
@@ -424,9 +425,9 @@ __attribute__((target("sse2"))) static inline mzd_t* mzd_xor_sse(mzd_t* res, mzd
 __attribute__((target("avx2"))) static inline mzd_t* mzd_xor_avx(mzd_t* res, mzd_t const* first,
                                                                  mzd_t const* second) {
   unsigned int width    = first->width;
-  word* resptr          = res->rows[0];
-  word const* firstptr  = first->rows[0];
-  word const* secondptr = second->rows[0];
+  word* resptr          = FIRST_ROW(res);
+  word const* firstptr  = CONST_FIRST_ROW(first);
+  word const* secondptr = CONST_FIRST_ROW(second);
 
   if (width >= avx_bound) {
     __m256i* mresptr          = __builtin_assume_aligned(resptr, 32);
@@ -472,9 +473,9 @@ mzd_t* mzd_xor(mzd_t* res, mzd_t const* first, mzd_t const* second) {
 
   unsigned int width    = first->width;
   const word mask       = first->high_bitmask;
-  word const* firstptr  = first->rows[0];
-  word const* secondptr = second->rows[0];
-  word* resptr          = res->rows[0];
+  word* resptr          = FIRST_ROW(res);
+  word const* firstptr  = CONST_FIRST_ROW(first);
+  word const* secondptr = CONST_FIRST_ROW(second);
 
   while (width--) {
     *resptr++ = *firstptr++ ^ *secondptr++;
@@ -504,8 +505,8 @@ mzd_t* mzd_mul_v(mzd_t* c, mzd_t const* v, mzd_t const* At) {
 __attribute__((target("sse2"))) static inline mzd_t* mzd_addmul_v_sse(mzd_t* c, mzd_t const* v,
                                                                       mzd_t const* A) {
   const unsigned int len        = A->width * sizeof(word) / sizeof(__m128i);
-  word* cptr                    = c->rows[0];
-  word const* vptr              = v->rows[0];
+  word* cptr                    = FIRST_ROW(c);
+  word const* vptr              = CONST_FIRST_ROW(v);
   const unsigned int width      = v->width;
   const unsigned int rowstride  = A->rowstride;
   const unsigned int mrowstride = rowstride * sizeof(word) / sizeof(__m128i);
@@ -613,8 +614,8 @@ __attribute__((target("sse2"))) static inline mzd_t* mzd_addmul_v_sse(mzd_t* c, 
 __attribute__((target("avx2"))) static inline mzd_t* mzd_addmul_v_avx(mzd_t* c, mzd_t const* v,
                                                                       mzd_t const* A) {
   const unsigned int len        = A->width * sizeof(word) / sizeof(__m256i);
-  word* cptr                    = c->rows[0];
-  word const* vptr              = v->rows[0];
+  word* cptr                    = FIRST_ROW(c);
+  word const* vptr              = CONST_FIRST_ROW(v);
   const unsigned int width      = v->width;
   const unsigned int rowstride  = A->rowstride;
   const unsigned int mrowstride = rowstride * sizeof(word) / sizeof(__m256i);
@@ -743,8 +744,8 @@ mzd_t* mzd_addmul_v(mzd_t* c, mzd_t const* v, mzd_t const* A) {
   const unsigned int len       = A->width;
   const word mask              = A->high_bitmask;
   const unsigned int rowstride = A->rowstride;
-  word* cptr                   = c->rows[0];
-  word const* vptr             = v->rows[0];
+  word* cptr                   = FIRST_ROW(c);
+  word const* vptr             = CONST_FIRST_ROW(v);
   const unsigned int width     = v->width;
 
   for (unsigned int w = 0; w < width; ++w, ++vptr) {
@@ -961,15 +962,15 @@ mzd_t* mzd_mul_vl(mzd_t* c, mzd_t const* v, mzd_t const* At) {
 __attribute__((target("sse2"))) static inline mzd_t* mzd_addmul_vl_sse(mzd_t* c, mzd_t const* v,
                                                                        mzd_t const* A) {
   const unsigned int len        = A->width * sizeof(word) / sizeof(__m128i);
-  word const* vptr              = __builtin_assume_aligned(v->rows[0], 16);
+  word const* vptr              = __builtin_assume_aligned(CONST_FIRST_ROW(v), 16);
   const unsigned int width      = v->width;
   const unsigned int rowstride  = A->rowstride;
   const unsigned int mrowstride = rowstride * sizeof(word) / sizeof(__m128i);
   const unsigned int moff1      = sizeof(word) * 8 * 32 * mrowstride;
   const unsigned int moff2      = 256 * mrowstride;
 
-  __m128i* mcptr       = __builtin_assume_aligned(c->rows[0], 16);
-  __m128i const* mAptr = __builtin_assume_aligned(A->rows[0], 16);
+  __m128i* mcptr       = __builtin_assume_aligned(FIRST_ROW(c), 16);
+  __m128i const* mAptr = __builtin_assume_aligned(CONST_FIRST_ROW(A), 16);
 
   for (unsigned int w = 0; w < width; ++w, ++vptr, mAptr += moff1) {
     word idx = *vptr;
@@ -989,15 +990,15 @@ __attribute__((target("sse2"))) static inline mzd_t* mzd_addmul_vl_sse(mzd_t* c,
 __attribute__((target("avx2"))) static inline mzd_t* mzd_addmul_vl_avx(mzd_t* c, mzd_t const* v,
                                                                        mzd_t const* A) {
   const unsigned int len        = A->width * sizeof(word) / sizeof(__m256i);
-  word const* vptr              = __builtin_assume_aligned(v->rows[0], 16);
+  word const* vptr              = __builtin_assume_aligned(CONST_FIRST_ROW(v), 16);
   const unsigned int width      = v->width;
   const unsigned int rowstride  = A->rowstride;
   const unsigned int mrowstride = rowstride * sizeof(word) / sizeof(__m256i);
   const unsigned int moff1      = sizeof(word) * 8 * 32 * mrowstride;
   const unsigned int moff2      = 256 * mrowstride;
 
-  __m256i* mcptr       = __builtin_assume_aligned(c->rows[0], 32);
-  __m256i const* mAptr = __builtin_assume_aligned(A->rows[0], 32);
+  __m256i* mcptr       = __builtin_assume_aligned(FIRST_ROW(c), 32);
+  __m256i const* mAptr = __builtin_assume_aligned(CONST_FIRST_ROW(A), 32);
 
   for (unsigned int w = 0; w < width; ++w, ++vptr, mAptr += moff1) {
     word idx = *vptr;
@@ -1037,8 +1038,8 @@ mzd_t* mzd_addmul_vl(mzd_t* c, mzd_t const* v, mzd_t const* A) {
 
   const unsigned int len   = A->width;
   const word mask          = A->high_bitmask;
-  word* cptr               = c->rows[0];
-  word const* vptr         = v->rows[0];
+  word* cptr               = FIRST_ROW(c);
+  word const* vptr         = CONST_FIRST_ROW(v);
   const unsigned int width = v->width;
 
   for (unsigned int w = 0; w < width; ++w, ++vptr) {
