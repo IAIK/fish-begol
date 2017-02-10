@@ -116,15 +116,12 @@ static proof_t* fis_prove(mpc_lowmc_t* lowmc, lowmc_key_t* lowmc_key, mzd_t* p, 
   init_view(lowmc, views);
 
   START_TIMING;
-  aes_prng_t aes_prng;
-  aes_prng_init(&aes_prng, secret_sharing_key);
-
+  
   mzd_shared_t s[FIS_NUM_ROUNDS];
   for (unsigned int i = 0; i < FIS_NUM_ROUNDS; ++i) {
     mzd_shared_init(&s[i], lowmc_key);
-    mzd_shared_share_prng(&s[i], &aes_prng);
+    mzd_shared_share_from_keys(&s[i], keys[i]);
   }
-  aes_prng_clear(&aes_prng);
   END_TIMING(timing_and_size->sign.secret_sharing);
 
   START_TIMING;
