@@ -312,6 +312,15 @@ mzd_t** mpc_const_mat_mul(mzd_t** result, mzd_t const* matrix, mzd_t** vector, u
   return result;
 }
 
+mzd_t** mpc_const_mat_mul_l(mzd_t** result, mzd_t const* matrix, mzd_t** vector, unsigned sc) {
+  if (result == 0)
+    result = mpc_init_empty_share_vector(vector[0]->ncols, sc);
+  for (unsigned i = 0; i < sc; ++i) {
+    mzd_mul_vl(result[i], vector[i], matrix);
+  }
+  return result;
+}
+
 void mpc_copy(mzd_t** out, mzd_t* const* in, unsigned sc) {
   for (unsigned i = 0; i < sc; ++i) {
     mzd_local_copy(out[i], in[i]);

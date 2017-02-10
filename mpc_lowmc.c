@@ -518,7 +518,11 @@ static mzd_t** _mpc_lowmc_call_bitsliced(mpc_lowmc_t const* lowmc, mpc_lowmc_key
   mzd_t* y[SC_PROOF];
   mzd_local_init_multiple(y, SC_PROOF, 1, lowmc->n);
 
+#ifdef NOSCR
+  mpc_const_mat_mul_l(x, lowmc->k0_lookup, lowmc_key->shared, SC_PROOF);
+#else
   mpc_const_mat_mul(x, lowmc->k0_matrix, lowmc_key->shared, SC_PROOF);
+#endif
   mpc_const_add(x, x, p, SC_PROOF, ch);
 
   lowmc_round_t const* round = lowmc->rounds;
@@ -542,9 +546,17 @@ static mzd_t** _mpc_lowmc_call_bitsliced(mpc_lowmc_t const* lowmc, mpc_lowmc_key
       _mpc_sbox_layer_bitsliced(y, x, views, r, &lowmc->mask, &vars);
     }
 
+#ifdef NOSCR
+    mpc_const_mat_mul_l(x, round->l_lookup, y, SC_PROOF);
+#else
     mpc_const_mat_mul(x, round->l_matrix, y, SC_PROOF);
+#endif
     mpc_const_add(x, x, round->constant, SC_PROOF, ch);
+#ifdef NOSCR
+    mpc_const_mat_mul_l(y, round->k_lookup, lowmc_key->shared, SC_PROOF);
+#else
     mpc_const_mat_mul(y, round->k_matrix, lowmc_key->shared, SC_PROOF);
+#endif
     mpc_add(x, x, y, SC_PROOF);
   }
 
@@ -572,7 +584,11 @@ static mzd_t** _mpc_lowmc_call_bitsliced_verify(mpc_lowmc_t const* lowmc,
   mzd_t* y[SC_VERIFY] = {NULL};
   mzd_local_init_multiple(y, SC_VERIFY, 1, lowmc->n);
 
+#ifdef NOSCR
+  mpc_const_mat_mul_l(x, lowmc->k0_lookup, lowmc_key->shared, SC_VERIFY);
+#else
   mpc_const_mat_mul(x, lowmc->k0_matrix, lowmc_key->shared, SC_VERIFY);
+#endif
   mpc_const_add(x, x, p, SC_VERIFY, ch);
 
   lowmc_round_t const* round = lowmc->rounds;
@@ -603,9 +619,17 @@ static mzd_t** _mpc_lowmc_call_bitsliced_verify(mpc_lowmc_t const* lowmc,
       break;
     }
 
+#ifdef NOSCR
+    mpc_const_mat_mul_l(x, round->l_lookup, y, SC_VERIFY);
+#else
     mpc_const_mat_mul(x, round->l_matrix, y, SC_VERIFY);
+#endif
     mpc_const_add(x, x, round->constant, SC_VERIFY, ch);
+#ifdef NOSCR
+    mpc_const_mat_mul_l(y, round->k_lookup, lowmc_key->shared, SC_VERIFY);
+#else
     mpc_const_mat_mul(y, round->k_matrix, lowmc_key->shared, SC_VERIFY);
+#endif
     mpc_add(x, x, y, SC_VERIFY);
   }
 

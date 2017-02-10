@@ -91,4 +91,20 @@ mzd_t* mzd_mul_v(mzd_t* c, mzd_t const* v, mzd_t const* At);
  */
 mzd_t* mzd_addmul_v(mzd_t* c, mzd_t const* v, mzd_t const* At);
 
+/**
+ * Compute v * A optimized for v being a vector.
+ */
+mzd_t* mzd_mul_vl(mzd_t* c, mzd_t const* v, mzd_t const* At);
+
+/**
+ * Compute c + v * A optimized for c and v being vectors.
+ */
+mzd_t* mzd_addmul_vl(mzd_t* c, mzd_t const* v, mzd_t const* At);
+
+/**
+ * Pre-compute matrices for faster mzd_addmul_v computions.
+ *
+ */
+mzd_t* mzd_precompute_matrix_lookup(mzd_t const* A);
+
 #endif

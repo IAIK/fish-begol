@@ -172,7 +172,11 @@ mzd_t* lowmc_call(lowmc_t const* lowmc, lowmc_key_t const* lowmc_key, mzd_t cons
   mzd_t* y = mzd_local_init(1, lowmc->n);
 
   mzd_local_copy(x, p);
+#ifdef NOSCR
+  mzd_addmul_vl(x, lowmc_key, lowmc->k0_lookup);
+#else
   mzd_addmul_v(x, lowmc_key, lowmc->k0_matrix);
+#endif
 
   lowmc_round_t const* round = lowmc->rounds;
   for (unsigned i = 0; i < lowmc->r; ++i, ++round) {
@@ -192,9 +196,17 @@ mzd_t* lowmc_call(lowmc_t const* lowmc, lowmc_key_t const* lowmc_key, mzd_t cons
       sbox_layer_bitsliced(y, x, lowmc->m, &lowmc->mask);
     }
 
+#ifdef NOSCR
+    mzd_mul_vl(x, y, round->l_lookup);
+#else
     mzd_mul_v(x, y, round->l_matrix);
+#endif
     mzd_xor(x, x, round->constant);
+#ifdef NOSCR
+    mzd_addmul_vl(x, lowmc_key, round->k_lookup);
+#else
     mzd_addmul_v(x, lowmc_key, round->k_matrix);
+#endif
   }
 
   mzd_local_free(y);

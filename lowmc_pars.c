@@ -87,12 +87,20 @@ lowmc_t* lowmc_init(size_t m, size_t n, size_t r, size_t k) {
   lowmc->k       = k;
 
   lowmc->k0_matrix = mzd_sample_kmatrix(k, n);
+#ifdef NOSCR
+  lowmc->k0_lookup = mzd_precompute_matrix_lookup(lowmc->k0_matrix);
+#endif
 
   lowmc->rounds = calloc(sizeof(lowmc_round_t), r);
   for (unsigned int i = 0; i < r; ++i) {
     lowmc->rounds[i].l_matrix = mzd_sample_lmatrix(n);
     lowmc->rounds[i].k_matrix = mzd_sample_kmatrix(k, n);
     lowmc->rounds[i].constant = mzd_init_random_vector(n);
+
+#ifdef NOSCR
+    lowmc->rounds[i].l_lookup = mzd_precompute_matrix_lookup(lowmc->rounds[i].l_matrix);
+    lowmc->rounds[i].k_lookup = mzd_precompute_matrix_lookup(lowmc->rounds[i].k_matrix);
+#endif
   }
 
   if (!prepare_masks(&lowmc->mask, n, m)) {
@@ -109,10 +117,17 @@ lowmc_key_t* lowmc_keygen(lowmc_t* lowmc) {
 
 void lowmc_free(lowmc_t* lowmc) {
   for (unsigned i = 0; i < lowmc->r; ++i) {
+#ifdef NOSCR
+    mzd_local_free(lowmc->rounds[i].k_lookup);
+    mzd_local_free(lowmc->rounds[i].l_lookup);
+#endif
     mzd_local_free(lowmc->rounds[i].constant);
     mzd_local_free(lowmc->rounds[i].k_matrix);
     mzd_local_free(lowmc->rounds[i].l_matrix);
   }
+#ifdef NOSCR
+  mzd_local_free(lowmc->k0_lookup);
+#endif
   mzd_local_free(lowmc->k0_matrix);
   free(lowmc->rounds);
 
