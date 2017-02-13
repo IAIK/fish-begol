@@ -958,23 +958,33 @@ mzd_t* mzd_precompute_matrix_lookup(mzd_t const* A) {
   return B;
 }
 
-mzd_t* mzd_mul_vl(mzd_t* c, mzd_t const* v, mzd_t const* At) {
-  if (At->nrows != 32 * v->ncols) {
-    // number of columns does not match
-    return NULL;
-  }
-
-  if (!c) {
-    c = mzd_local_init(1, At->ncols);
-  } else {
-    mzd_row_clear_offset(c, 0, 0);
-  }
-
-  return mzd_addmul_vl(c, v, At);
-}
-
 #ifdef WITH_OPT
 #ifdef WITH_SSE2
+__attribute__((target("sse2"))) static inline mzd_t* mzd_mul_vl_sse_128(mzd_t* c, mzd_t const* v,
+                                                                           mzd_t const* A) {
+  word const* vptr                = __builtin_assume_aligned(CONST_FIRST_ROW(v), 16);
+  const unsigned int width        = v->width;
+  static const unsigned int moff1 = sizeof(word) * 128;
+  static const unsigned int moff2 = 128;
+
+  __m128i mc           = _mm_setzero_si128();
+  __m128i const* mAptr = __builtin_assume_aligned(CONST_FIRST_ROW(A), 16);
+
+  for (unsigned int w = width; w; --w, ++vptr, mAptr += moff1) {
+    word idx              = *vptr;
+    __m128i const* mAptri = mAptr;
+    for (unsigned int s = sizeof(word); s; --s, idx >>= 8, mAptri += moff2) {
+      const word comb = idx & 0xff;
+      mc              = _mm_xor_si128(mc, mAptri[comb]);
+    }
+  }
+
+  __m128i* mcptr       = __builtin_assume_aligned(FIRST_ROW(c), 16);
+  *mcptr = mc;
+  return c;
+}
+
+
 __attribute__((target("sse2"))) static inline mzd_t* mzd_addmul_vl_sse_128(mzd_t* c, mzd_t const* v,
                                                                            mzd_t const* A) {
   word const* vptr                = __builtin_assume_aligned(CONST_FIRST_ROW(v), 16);
@@ -1026,6 +1036,29 @@ __attribute__((target("sse2"))) static inline mzd_t* mzd_addmul_vl_sse(mzd_t* c,
 #endif
 
 #ifdef WITH_AVX2
+__attribute__((target("avx2"))) static inline mzd_t* mzd_mul_vl_avx_256(mzd_t* c, mzd_t const* v,
+                                                                           mzd_t const* A) {
+  word const* vptr                = __builtin_assume_aligned(CONST_FIRST_ROW(v), 16);
+  const unsigned int width        = v->width;
+  static const unsigned int moff1 = sizeof(word) * 256;
+  static const unsigned int moff2 = 256;
+
+  __m256i mc           = _mm256_setzero_si256();;
+  __m256i const* mAptr = __builtin_assume_aligned(CONST_FIRST_ROW(A), 32);
+
+  for (unsigned int w = width; w; --w, ++vptr, mAptr += moff1) {
+    word idx              = *vptr;
+    __m256i const* mAptri = mAptr;
+    for (unsigned int s = sizeof(word); s; --s, idx >>= 8, mAptri += moff2) {
+      const word comb = idx & 0xff;
+      mc              = _mm256_xor_si256(mc, mAptri[comb]);
+    }
+  }
+
+  __m256i* mcptr       = __builtin_assume_aligned(FIRST_ROW(c), 32);
+  *mcptr = mc;
+  return c;
+}
 __attribute__((target("avx2"))) static inline mzd_t* mzd_addmul_vl_avx_256(mzd_t* c, mzd_t const* v,
                                                                            mzd_t const* A) {
   word const* vptr                = __builtin_assume_aligned(CONST_FIRST_ROW(v), 16);
@@ -1076,6 +1109,36 @@ __attribute__((target("avx2"))) static inline mzd_t* mzd_addmul_vl_avx(mzd_t* c,
 }
 #endif
 #endif
+
+mzd_t* mzd_mul_vl(mzd_t* c, mzd_t const* v, mzd_t const* A) {
+  if (A->nrows != 32 * v->ncols) {
+    // number of columns does not match
+    return NULL;
+  }
+
+#ifdef WITH_OPT
+  if (A->nrows % (sizeof(word) * 8) == 0) {
+#ifdef WITH_AVX2
+    if (CPU_SUPPORTS_AVX2) {
+      if (A->ncols == 256) {
+        return mzd_mul_vl_avx_256(c, v, A);
+      }
+    }
+#endif
+#ifdef WITH_SSE2
+    if (CPU_SUPPORTS_SSE2) {
+      if (A->ncols == 128) {
+        return mzd_mul_vl_sse_128(c, v, A);
+      }
+    }
+#endif
+  }
+#endif
+
+    mzd_row_clear_offset(c, 0, 0);
+
+  return mzd_addmul_vl(c, v, A);
+}
 
 mzd_t* mzd_addmul_vl(mzd_t* c, mzd_t const* v, mzd_t const* A) {
   if (A->ncols != c->ncols || A->nrows != 32 * v->ncols) {

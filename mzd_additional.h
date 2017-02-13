@@ -102,6 +102,16 @@ mzd_t* mzd_mul_vl(mzd_t* c, mzd_t const* v, mzd_t const* At);
  * Compute c + v * A optimized for c and v being vectors.
  */
 mzd_t* mzd_addmul_vl(mzd_t* c, mzd_t const* v, mzd_t const* At);
+/**
+ * Compute v * A optimized for v being a vector.
+ */
+void mzd_mul_vlm(mzd_t** c, mzd_t const* const* v, mzd_t const* At, unsigned int sc) __attribute__((nonnull));
+
+/**
+ * Compute c + v * A optimized for c and v being vectors.
+ */
+void mzd_addmul_vlm(mzd_t** c, mzd_t const* const* v, mzd_t const* At, unsigned int sc) __attribute__((nonnull));
+
 
 /**
  * Pre-compute matrices for faster mzd_addmul_v computions.

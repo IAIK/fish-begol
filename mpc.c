@@ -309,6 +309,12 @@ mzd_t** mpc_const_mat_mul(mzd_t** result, mzd_t const* matrix, mzd_t** vector, u
   return result;
 }
 
+void mpc_const_addmat_mul_l(mzd_t** result, mzd_t const* matrix, mzd_t** vector, unsigned sc) {
+  for (unsigned i = 0; i < sc; ++i) {
+    mzd_addmul_vl(result[i], vector[i], matrix);
+  }
+}
+
 mzd_t** mpc_const_mat_mul_l(mzd_t** result, mzd_t const* matrix, mzd_t** vector, unsigned sc) {
   if (result == 0)
     result = mpc_init_empty_share_vector(vector[0]->ncols, sc);

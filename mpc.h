@@ -185,6 +185,8 @@ mzd_t** mpc_const_add(mzd_t** result, mzd_t** first, mzd_t const* second, unsign
  */
 mzd_t** mpc_const_mat_mul(mzd_t** result, mzd_t const* matrix, mzd_t** vector, unsigned sc);
 
+void mpc_const_addmat_mul_l(mzd_t** result, mzd_t const* matrix, mzd_t** vector, unsigned sc) __attribute__((nonnull));
+
 /**
  * Computes result = first * second in GF(2) of a
  * secret shared vector and a matrix according to
