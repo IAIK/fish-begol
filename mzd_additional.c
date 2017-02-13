@@ -251,7 +251,6 @@ mzd_t* mzd_init_random_vector_from_seed(const unsigned char key[16], rci_t n) {
   return vector;
 }
 
-
 mzd_t** mzd_init_random_vectors_from_seed(const unsigned char key[16], rci_t n,
                                           unsigned int count) {
   aes_prng_t aes_prng;
@@ -976,6 +975,30 @@ mzd_t* mzd_mul_vl(mzd_t* c, mzd_t const* v, mzd_t const* At) {
 
 #ifdef WITH_OPT
 #ifdef WITH_SSE2
+__attribute__((target("sse2"))) static inline mzd_t* mzd_addmul_vl_sse_128(mzd_t* c, mzd_t const* v,
+                                                                           mzd_t const* A) {
+  word const* vptr                = __builtin_assume_aligned(CONST_FIRST_ROW(v), 16);
+  const unsigned int width        = v->width;
+  static const unsigned int moff1 = sizeof(word) * 128;
+  static const unsigned int moff2 = 128;
+
+  __m128i* mcptr       = __builtin_assume_aligned(FIRST_ROW(c), 16);
+  __m128i mc           = *mcptr;
+  __m128i const* mAptr = __builtin_assume_aligned(CONST_FIRST_ROW(A), 16);
+
+  for (unsigned int w = width; w; --w, ++vptr, mAptr += moff1) {
+    word idx              = *vptr;
+    __m128i const* mAptri = mAptr;
+    for (unsigned int s = sizeof(word); s; --s, idx >>= 8, mAptri += moff2) {
+      const word comb = idx & 0xff;
+      mc              = _mm_xor_si128(mc, mAptri[comb]);
+    }
+  }
+
+  *mcptr = mc;
+  return c;
+}
+
 __attribute__((target("sse2"))) static inline mzd_t* mzd_addmul_vl_sse(mzd_t* c, mzd_t const* v,
                                                                        mzd_t const* A) {
   const unsigned int len        = A->width * sizeof(word) / sizeof(__m128i);
@@ -990,10 +1013,9 @@ __attribute__((target("sse2"))) static inline mzd_t* mzd_addmul_vl_sse(mzd_t* c,
   __m128i const* mAptr = __builtin_assume_aligned(CONST_FIRST_ROW(A), 16);
 
   for (unsigned int w = width; w; --w, ++vptr, mAptr += moff1) {
-    word idx = *vptr;
-
+    word idx              = *vptr;
     __m128i const* mAptri = mAptr;
-    for (unsigned int s = 0; s < sizeof(word); ++s, idx >>= 8, mAptri += moff2) {
+    for (unsigned int s = sizeof(word); s; --s, idx >>= 8, mAptri += moff2) {
       const word comb = idx & 0xff;
       mm128_xor_region(mcptr, mAptri + comb * mrowstride, len);
     }
@@ -1004,6 +1026,30 @@ __attribute__((target("sse2"))) static inline mzd_t* mzd_addmul_vl_sse(mzd_t* c,
 #endif
 
 #ifdef WITH_AVX2
+__attribute__((target("avx2"))) static inline mzd_t* mzd_addmul_vl_avx_256(mzd_t* c, mzd_t const* v,
+                                                                           mzd_t const* A) {
+  word const* vptr                = __builtin_assume_aligned(CONST_FIRST_ROW(v), 16);
+  const unsigned int width        = v->width;
+  static const unsigned int moff1 = sizeof(word) * 256;
+  static const unsigned int moff2 = 256;
+
+  __m256i* mcptr       = __builtin_assume_aligned(FIRST_ROW(c), 32);
+  __m256i mc           = *mcptr;
+  __m256i const* mAptr = __builtin_assume_aligned(CONST_FIRST_ROW(A), 32);
+
+  for (unsigned int w = width; w; --w, ++vptr, mAptr += moff1) {
+    word idx              = *vptr;
+    __m256i const* mAptri = mAptr;
+    for (unsigned int s = sizeof(word); s; --s, idx >>= 8, mAptri += moff2) {
+      const word comb = idx & 0xff;
+      mc              = _mm256_xor_si256(mc, mAptri[comb]);
+    }
+  }
+
+  *mcptr = mc;
+  return c;
+}
+
 __attribute__((target("avx2"))) static inline mzd_t* mzd_addmul_vl_avx(mzd_t* c, mzd_t const* v,
                                                                        mzd_t const* A) {
   const unsigned int len        = A->width * sizeof(word) / sizeof(__m256i);
@@ -1018,10 +1064,9 @@ __attribute__((target("avx2"))) static inline mzd_t* mzd_addmul_vl_avx(mzd_t* c,
   __m256i const* mAptr = __builtin_assume_aligned(CONST_FIRST_ROW(A), 32);
 
   for (unsigned int w = width; w; --w, ++vptr, mAptr += moff1) {
-    word idx = *vptr;
-
+    word idx              = *vptr;
     __m256i const* mAptri = mAptr;
-    for (unsigned int s = 0; s < sizeof(word); ++s, idx >>= 8, mAptri += moff2) {
+    for (unsigned int s = sizeof(word); s; --s, idx >>= 8, mAptri += moff2) {
       const word comb = idx & 0xff;
       mm256_xor_region(mcptr, mAptri + comb * mrowstride, len);
     }
@@ -1041,13 +1086,23 @@ mzd_t* mzd_addmul_vl(mzd_t* c, mzd_t const* v, mzd_t const* A) {
 #ifdef WITH_OPT
   if (A->nrows % (sizeof(word) * 8) == 0) {
 #ifdef WITH_AVX2
-    if (CPU_SUPPORTS_AVX2 && (A->ncols & 0xff) == 0) {
-      return mzd_addmul_vl_avx(c, v, A);
+    if (CPU_SUPPORTS_AVX2) {
+      if (A->ncols == 256) {
+        return mzd_addmul_vl_avx_256(c, v, A);
+      }
+      if ((A->ncols & 0xff) == 0) {
+        return mzd_addmul_vl_avx(c, v, A);
+      }
     }
 #endif
 #ifdef WITH_SSE2
-    if (CPU_SUPPORTS_SSE2 && (A->ncols & 0x7f) == 0) {
-      return mzd_addmul_vl_sse(c, v, A);
+    if (CPU_SUPPORTS_SSE2) {
+      if (A->ncols == 128) {
+        return mzd_addmul_vl_sse_128(c, v, A);
+      }
+      if ((A->ncols & 0x7f) == 0) {
+        return mzd_addmul_vl_sse(c, v, A);
+      }
     }
 #endif
   }
