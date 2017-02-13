@@ -104,21 +104,13 @@ static proof_t* fis_prove(mpc_lowmc_t* lowmc, lowmc_key_t* lowmc_key, mzd_t* p, 
 #endif
     return 0;
   }
-
-  mzd_t** rvec[FIS_NUM_ROUNDS][3];
-#pragma omp parallel for
-  for (unsigned int i = 0; i < FIS_NUM_ROUNDS; ++i) {
-    rvec[i][0] = mzd_init_random_vectors_from_seed(keys[i][0], lowmc->n, lowmc->r);
-    rvec[i][1] = mzd_init_random_vectors_from_seed(keys[i][1], lowmc->n, lowmc->r);
-    rvec[i][2] = mzd_init_random_vectors_from_seed(keys[i][2], lowmc->n, lowmc->r);
-  }
   END_TIMING(timing_and_size->sign.rand);
 
   view_t* views[FIS_NUM_ROUNDS];
   init_view(lowmc, views);
 
   START_TIMING;
-  
+
   mzd_shared_t s[FIS_NUM_ROUNDS];
   for (unsigned int i = 0; i < FIS_NUM_ROUNDS; ++i) {
     mzd_shared_init(&s[i], lowmc_key);
@@ -128,9 +120,35 @@ static proof_t* fis_prove(mpc_lowmc_t* lowmc, lowmc_key_t* lowmc_key, mzd_t* p, 
 
   START_TIMING;
   mzd_t** c_mpc[FIS_NUM_ROUNDS];
+
+#ifdef WITH_OPENMP
+  mzd_t** rvec[FIS_NUM_ROUNDS][3];
 #pragma omp parallel for
   for (unsigned int i = 0; i < FIS_NUM_ROUNDS; ++i) {
-    c_mpc[i] = mpc_lowmc_call(lowmc, &s[i], p, false, views[i], rvec[i]);
+    rvec[i][0] = mzd_init_random_vectors_from_seed(keys[i][0], lowmc->n, lowmc->r);
+    rvec[i][1] = mzd_init_random_vectors_from_seed(keys[i][1], lowmc->n, lowmc->r);
+    rvec[i][2] = mzd_init_random_vectors_from_seed(keys[i][2], lowmc->n, lowmc->r);
+  }
+#endif
+
+#ifndef WITH_OPENMP
+  mzd_t** rvecs[SC_PROOF];
+  for (unsigned int i = 0; i < SC_PROOF; ++i) {
+    rvecs[i] = malloc(sizeof(mzd_t*) * lowmc->r);
+    mzd_local_init_multiple_ex(rvecs[i], lowmc->r, 1, lowmc->n, false);
+  }
+#endif
+
+#pragma omp parallel for
+  for (unsigned int i = 0; i < FIS_NUM_ROUNDS; ++i) {
+#ifdef WITH_OPENMP
+    mzd_t*** rvecs = rvec[i];
+#else
+    for (unsigned int j = 0; j < SC_PROOF; ++j) {
+      mzd_randomize_multiple_from_seed(rvecs[j], lowmc->r, keys[i][j]);
+    }
+#endif
+    c_mpc[i] = mpc_lowmc_call(lowmc, &s[i], p, false, views[i], rvecs);
   }
   END_TIMING(timing_and_size->sign.lowmc_enc);
 
@@ -153,12 +171,21 @@ static proof_t* fis_prove(mpc_lowmc_t* lowmc, lowmc_key_t* lowmc_key, mzd_t* p, 
 
   for (unsigned int j = 0; j < FIS_NUM_ROUNDS; ++j) {
     mzd_shared_clear(&s[j]);
+#ifdef WITH_OPENMP
     for (unsigned int i = 0; i < 3; ++i) {
       mzd_local_free_multiple(rvec[j][i]);
       free(rvec[j][i]);
     }
+#endif
     mpc_free(c_mpc[j], 3);
   }
+
+#ifndef WITH_OPENMP
+  for (unsigned int i = 0; i < SC_PROOF; ++i) {
+    mzd_local_free_multiple(rvecs[i]);
+    free(rvecs[i]);
+  }
+#endif
 
   free_view(lowmc, views);
 
