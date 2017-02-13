@@ -288,7 +288,7 @@ static int _mpc_sbox_layer_bitsliced_verify(mzd_t** out, mzd_t* const* in, view_
   bitsliced_step_2(SC_VERIFY);
 
   mzd_xor(view->s[0], view->s[0], out[0]);
-  mzd_shift_left(out[1], view->s[1], 0);
+  mzd_copy(out[1], view->s[1]);
 
   return 0;
 }
@@ -653,7 +653,7 @@ static mzd_t** _mpc_lowmc_call_bitsliced_verify(mpc_lowmc_t const* lowmc,
     mpc_const_add(x, x, p, SC_VERIFY, ch);
   }
 
-  mpc_xor(views->s, views->s, x, SC_VERIFY);
+  mzd_copy(views->s[0], x[0]);
 
   sbox_vars_clear(&vars);
   mzd_local_free_multiple(y);

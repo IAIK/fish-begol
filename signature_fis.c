@@ -132,13 +132,15 @@ static proof_t* fis_prove(mpc_lowmc_t* lowmc, lowmc_key_t* lowmc_key, mzd_t* p, 
 #pragma omp parallel for
   for (unsigned int i = 0; i < FIS_NUM_ROUNDS; ++i) {
     c_mpc[i] = mpc_lowmc_call(lowmc, &s[i], p, false, views[i], rvec[i]);
-    mzd_print(c_mpc[i][0]);
-    mzd_print(c_mpc[i][1]);
-    mzd_print(c_mpc[i][2]);
+  
+    printf("views prf:\n");
+    for(int j = 0 ; j <= lowmc->r + 1 ; ++j) {
+      printf("%d\n", j);
+      mzd_print(views[i][j].s[0]);
+      mzd_print(views[i][j].s[1]);
+      mzd_print(views[i][j].s[2]);
+    }
   }
-  
-  
- 
   END_TIMING(timing_and_size->sign.lowmc_enc);
 
   START_TIMING;
@@ -191,23 +193,26 @@ static int fis_proof_verify(mpc_lowmc_t const* lowmc, mzd_t const* p, mzd_t cons
     unsigned int c_i = (a_i + 2) % 3;
 
     //mzd_local_free(ys[a_i]);
-    //prf->views[i][last_view_index].s[0] = mzd_local_init(1, lowmc->n);
+    prf->views[i][last_view_index].s[0] = mzd_local_init(1, lowmc->n);
     
     mzd_t** rv[2];
     rv[0] = mzd_init_random_vectors_from_seed(prf->keys[i][0], lowmc->n, lowmc->r);
     rv[1] = mzd_init_random_vectors_from_seed(prf->keys[i][1], lowmc->n, lowmc->r);
 
     mpc_lowmc_verify_keys(lowmc, p, false, prf->views[i], rv, a_i, prf->keys[i]);
+ 
+    printf("views vrf:\n");
+    for(int j = 0 ; j <= last_view_index ; ++j) {
+      printf("%d\n", j);
+      mzd_print(prf->views[i][j].s[0]);
+      mzd_print(prf->views[i][j].s[1]);
+    }
 
     ys[a_i] = prf->views[i][last_view_index].s[0];
     ys[b_i] = prf->views[i][last_view_index].s[1];
     ys[c_i] = (mzd_t*)c;
 
     ys[c_i] = mpc_reconstruct_from_share(0, ys);
-
-    mzd_print(ys[0]);
-    mzd_print(ys[1]);
-    mzd_print(ys[2]);
 
     H(prf->keys[i][0], ys, prf->views[i], 0, view_count, prf->r[i][0], hash[i][0]);
     H(prf->keys[i][1], ys, prf->views[i], 1, view_count, prf->r[i][1], hash[i][1]);
