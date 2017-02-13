@@ -282,8 +282,6 @@ void mpc_write_bit(mzd_t** vec, rci_t n, BIT* bit, unsigned sc) {
 #endif
 
 mzd_t** mpc_add(mzd_t** result, mzd_t** first, mzd_t** second, unsigned sc) {
-  if (result == 0)
-    result = mpc_init_empty_share_vector(first[0]->ncols, sc);
   for (unsigned i = 0; i < sc; i++) {
     mzd_xor(result[i], first[i], second[i]);
   }
@@ -291,8 +289,6 @@ mzd_t** mpc_add(mzd_t** result, mzd_t** first, mzd_t** second, unsigned sc) {
 }
 
 mzd_t** mpc_const_add(mzd_t** result, mzd_t** first, mzd_t const* second, unsigned sc, unsigned c) {
-  if (result == 0)
-    result = mpc_init_empty_share_vector(first[0]->ncols, sc);
   if (c == 0)
     mzd_xor(result[0], first[0], second);
   else if (c == sc)
@@ -301,8 +297,6 @@ mzd_t** mpc_const_add(mzd_t** result, mzd_t** first, mzd_t const* second, unsign
 }
 
 mzd_t** mpc_const_mat_mul(mzd_t** result, mzd_t const* matrix, mzd_t** vector, unsigned sc) {
-  if (result == 0)
-    result = mpc_init_empty_share_vector(vector[0]->ncols, sc);
   for (unsigned i = 0; i < sc; ++i) {
     mzd_mul_v(result[i], vector[i], matrix);
   }
@@ -316,8 +310,6 @@ void mpc_const_addmat_mul_l(mzd_t** result, mzd_t const* matrix, mzd_t** vector,
 }
 
 mzd_t** mpc_const_mat_mul_l(mzd_t** result, mzd_t const* matrix, mzd_t** vector, unsigned sc) {
-  if (result == 0)
-    result = mpc_init_empty_share_vector(vector[0]->ncols, sc);
   for (unsigned i = 0; i < sc; ++i) {
     mzd_mul_vl(result[i], vector[i], matrix);
   }
