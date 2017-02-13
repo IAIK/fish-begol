@@ -166,8 +166,8 @@ mzd_t* lowmc_call(lowmc_t const* lowmc, lowmc_key_t const* lowmc_key, mzd_t cons
     printf("p needs to have exactly one row!\n");
   }
 
-  mzd_t* x = mzd_local_init(1, lowmc->n);
-  mzd_t* y = mzd_local_init(1, lowmc->n);
+  mzd_t* x = mzd_local_init_ex(1, lowmc->n, false);
+  mzd_t* y = mzd_local_init_ex(1, lowmc->n, false);
 
   mzd_local_copy(x, p);
 #ifdef NOSCR
