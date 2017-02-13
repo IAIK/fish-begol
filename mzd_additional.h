@@ -70,6 +70,8 @@ void mzd_randomize_from_seed(mzd_t* vector, const unsigned char key[16]) __attri
 
 mzd_t* mzd_init_random_vector_from_seed(const unsigned char key[16], rci_t n);
 
+void mzd_randomize_multiple_from_seed(mzd_t** vectors, unsigned int count, const unsigned char key[PRNG_KEYSIZE]);
+
 mzd_t** mzd_init_random_vectors_from_seed(const unsigned char key[PRNG_KEYSIZE], rci_t n,
                                           unsigned count);
 

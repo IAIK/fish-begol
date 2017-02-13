@@ -270,18 +270,22 @@ mzd_t* mzd_init_random_vector_from_seed(const unsigned char key[16], rci_t n) {
   return vector;
 }
 
-mzd_t** mzd_init_random_vectors_from_seed(const unsigned char key[16], rci_t n,
-                                          unsigned int count) {
+void mzd_randomize_multiple_from_seed(mzd_t** vectors, unsigned int count, const unsigned char key[16]) {
   aes_prng_t aes_prng;
   aes_prng_init(&aes_prng, key);
 
-  mzd_t** vectors = malloc(count * sizeof(mzd_t*));
-  mzd_local_init_multiple_ex(vectors, count, 1, n, false);
   for (unsigned int v = 0; v < count; ++v) {
     mzd_randomize_aes_prng(vectors[v], &aes_prng);
   }
 
   aes_prng_clear(&aes_prng);
+}
+
+mzd_t** mzd_init_random_vectors_from_seed(const unsigned char key[16], rci_t n,
+                                          unsigned int count) {
+  mzd_t** vectors = malloc(count * sizeof(mzd_t*));
+  mzd_local_init_multiple_ex(vectors, count, 1, n, false);
+  mzd_randomize_multiple_from_seed(vectors, count, key);
   return vectors;
 }
 
