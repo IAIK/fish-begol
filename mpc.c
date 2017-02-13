@@ -20,11 +20,13 @@
 #include "mzd_additional.h"
 #include "simd.h"
 
+#if 0
 void mpc_clear(mzd_t** res, unsigned sc) {
   for (unsigned int i = 0; i < sc; i++) {
     mzd_local_clear(res[i]);
   }
 }
+#endif
 
 void mpc_shift_right(mzd_t* const* res, mzd_t* const* val, unsigned count, unsigned sc) {
   for (unsigned i = 0; i < sc; ++i)
