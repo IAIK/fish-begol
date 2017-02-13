@@ -77,16 +77,18 @@ unsigned char* proof_to_char_array(mpc_lowmc_t* lowmc, proof_t* proof, unsigned*
     memcpy(temp, proof->keys[i][1], PRNG_KEYSIZE * sizeof(unsigned char));
     temp += PRNG_KEYSIZE;
 
-    unsigned char* v0 = mzd_to_char_array(proof->views[i][0].s[0], first_view_bytes);
-    unsigned char* v1 = mzd_to_char_array(proof->views[i][0].s[1], first_view_bytes);
+    if(proof->ch[i] != 0) {
+      unsigned char* v0 = mzd_to_char_array(proof->views[i][0].s[0], first_view_bytes);
+      unsigned char* v1 = mzd_to_char_array(proof->views[i][0].s[1], first_view_bytes);
 
-    memcpy(temp, v0, first_view_bytes);
-    temp += first_view_bytes;
-    memcpy(temp, v1, first_view_bytes);
-    temp += first_view_bytes;
+      memcpy(temp, v0, first_view_bytes);
+      temp += first_view_bytes;
+      memcpy(temp, v1, first_view_bytes);
+      temp += first_view_bytes;
 
-    free(v0);
-    free(v1);
+      free(v0);
+      free(v1);
+    }
 
     for (unsigned j = 1; j < 1 + lowmc->r; j++) {
       v0 = mzd_to_char_array(proof->views[i][j].s[0], single_mzd_bytes);

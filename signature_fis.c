@@ -214,35 +214,6 @@ static int fis_proof_verify(mpc_lowmc_t const* lowmc, mzd_t const* p, mzd_t cons
   fis_H3_verify(hash, prf->hashes, prf->ch, m, m_len, ch);
   END_TIMING(timing_and_size->verify.challenge);
 
-  int reconstruct_status  = 0;
-  int output_share_status = 0;
-  int view_verify_status  = 0;
-
-  // TODO: probably unnecessary now
-  START_TIMING;
-#pragma omp parallel for reduction(| : reconstruct_status)
-  for (unsigned int i = 0; i < FIS_NUM_ROUNDS; ++i) {
-    mzd_t* c_mpcr = mpc_reconstruct_from_share(NULL, ys[i]);
-    if (mzd_cmp(c, c_mpcr) != 0) {
-      reconstruct_status |= -1;
-    }
-    mzd_local_free(c_mpcr);
-  }
-  END_TIMING(timing_and_size->verify.output_shares);
-
-  // TODO: probably unnecessary now
-  START_TIMING;
-#pragma omp parallel for reduction(| : output_share_status)
-  for (unsigned int i = 0; i < FIS_NUM_ROUNDS; ++i) {
-    if (mzd_cmp(ys[i][ch[i]], prf->views[i][last_view_index].s[0]) ||
-        mzd_cmp(ys[i][(ch[i] + 1) % 3], prf->views[i][last_view_index].s[1])) {
-      output_share_status |= -1;
-    }
-  }
-  END_TIMING(timing_and_size->verify.output_views);
-
-  mzd_local_free_multiple(ys_f);
-
 #ifdef VERBOSE
   if (output_share_status)
     printf("[FAIL] Output shares do not match\n");

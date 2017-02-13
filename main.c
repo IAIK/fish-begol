@@ -204,7 +204,7 @@ int main(int argc, char** argv) {
   parse_args(args, argc, argv);
 
   fis_sign_verify(args);
-  bg_sign_verify(args);
+  //bg_sign_verify(args);
 
   openmp_thread_cleanup();
   cleanup_EVP();
