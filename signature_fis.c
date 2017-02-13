@@ -211,7 +211,17 @@ static int fis_proof_verify(mpc_lowmc_t const* lowmc, mzd_t const* p, mzd_t cons
     H(prf->keys[i][0], ys[i], prf->views[i], 0, view_count, prf->r[i][0], hash[i][0]);
     H(prf->keys[i][1], ys[i], prf->views[i], 1, view_count, prf->r[i][1], hash[i][1]);
   }
-  int success_status = fis_H3_verify(hash, prf->hashes, prf->ch, m, m_len, ch);
+  fis_H3_verify(hash, prf->hashes, prf->ch, m, m_len, ch);
+  unsigned char ch_collapsed[(FIS_NUM_ROUNDS + 3)/4];
+  for (unsigned int i = 0; i < FIS_NUM_ROUNDS; i+=4) {
+    int idx        = i / 4;
+    ch_collapsed[idx] = 0;
+    ch_collapsed[idx] |= (ch[i] & 3);
+    ch_collapsed[idx] |= i + 1 < NUM_ROUNDS ? (ch[i + 1] & 3) << 2 : 0;
+    ch_collapsed[idx] |= i + 2 < NUM_ROUNDS ? (ch[i + 2] & 3) << 4 : 0;
+    ch_collapsed[idx] |= i + 3 < NUM_ROUNDS ? (ch[i + 3] & 3) << 6 : 0;
+  }
+  int success_status = memcmp(ch_collapsed, prf->ch, ((FIS_NUM_ROUNDS + 3) / 4) * sizeof(unsigned char));
   END_TIMING(timing_and_size->verify.challenge);
 
 #ifdef VERBOSE
@@ -221,7 +231,7 @@ static int fis_proof_verify(mpc_lowmc_t const* lowmc, mzd_t const* p, mzd_t cons
     printf("[ OK ] Verification Succeeded.\n");
 #endif
 
-  return output_share_status || reconstruct_status || view_verify_status;
+  return success_status;
 }
 
 fis_signature_t* fis_sign(public_parameters_t* pp, fis_private_key_t* private_key, char* m) {
