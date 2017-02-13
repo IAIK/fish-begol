@@ -240,14 +240,17 @@ mzd_t* mzd_init_random_vector_prng(rci_t n, aes_prng_t* aes_prng) {
   return v;
 }
 
-mzd_t* mzd_init_random_vector_from_seed(const unsigned char key[16], rci_t n) {
+void mzd_randomize_from_seed(mzd_t* vector, const unsigned char key[16]) {
   aes_prng_t aes_prng;
   aes_prng_init(&aes_prng, key);
-
-  mzd_t* vector = mzd_local_init(1, n);
   mzd_randomize_aes_prng(vector, &aes_prng);
-
   aes_prng_clear(&aes_prng);
+}
+
+
+mzd_t* mzd_init_random_vector_from_seed(const unsigned char key[16], rci_t n) {
+  mzd_t* vector = mzd_local_init(1, n);
+  mzd_randomize_from_seed(vector, key);
   return vector;
 }
 

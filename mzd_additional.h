@@ -58,6 +58,8 @@ mzd_t* mzd_init_random_vector_prng(rci_t n, aes_prng_t* aes_prng);
 
 void mzd_randomize_ssl(mzd_t* val) __attribute__((nonnull(1)));
 
+void mzd_randomize_from_seed(mzd_t* vector, const unsigned char key[16]) __attribute__((nonnull));
+
 mzd_t* mzd_init_random_vector_from_seed(const unsigned char key[16], rci_t n);
 
 mzd_t** mzd_init_random_vectors_from_seed(const unsigned char key[PRNG_KEYSIZE], rci_t n,
