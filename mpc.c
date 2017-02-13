@@ -21,9 +21,9 @@
 #include "simd.h"
 
 void mpc_clear(mzd_t** res, unsigned sc) {
-  for (unsigned int i = 0; i < sc; i++)
-    for (int j = 0; j < res[i]->nrows; j++)
-      mzd_row_clear_offset(res[i], j, 0);
+  for (unsigned int i = 0; i < sc; i++) {
+    mzd_local_clear(res[i]);
+  }
 }
 
 void mpc_shift_right(mzd_t* const* res, mzd_t* const* val, unsigned count, unsigned sc) {

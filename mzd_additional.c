@@ -211,7 +211,14 @@ mzd_t* mzd_local_copy(mzd_t* dst, mzd_t const* src) {
     return mzd_copy(dst, src);
   }
 }
-// #endif
+
+void mzd_local_clear(mzd_t* c) {
+  if (c->flags & mzd_flag_custom_layout) {
+    memset(__builtin_assume_aligned(FIRST_ROW(c), 32), 0, c->nrows * sizeof(word) * c->width);
+  } else {
+    mzd_row_clear_offset(c, 0, 0);
+  }
+}
 
 void mzd_randomize_ssl(mzd_t* val) {
   // similar to mzd_randomize but using RAND_Bytes instead
@@ -501,7 +508,7 @@ mzd_t* mzd_mul_v(mzd_t* c, mzd_t const* v, mzd_t const* At) {
     return NULL;
   }
 
-  mzd_row_clear_offset(c, 0, 0);
+  mzd_local_clear(c);
   return mzd_addmul_v(c, v, At);
 }
 
@@ -1130,8 +1137,7 @@ mzd_t* mzd_mul_vl(mzd_t* c, mzd_t const* v, mzd_t const* A) {
   }
 #endif
 
-    mzd_row_clear_offset(c, 0, 0);
-
+  mzd_local_clear(c);
   return mzd_addmul_vl(c, v, A);
 }
 
