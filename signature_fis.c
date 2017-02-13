@@ -183,7 +183,7 @@ static int fis_proof_verify(mpc_lowmc_t const* lowmc, mzd_t const* p, mzd_t cons
     rv[0] = mzd_init_random_vectors_from_seed(prf->keys[i][0], lowmc->n, lowmc->r);
     rv[1] = mzd_init_random_vectors_from_seed(prf->keys[i][1], lowmc->n, lowmc->r);
 
-    mpc_lowmc_verify_keys(lowmc, p, false, prf->views[i], rv, prf->ch[i], prf->keys[i]);
+    mpc_lowmc_verify_keys(lowmc, p, false, prf->views[i], rv, getChAt(prf->ch, i), prf->keys[i]);
 
     mzd_local_free_multiple(rv[1]);
     free(rv[1]);
