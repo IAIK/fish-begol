@@ -103,7 +103,8 @@ __attribute__((target("avx2"))) int mpc_and_avx(__m256i* res, __m256i const* fir
 int mpc_and(mzd_t* const* res, mzd_t* const* first, mzd_t* const* second, mzd_t* const* r,
             view_t* view, unsigned viewshift, mzd_t* const* buffer) {
   mzd_t* b = buffer[0];
-
+    mzd_print(first[0]);
+    mzd_print(second[0]);
   for (unsigned m = 0; m < SC_PROOF; ++m) {
     const unsigned j = (m + 1) % SC_PROOF;
 
@@ -121,6 +122,7 @@ int mpc_and(mzd_t* const* res, mzd_t* const* first, mzd_t* const* second, mzd_t*
 
   mpc_shift_right(buffer, res, viewshift, SC_PROOF);
   mpc_xor(view->s, view->s, buffer, SC_PROOF);
+  mzd_print(view->s[0]);
   return 0;
 }
 
@@ -201,6 +203,9 @@ int mpc_and_verify(mzd_t* const* res, mzd_t* const* first, mzd_t* const* second,
                    view_t const* view, mzd_t const* mask, unsigned viewshift,
                    mzd_t* const* buffer) {
   mzd_t* b = buffer[0];
+ 
+    mzd_print(first[0]);
+    mzd_print(second[0]);
 
   for (unsigned m = 0; m < (SC_VERIFY - 1); ++m) {
     const unsigned j = m + 1;
@@ -218,11 +223,8 @@ int mpc_and_verify(mzd_t* const* res, mzd_t* const* first, mzd_t* const* second,
   }
 
   for (unsigned m = 0; m < (SC_VERIFY - 1); ++m) {
-    mzd_shift_left(b, view->s[m], viewshift);
-    mzd_and(b, b, res[m]);
-    if (!mzd_local_equal(b, res[m])) {
-      return -1;
-    }
+    mzd_shift_right(b, res[m], viewshift);
+    mzd_xor(view->s[m], view->s[m], b);
   }
 
   mzd_shift_left(res[SC_VERIFY - 1], view->s[SC_VERIFY - 1], viewshift);

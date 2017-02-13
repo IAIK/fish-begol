@@ -173,26 +173,7 @@ static int fis_proof_verify(mpc_lowmc_t const* lowmc, mzd_t const* p, mzd_t cons
   const unsigned int last_view_index = lowmc->r + 1;
 
   mzd_t* ys[NUM_ROUNDS][3] = {{NULL}};
-  mzd_t* ys_f[NUM_ROUNDS]  = {NULL};
-  mzd_local_init_multiple(ys_f, NUM_ROUNDS, 1, lowmc->n);
-
-  START_TIMING;
-#pragma omp parallel for
-  for (unsigned int i = 0; i < FIS_NUM_ROUNDS; ++i) {
-    mzd_t** rv[2];
-    rv[0] = mzd_init_random_vectors_from_seed(prf->keys[i][0], lowmc->n, lowmc->r);
-    rv[1] = mzd_init_random_vectors_from_seed(prf->keys[i][1], lowmc->n, lowmc->r);
-
-    mpc_lowmc_verify_keys(lowmc, p, false, prf->views[i], rv, prf->ch[i], prf->keys[i]);
-
-    mzd_local_free_multiple(rv[1]);
-    free(rv[1]);
-    mzd_local_free_multiple(rv[0]);
-    free(rv[0]);
-  }
-  END_TIMING(timing_and_size->verify.verify);
-
-
+  
   START_TIMING;
   unsigned char ch[FIS_NUM_ROUNDS];
   unsigned char hash[FIS_NUM_ROUNDS][2][COMMITMENT_LENGTH];
@@ -206,10 +187,24 @@ static int fis_proof_verify(mpc_lowmc_t const* lowmc, mzd_t const* p, mzd_t cons
     ys[i][b_i] = prf->views[i][last_view_index].s[1];
     ys[i][c_i] = (mzd_t*)c;
 
-    ys[i][c_i] = mpc_reconstruct_from_share(ys_f[i], ys[i]);
+    ys[i][c_i] = mpc_reconstruct_from_share(0, ys[i]);
+
+    //mzd_local_free(ys[i][a_i]);
+    prf->views[i][last_view_index].s[0] = mzd_local_init(1, lowmc->n);
+   
+    mzd_t** rv[2];
+    rv[0] = mzd_init_random_vectors_from_seed(prf->keys[i][0], lowmc->n, lowmc->r);
+    rv[1] = mzd_init_random_vectors_from_seed(prf->keys[i][1], lowmc->n, lowmc->r);
+
+    mpc_lowmc_verify_keys(lowmc, p, false, prf->views[i], rv, a_i, prf->keys[i]);
 
     H(prf->keys[i][0], ys[i], prf->views[i], 0, view_count, prf->r[i][0], hash[i][0]);
     H(prf->keys[i][1], ys[i], prf->views[i], 1, view_count, prf->r[i][1], hash[i][1]);
+
+    mzd_local_free_multiple(rv[1]);
+    free(rv[1]);
+    mzd_local_free_multiple(rv[0]);
+    free(rv[0]);
   }
   fis_H3_verify(hash, prf->hashes, prf->ch, m, m_len, ch);
   unsigned char ch_collapsed[(FIS_NUM_ROUNDS + 3)/4];
@@ -222,7 +217,9 @@ static int fis_proof_verify(mpc_lowmc_t const* lowmc, mzd_t const* p, mzd_t cons
     ch_collapsed[idx] |= i + 3 < NUM_ROUNDS ? (ch[i + 3] & 3) << 6 : 0;
   }
   int success_status = memcmp(ch_collapsed, prf->ch, ((FIS_NUM_ROUNDS + 3) / 4) * sizeof(unsigned char));
-  END_TIMING(timing_and_size->verify.challenge);
+  END_TIMING(timing_and_size->verify.verify);
+
+  START_TIMING;
 
 #ifdef VERBOSE
   if (success_status)

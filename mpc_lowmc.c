@@ -161,7 +161,7 @@ proof_t* proof_from_char_array(mpc_lowmc_t* lowmc, proof_t* proof, unsigned char
     temp += first_view_bytes;
     for (unsigned j = 1; j < 1 + lowmc->r; j++) {
       proof->views[i][j].s    = (mzd_t**)malloc(2 * sizeof(mzd_t*));
-      proof->views[i][j].s[0] = mzd_from_char_array(temp, single_mzd_bytes, lowmc->n);
+      proof->views[i][j].s[0] = mzd_local_init(1, lowmc->n); //mzd_from_char_array(temp, single_mzd_bytes, lowmc->n);
       temp += single_mzd_bytes;
       proof->views[i][j].s[1] = mzd_from_char_array(temp, single_mzd_bytes, lowmc->n);
       temp += single_mzd_bytes;
@@ -256,7 +256,8 @@ proof_t* create_proof(proof_t* proof, mpc_lowmc_t const* lowmc,
                                                                                                    \
   mpc_xor(out, out, vars->r0m, sc);                                                                \
   mpc_xor(out, out, vars->x0s, sc);                                                                \
-  mpc_xor(out, out, vars->x1s, sc)
+  mpc_xor(out, out, vars->x1s, sc)                                                                
+
 
 static void _mpc_sbox_layer_bitsliced(mzd_t** out, mzd_t* const* in, view_t* view,
                                       mzd_t* const* rvec, mask_t const* mask,
@@ -282,6 +283,7 @@ static int _mpc_sbox_layer_bitsliced_verify(mzd_t** out, mzd_t* const* in, view_
   }
 
   bitsliced_step_2(SC_VERIFY);
+
   return 0;
 }
 
