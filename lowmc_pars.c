@@ -26,8 +26,8 @@
 
 static mask_t* prepare_masks(mask_t* mask, rci_t n, rci_t m) {
   mask->x0   = mzd_local_init(1, n);
-  mask->x1   = mzd_local_init(1, n);
-  mask->x2   = mzd_local_init(1, n);
+  mask->x1   = mzd_local_init_ex(1, n, false);
+  mask->x2   = mzd_local_init_ex(1, n, false);
   mask->mask = mzd_local_init(1, n);
 
   const int bound = n - 3 * m;
@@ -48,7 +48,7 @@ static mzd_t* mzd_sample_matrix_word(rci_t n, rci_t k, rci_t rank, bool with_xor
   // also, this function cannot be parallelized as mzd_echolonize will call
   // mzd_init and mzd_free at will causing various crashes.
   mzd_t* A = mzd_init(n, k);
-  mzd_t* B = mzd_local_init(n, k);
+  mzd_t* B = mzd_local_init_ex(n, k, false);
   do {
     mzd_randomize_ssl(A);
     if (with_xor) {
