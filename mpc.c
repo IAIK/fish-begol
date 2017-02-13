@@ -337,42 +337,38 @@ void mpc_print(mzd_t** shared_vec) {
 }
 
 void mpc_free(mzd_t** vec, unsigned sc) {
-  for (unsigned i = 0; i < sc; ++i) {
-    mzd_local_free(vec[i]);
-  }
+  (void) sc;
+  mzd_local_free_multiple(vec);
   free(vec);
 }
 
 mzd_t** mpc_init_empty_share_vector(rci_t n, unsigned sc) {
   mzd_t** s = calloc(sc, sizeof(mzd_t*));
-  for (unsigned i = 0; i < sc; ++i) {
-    s[i] = mzd_local_init(1, n);
-  }
+  mzd_local_init_multiple(s, sc, 1, n);
   return s;
 }
 
 mzd_t** mpc_init_random_vector(rci_t n, unsigned sc) {
-  mzd_t** s = calloc(sc, sizeof(mzd_t*));
+  mzd_t** s = mpc_init_empty_share_vector(n, sc);
   for (unsigned i = 0; i < sc; ++i) {
-    s[i] = mzd_init_random_vector(n);
+    mzd_randomize_ssl(s[i]);
   }
   return s;
 }
 
 mzd_t** mpc_init_plain_share_vector(mzd_t const* v) {
-  mzd_t** s = calloc(3, sizeof(mzd_t*));
-  s[0]      = mzd_local_copy(NULL, v);
-  s[1]      = mzd_local_copy(NULL, v);
-  s[2]      = mzd_local_copy(NULL, v);
+  mzd_t** s = mpc_init_empty_share_vector(v->ncols, 3);
+  for (unsigned i = 0; i < 3; ++i) {
+    mzd_local_copy(s[i], v);
+  }
 
   return s;
 }
 
 mzd_t** mpc_init_share_vector(mzd_t const* v) {
-  mzd_t** s = calloc(3, sizeof(mzd_t*));
-  s[0]      = mzd_init_random_vector(v->ncols);
-  s[1]      = mzd_init_random_vector(v->ncols);
-  s[2]      = mzd_local_init(1, v->ncols);
+  mzd_t** s = mpc_init_empty_share_vector(v->ncols, 3);
+  mzd_randomize_ssl(s[0]);
+  mzd_randomize_ssl(s[1]);
 
   mzd_xor(s[2], s[0], s[1]);
   mzd_xor(s[2], s[2], v);
