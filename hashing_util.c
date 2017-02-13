@@ -39,22 +39,14 @@ typedef SHA512_CTX commitment_ctx;
 #endif
 
 static void commit_mzd(commitment_ctx* ctx, mzd_t const* v) {
-  const rci_t nrows        = v->nrows;
-  const unsigned int width = sizeof(word) * v->width;
-  for (rci_t m = 0; m < nrows; ++m) {
-    commitment_update(ctx, v->rows[m], width);
-  }
+  commitment_update(ctx, CONST_FIRST_ROW(v), sizeof(word) * v->width * v->nrows);
 }
 
 #if COMMITMENT_LENGTH == SHA256_DIGEST_LENGTH
 #define hash_mzd commit_mzd
 #else
 static void hash_mzd(SHA256_CTX* ctx, mzd_t const* v) {
-  const rci_t nrows        = v->nrows;
-  const unsigned int width = sizeof(word) * v->width;
-  for (rci_t m = 0; m < nrows; ++m) {
-    SHA256_Update(ctx, v->rows[m], width);
-  }
+  SHA256_Update(ctx, CONST_FIRST_ROW(v), sizeof(word) * v->width * v->nrows);
 }
 #endif
 
