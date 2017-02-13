@@ -185,38 +185,34 @@ proof_t* create_proof(proof_t* proof, mpc_lowmc_t const* lowmc,
   if (!proof)
     proof = calloc(sizeof(proof_t), 1);
 
-  // memcpy(proof->hashes, hashes, NUM_ROUNDS * 3 * SHA256_DIGEST_LENGTH * sizeof(char));
-
   const size_t num_views = 2 + lowmc->r;
-
   for (unsigned int i = 0; i < NUM_ROUNDS; i++) {
     unsigned int a = ch[i];
     unsigned int b = (a + 1) % 3;
     unsigned int c = (a + 2) % 3;
 
-    memcpy(proof->hashes[i], hashes[i][c], COMMITMENT_LENGTH * sizeof(char));
+    memcpy(proof->hashes[i], hashes[i][c], COMMITMENT_LENGTH);
 
-    memcpy(proof->r[i][0], r[i][a], COMMITMENT_RAND_LENGTH * sizeof(char));
-    memcpy(proof->r[i][1], r[i][b], COMMITMENT_RAND_LENGTH * sizeof(char));
+    memcpy(proof->r[i][0], r[i][a], COMMITMENT_RAND_LENGTH);
+    memcpy(proof->r[i][1], r[i][b], COMMITMENT_RAND_LENGTH);
 
-    memcpy(proof->keys[i][0], keys[i][a], PRNG_KEYSIZE * sizeof(char));
-    memcpy(proof->keys[i][1], keys[i][b], PRNG_KEYSIZE * sizeof(char));
+    memcpy(proof->keys[i][0], keys[i][a], PRNG_KEYSIZE);
+    memcpy(proof->keys[i][1], keys[i][b], PRNG_KEYSIZE);
 
-    proof->views[i] = (view_t*)malloc(num_views * sizeof(view_t));
+    proof->views[i] = malloc(num_views * sizeof(view_t));
     for (unsigned j = 0; j < num_views; j++) {
       proof->views[i][j].s[0] = views[i][j].s[a];
       proof->views[i][j].s[1] = views[i][j].s[b];
       proof->views[i][j].s[2] = NULL;
       mzd_local_free(views[i][j].s[c]);
     }
+  }
 
-    if ((i % 4) == 0) {
-      int idx        = i / 4;
-      proof->ch[idx]  = (ch[i] & 3);
-      proof->ch[idx] |= i + 1 < NUM_ROUNDS ? (ch[i + 1] & 3) << 2 : 0;
-      proof->ch[idx] |= i + 2 < NUM_ROUNDS ? (ch[i + 2] & 3) << 4 : 0;
-      proof->ch[idx] |= i + 3 < NUM_ROUNDS ? (ch[i + 3] & 3) << 6 : 0;
-    }
+  for (unsigned int i = 0; i < NUM_ROUNDS; i++) {
+    const unsigned int idx = i / 4;
+    const unsigned int shift = (i % 4) << 1;
+
+    proof->ch[idx] |= (ch[i] & 3) << shift;
   }
 
   return proof;
