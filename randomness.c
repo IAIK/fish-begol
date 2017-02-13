@@ -70,15 +70,11 @@ void aes_prng_get_randomness(aes_prng_t* aes_prng, unsigned char* dst, size_t co
 
   int len = 0;
   for (; count >= 16; count -= 16, dst += 16) {
-    if (unlikely(1 != EVP_EncryptUpdate(ctx, dst, &len, plaintext, sizeof(plaintext)))) {
-      handleErrors();
-    }
+    EVP_EncryptUpdate(ctx, dst, &len, plaintext, sizeof(plaintext));
   }
 
   if (count) {
-    if (unlikely(1 != EVP_EncryptUpdate(ctx, dst, &len, plaintext, count))) {
-      handleErrors();
-    }
+    EVP_EncryptUpdate(ctx, dst, &len, plaintext, count);
   }
 }
 
