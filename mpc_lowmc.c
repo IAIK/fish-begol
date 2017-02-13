@@ -523,7 +523,7 @@ static mzd_t** _mpc_lowmc_call_bitsliced(mpc_lowmc_t const* lowmc, mpc_lowmc_key
 
   mzd_t** x = mpc_init_empty_share_vector(lowmc->n, SC_PROOF);
   mzd_t* y[SC_PROOF];
-  mzd_local_init_multiple(y, SC_PROOF, 1, lowmc->n);
+  mzd_local_init_multiple_ex(y, SC_PROOF, 1, lowmc->n, false);
 
 #ifdef NOSCR
   mpc_const_mat_mul_l(x, lowmc->k0_lookup, lowmc_key->shared, SC_PROOF);
@@ -589,7 +589,7 @@ static mzd_t** _mpc_lowmc_call_bitsliced_verify(mpc_lowmc_t const* lowmc,
 
   mzd_t** x           = mpc_init_empty_share_vector(lowmc->n, SC_VERIFY);
   mzd_t* y[SC_VERIFY] = {NULL};
-  mzd_local_init_multiple(y, SC_VERIFY, 1, lowmc->n);
+  mzd_local_init_multiple_ex(y, SC_VERIFY, 1, lowmc->n, false);
 
 #ifdef NOSCR
   mpc_const_mat_mul_l(x, lowmc->k0_lookup, lowmc_key->shared, SC_VERIFY);
@@ -724,7 +724,7 @@ sbox_vars_t* sbox_vars_init(sbox_vars_t* vars, rci_t n, unsigned sc) {
 #endif
 
   vars->storage = calloc(11 * sc, sizeof(mzd_t*));
-  mzd_local_init_multiple(vars->storage, 11 * sc, 1, n);
+  mzd_local_init_multiple_ex(vars->storage, 11 * sc, 1, n, false);
 
   for (unsigned int i = 0; i < sc; ++i) {
     vars->x0m[i] = vars->storage[11 * i + 0];

@@ -324,7 +324,7 @@ void mpc_copy(mzd_t** out, mzd_t* const* in, unsigned sc) {
 
 mzd_t* mpc_reconstruct_from_share(mzd_t* dst, mzd_t** shared_vec) {
   if (!dst) {
-    dst = mzd_local_init(shared_vec[0]->nrows, shared_vec[0]->ncols);
+    dst = mzd_local_init_ex(shared_vec[0]->nrows, shared_vec[0]->ncols, false);
   }
   mzd_xor(dst, shared_vec[0], shared_vec[1]);
   return mzd_xor(dst, dst, shared_vec[2]);
@@ -349,7 +349,8 @@ mzd_t** mpc_init_empty_share_vector(rci_t n, unsigned sc) {
 }
 
 mzd_t** mpc_init_random_vector(rci_t n, unsigned sc) {
-  mzd_t** s = mpc_init_empty_share_vector(n, sc);
+  mzd_t** s = calloc(sc, sizeof(mzd_t*));
+  mzd_local_init_multiple_ex(s, sc, 1, n, false);
   for (unsigned i = 0; i < sc; ++i) {
     mzd_randomize_ssl(s[i]);
   }
@@ -357,7 +358,8 @@ mzd_t** mpc_init_random_vector(rci_t n, unsigned sc) {
 }
 
 mzd_t** mpc_init_plain_share_vector(mzd_t const* v) {
-  mzd_t** s = mpc_init_empty_share_vector(v->ncols, 3);
+  mzd_t** s = calloc(3, sizeof(mzd_t*));
+  mzd_local_init_multiple_ex(s, 3, 1, v->ncols, false);
   for (unsigned i = 0; i < 3; ++i) {
     mzd_local_copy(s[i], v);
   }
@@ -366,7 +368,9 @@ mzd_t** mpc_init_plain_share_vector(mzd_t const* v) {
 }
 
 mzd_t** mpc_init_share_vector(mzd_t const* v) {
-  mzd_t** s = mpc_init_empty_share_vector(v->ncols, 3);
+  mzd_t** s = calloc(3, sizeof(mzd_t*));
+  mzd_local_init_multiple_ex(s, 3, 1, v->ncols, false);
+
   mzd_randomize_ssl(s[0]);
   mzd_randomize_ssl(s[1]);
 

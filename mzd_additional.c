@@ -61,7 +61,7 @@ static size_t calculate_row_alignment(size_t width) {
 // In mzd_local_init_multiple we do the same, but store n mzd_t instances in one
 // memory block.
 
-mzd_t* mzd_local_init(rci_t r, rci_t c) {
+mzd_t* mzd_local_init_ex(rci_t r, rci_t c, bool clear) {
   const rci_t width       = (c + m4ri_radix - 1) / m4ri_radix;
   const rci_t rowstride   = calculate_rowstride(width);
   const word high_bitmask = __M4RI_LEFT_BITMASK(c % m4ri_radix);
@@ -81,7 +81,9 @@ mzd_t* mzd_local_init(rci_t r, rci_t c) {
   mzd_t* A = (mzd_t*)buffer;
   buffer += mzd_t_size;
 
-  memset(buffer, 0, buffer_size);
+  if (clear) {
+    memset(buffer, 0, buffer_size);
+  }
 
   A->rows = (word**)(buffer + buffer_size);
   for (rci_t i = 0; i < r; ++i, buffer += rowstride * sizeof(word)) {
@@ -118,7 +120,7 @@ void mzd_local_free(mzd_t* v) {
   free(v);
 }
 
-void mzd_local_init_multiple(mzd_t** dst, size_t n, rci_t r, rci_t c) {
+void mzd_local_init_multiple_ex(mzd_t** dst, size_t n, rci_t r, rci_t c, bool clear) {
   const rci_t width       = (c + m4ri_radix - 1) / m4ri_radix;
   const rci_t rowstride   = calculate_rowstride(width);
   const word high_bitmask = __M4RI_LEFT_BITMASK(c % m4ri_radix);
@@ -140,7 +142,9 @@ void mzd_local_init_multiple(mzd_t** dst, size_t n, rci_t r, rci_t c) {
 
     buffer += mzd_t_size;
 
-    memset(buffer, 0, buffer_size);
+    if (clear) {
+      memset(buffer, 0, buffer_size);
+    }
 
     A->rows = (word**)(buffer + buffer_size);
     for (rci_t i = 0; i < r; ++i, buffer += rowstride * sizeof(word)) {
@@ -228,14 +232,14 @@ static void mzd_randomize_aes_prng(mzd_t* v, aes_prng_t* aes_prng) {
 }
 
 mzd_t* mzd_init_random_vector(rci_t n) {
-  mzd_t* A = mzd_local_init(1, n);
+  mzd_t* A = mzd_local_init_ex(1, n, false);
   mzd_randomize_ssl(A);
 
   return A;
 }
 
 mzd_t* mzd_init_random_vector_prng(rci_t n, aes_prng_t* aes_prng) {
-  mzd_t* v = mzd_local_init(1, n);
+  mzd_t* v = mzd_local_init_ex(1, n, false);
   mzd_randomize_aes_prng(v, aes_prng);
   return v;
 }
@@ -249,7 +253,7 @@ void mzd_randomize_from_seed(mzd_t* vector, const unsigned char key[16]) {
 
 
 mzd_t* mzd_init_random_vector_from_seed(const unsigned char key[16], rci_t n) {
-  mzd_t* vector = mzd_local_init(1, n);
+  mzd_t* vector = mzd_local_init_ex(1, n, false);
   mzd_randomize_from_seed(vector, key);
   return vector;
 }
@@ -260,7 +264,7 @@ mzd_t** mzd_init_random_vectors_from_seed(const unsigned char key[16], rci_t n,
   aes_prng_init(&aes_prng, key);
 
   mzd_t** vectors = calloc(count, sizeof(mzd_t*));
-  mzd_local_init_multiple(vectors, count, 1, n);
+  mzd_local_init_multiple_ex(vectors, count, 1, n, false);
   for (unsigned int v = 0; v < count; ++v) {
     mzd_randomize_aes_prng(vectors[v], &aes_prng);
   }
@@ -929,7 +933,7 @@ static void xor_comb(const unsigned int len, const word mask, word* Brow, word**
  *
  */
 mzd_t* mzd_precompute_matrix_lookup(mzd_t const* A) {
-  mzd_t* B = mzd_local_init(32 * A->nrows, A->ncols);
+  mzd_t* B = mzd_local_init_ex(32 * A->nrows, A->ncols, true);
 
   const unsigned int len = A->width;
   const word mask        = A->high_bitmask;

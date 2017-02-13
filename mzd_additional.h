@@ -29,7 +29,10 @@
  * Modified mzd_init calling malloc less often. Do not pass mzd_t instances
  * initialized with this function to mzd_free.
  */
-mzd_t* mzd_local_init(rci_t r, rci_t c) __attribute__((assume_aligned(32)));
+mzd_t* mzd_local_init_ex(rci_t r, rci_t c, bool clear) __attribute__((assume_aligned(32)));
+
+#define mzd_local_init(r, c) mzd_local_init_ex(r, c, true)
+
 /**
  * Modified mzd_free for mzd_local_init.
  */
@@ -37,7 +40,10 @@ void mzd_local_free(mzd_t* v);
 /**
  * Initialize multiple mzd_t instances using one large enough memory block.
  */
-void mzd_local_init_multiple(mzd_t** dst, size_t n, rci_t r, rci_t c) __attribute__((nonnull(1)));
+void mzd_local_init_multiple_ex(mzd_t** dst, size_t n, rci_t r, rci_t c, bool clear) __attribute__((nonnull(1)));
+
+#define mzd_local_init_multiple(dst, n, r, c) mzd_local_init_multiple_ex(dst, n, r, c, true)
+
 /**
  * mzd_free for mzd_local_init_multiple.
  */

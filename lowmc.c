@@ -33,7 +33,7 @@ static void sbox_layer_bitsliced(mzd_t* out, mzd_t* in, rci_t m, mask_t const* m
   mzd_and(out, in, mask->mask);
 
   mzd_t* buffer[6] = { NULL };
-  mzd_local_init_multiple(buffer, 6, 1, in->ncols);
+  mzd_local_init_multiple_ex(buffer, 6, 1, in->ncols, false);
 
   mzd_t* x0m = mzd_and(buffer[0], mask->x0, in);
   mzd_t* x1m = mzd_and(buffer[1], mask->x1, in);

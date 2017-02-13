@@ -33,7 +33,7 @@ void mzd_shared_copy(mzd_shared_t* dst, mzd_shared_t const* src) {
 void mzd_shared_from_shares(mzd_shared_t* shared_value, mzd_t* const* shares,
                             unsigned int share_count) {
   shared_value->share_count = share_count;
-  mzd_local_init_multiple(shared_value->shared, 3, shares[0]->nrows, shares[0]->ncols);
+  mzd_local_init_multiple_ex(shared_value->shared, 3, shares[0]->nrows, shares[0]->ncols, false);
 
   for (unsigned int i = 0; i < share_count; ++i) {
     mzd_local_copy(shared_value->shared[i], shares[i]);

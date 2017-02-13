@@ -174,7 +174,7 @@ static int fis_proof_verify(mpc_lowmc_t const* lowmc, mzd_t const* p, mzd_t cons
 
   mzd_t* ys[NUM_ROUNDS][3] = {{NULL}};
   mzd_t* ys_f[NUM_ROUNDS]  = {NULL};
-  mzd_local_init_multiple(ys_f, NUM_ROUNDS, 1, lowmc->n);
+  mzd_local_init_multiple_ex(ys_f, NUM_ROUNDS, 1, lowmc->n, false);
 
   START_TIMING;
 #pragma omp parallel for

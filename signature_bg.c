@@ -294,8 +294,8 @@ static int bg_proof_verify(public_parameters_t* pp, bg_public_key_t* pk, mzd_t* 
 
   mzd_t* y_free_y[NUM_ROUNDS] = {NULL};
   mzd_t* y_free_c[NUM_ROUNDS] = {NULL};
-  mzd_local_init_multiple(y_free_y, NUM_ROUNDS, 1, lowmc->n);
-  mzd_local_init_multiple(y_free_c, NUM_ROUNDS, 1, lowmc->n);
+  mzd_local_init_multiple_ex(y_free_y, NUM_ROUNDS, 1, lowmc->n, false);
+  mzd_local_init_multiple_ex(y_free_c, NUM_ROUNDS, 1, lowmc->n, false);
 
 #pragma omp parallel for
   for (unsigned int i = 0; i < BG_NUM_ROUNDS; ++i) {
