@@ -91,15 +91,11 @@ unsigned char* proof_to_char_array(mpc_lowmc_t* lowmc, proof_t* proof, unsigned*
 
     for (unsigned j = 1; j < 1 + lowmc->r; j++) {
       v0 = mzd_to_char_array(proof->views[i][j].s[0], single_mzd_bytes);
-      v1 = mzd_to_char_array(proof->views[i][j].s[1], single_mzd_bytes);
 
       memcpy(temp, v0, single_mzd_bytes);
       temp += single_mzd_bytes;
-      memcpy(temp, v1, single_mzd_bytes);
-      temp += single_mzd_bytes;
 
       free(v0);
-      free(v1);
     }
 
     v0 = mzd_to_char_array(proof->views[i][1 + lowmc->r].s[0], full_mzd_size);
@@ -161,8 +157,7 @@ proof_t* proof_from_char_array(mpc_lowmc_t* lowmc, proof_t* proof, unsigned char
     temp += first_view_bytes;
     for (unsigned j = 1; j < 1 + lowmc->r; j++) {
       proof->views[i][j].s    = (mzd_t**)malloc(2 * sizeof(mzd_t*));
-      proof->views[i][j].s[0] = mzd_local_init(1, lowmc->n); //mzd_from_char_array(temp, single_mzd_bytes, lowmc->n);
-      temp += single_mzd_bytes;
+      proof->views[i][j].s[0] = mzd_local_init(1, lowmc->n);
       proof->views[i][j].s[1] = mzd_from_char_array(temp, single_mzd_bytes, lowmc->n);
       temp += single_mzd_bytes;
     }
@@ -206,12 +201,23 @@ proof_t* create_proof(proof_t* proof, mpc_lowmc_t const* lowmc,
     memcpy(proof->keys[i][1], keys[i][b], PRNG_KEYSIZE * sizeof(char));
 
     proof->views[i] = (view_t*)malloc((2 + lowmc->r) * sizeof(view_t));
-    for (unsigned j = 0; j < 2 + lowmc->r; j++) {
-      proof->views[i][j].s    = (mzd_t**)malloc(2 * sizeof(mzd_t*));
-      proof->views[i][j].s[0] = views[i][j].s[a];
-      proof->views[i][j].s[1] = views[i][j].s[b];
+    proof->views[i][0].s    = (mzd_t**)malloc(2 * sizeof(mzd_t*));
+    proof->views[i][0].s[0] = views[i][0].s[a];
+    proof->views[i][0].s[1] = views[i][0].s[b];
+    mzd_local_free(views[i][0].s[c]);
+    for (unsigned j = 1; j < 1 + lowmc->r; j++) {
+      proof->views[i][j].s    = (mzd_t**)malloc(1 * sizeof(mzd_t*));
+      proof->views[i][j].s[0] = views[i][j].s[b];
+      // we keep the reference to this pointer here and free it later
+      // to circumvent the need for two clear functions. Note that 
+      // this reference is not serialized withing proof_to_char_array
+      proof->views[i][j].s[1] = views[i][j].s[a];
       mzd_local_free(views[i][j].s[c]);
     }
+    proof->views[i][lowmc->r + 1].s    = (mzd_t**)malloc(2 * sizeof(mzd_t*));
+    proof->views[i][lowmc->r + 1].s[0] = views[i][lowmc->r + 1].s[a];
+    proof->views[i][lowmc->r + 1].s[1] = views[i][lowmc->r + 1].s[b];
+    mzd_local_free(views[i][lowmc->r + 1].s[c]);
 
     if ((i % 4) == 0) {
       int idx        = i / 4;
@@ -767,7 +773,10 @@ sbox_vars_t* sbox_vars_init(sbox_vars_t* vars, rci_t n, unsigned sc) {
 
 void clear_proof(mpc_lowmc_t const* lowmc, proof_t const* proof) {
   for (unsigned int i = 0; i < NUM_ROUNDS; ++i) {
-    for (unsigned int j = 0; j < 2 + lowmc->r; ++j) {
+    mzd_local_free(proof->views[i][0].s[0]);
+    mzd_local_free(proof->views[i][0].s[1]);
+    free(proof->views[i][0].s);
+    for (unsigned int j = 1; j < 2 + lowmc->r; ++j) {
       for (unsigned int k = 0; k < SC_VERIFY; ++k) {
         mzd_local_free(proof->views[i][j].s[k]);
       }
