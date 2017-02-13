@@ -206,13 +206,11 @@ proof_t* create_proof(proof_t* proof, mpc_lowmc_t const* lowmc,
       proof->views[i][j].s[2] = NULL;
       mzd_local_free(views[i][j].s[c]);
     }
-  }
 
-  for (unsigned int i = 0; i < NUM_ROUNDS; i++) {
     const unsigned int idx = i / 4;
     const unsigned int shift = (i % 4) << 1;
 
-    proof->ch[idx] |= (ch[i] & 3) << shift;
+    proof->ch[idx] |= a << shift;
   }
 
   return proof;
