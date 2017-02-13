@@ -560,11 +560,11 @@ static mzd_t** _mpc_lowmc_call_bitsliced(mpc_lowmc_t const* lowmc, mpc_lowmc_key
 #endif
     mpc_const_add(x, x, round->constant, SC_PROOF, ch);
 #ifdef NOSCR
-    mpc_const_mat_mul_l(y, round->k_lookup, lowmc_key->shared, SC_PROOF);
+    mpc_const_addmat_mul_l(x, round->k_lookup, lowmc_key->shared, SC_PROOF);
 #else
     mpc_const_mat_mul(y, round->k_matrix, lowmc_key->shared, SC_PROOF);
-#endif
     mpc_add(x, x, y, SC_PROOF);
+#endif
   }
 
   if (xor_p) {
@@ -633,11 +633,11 @@ static mzd_t** _mpc_lowmc_call_bitsliced_verify(mpc_lowmc_t const* lowmc,
 #endif
     mpc_const_add(x, x, round->constant, SC_VERIFY, ch);
 #ifdef NOSCR
-    mpc_const_mat_mul_l(y, round->k_lookup, lowmc_key->shared, SC_VERIFY);
+    mpc_const_addmat_mul_l(x, round->k_lookup, lowmc_key->shared, SC_VERIFY);
 #else
     mpc_const_mat_mul(y, round->k_matrix, lowmc_key->shared, SC_VERIFY);
-#endif
     mpc_add(x, x, y, SC_VERIFY);
+#endif
   }
 
   if (x && xor_p) {
