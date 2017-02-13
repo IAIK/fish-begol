@@ -371,6 +371,8 @@ _mpc_sbox_layer_bitsliced_sse(mzd_t** out, mzd_t* const* in, view_t const* view,
   mpc_and_sse(r1m, x0s, x2m, r1s, view, 1);
 
   bitsliced_mm_step_2(SC_PROOF, __m128i, _mm_and_si128, _mm_xor_si128, mm128_shift_right);
+  
+  mpc_xor(view->s, view->s, out, SC_PROOF);
 }
 
 __attribute__((target("sse2"))) static int
@@ -385,6 +387,9 @@ _mpc_sbox_layer_bitsliced_sse_verify(mzd_t** out, mzd_t* const* in, view_t const
   }
 
   bitsliced_mm_step_2(SC_VERIFY, __m128i, _mm_and_si128, _mm_xor_si128, mm128_shift_right);
+
+  mzd_xor(view->s[0], view->s[0], out[0]);
+  mzd_copy(out[1], view->s[1]);
 
   return 0;
 }
@@ -401,6 +406,9 @@ _mpc_sbox_layer_bitsliced_avx(mzd_t** out, mzd_t* const* in, view_t const* view,
   mpc_and_avx(r1m, x0s, x2m, r1s, view, 1);
 
   bitsliced_mm_step_2(SC_PROOF, __m256i, _mm256_and_si256, _mm256_xor_si256, mm256_shift_right);
+
+  mpc_xor(view->s, view->s, out, SC_PROOF);	
+ 
 }
 
 __attribute__((target("avx2"))) static int
@@ -416,6 +424,9 @@ _mpc_sbox_layer_bitsliced_avx_verify(mzd_t** out, mzd_t** in, view_t const* view
 
   bitsliced_mm_step_2(SC_VERIFY, __m256i, _mm256_and_si256, _mm256_xor_si256, mm256_shift_right);
 
+  mzd_xor(view->s[0], view->s[0], out[0]);
+  mzd_copy(out[1], view->s[1]);
+   
   return 0;
 }
 #endif

@@ -20,13 +20,13 @@ WITH_SSE4_1 ?= $(shell $(CC) $(CFLAGS) -dM -E - < /dev/null | grep -q "SSE4_1" &
 WITH_AVX2 ?= $(shell $(CC) $(CFLAGS) -dM -E - < /dev/null | grep -q "AVX2" && echo 1 || echo 0)
 
 ifneq ($(WITH_SSE2),0)
-#CPPFLAGS+=-DWITH_SSE2
+CPPFLAGS+=-DWITH_SSE2
 endif
 ifneq ($(WITH_SSE4_1),0)
-#CPPFLAGS+=-DWITH_SSE4_1
+CPPFLAGS+=-DWITH_SSE4_1
 endif
 ifneq ($(WITH_AVX2),0)
-#CPPFLAGS+=-DWITH_AVX2
+CPPFLAGS+=-DWITH_AVX2
 endif
 
 SOURCES=$(wildcard *.c)
