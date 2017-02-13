@@ -369,10 +369,6 @@ __attribute__((target("avx2"))) static inline mzd_t* mzd_and_avx(mzd_t* res, mzd
 #endif
 
 mzd_t* mzd_and(mzd_t* res, mzd_t const* first, mzd_t const* second) {
-  if (res == 0) {
-    res = mzd_local_init(1, first->ncols);
-  }
-
 #ifdef WITH_OPT
 #ifdef WITH_AVX2
   if (CPU_SUPPORTS_AVX2 && first->ncols >= 256 && first->ncols % word_size_bits == 0) {
@@ -465,10 +461,6 @@ __attribute__((target("avx2"))) static inline mzd_t* mzd_xor_avx(mzd_t* res, mzd
 #endif
 
 mzd_t* mzd_xor(mzd_t* res, mzd_t const* first, mzd_t const* second) {
-  if (!res) {
-    res = mzd_local_init(1, first->ncols);
-  }
-
 #ifdef WITH_OPT
 #ifdef WITH_AVX2
   if (CPU_SUPPORTS_AVX2 && first->ncols >= 256 && first->ncols % word_size_bits == 0) {
@@ -502,12 +494,7 @@ mzd_t* mzd_mul_v(mzd_t* c, mzd_t const* v, mzd_t const* At) {
     return NULL;
   }
 
-  if (!c) {
-    c = mzd_local_init(1, At->ncols);
-  } else {
-    mzd_row_clear_offset(c, 0, 0);
-  }
-
+  mzd_row_clear_offset(c, 0, 0);
   return mzd_addmul_v(c, v, At);
 }
 
@@ -1059,6 +1046,7 @@ __attribute__((target("avx2"))) static inline mzd_t* mzd_mul_vl_avx_256(mzd_t* c
   *mcptr = mc;
   return c;
 }
+
 __attribute__((target("avx2"))) static inline mzd_t* mzd_addmul_vl_avx_256(mzd_t* c, mzd_t const* v,
                                                                            mzd_t const* A) {
   word const* vptr                = __builtin_assume_aligned(CONST_FIRST_ROW(v), 16);
