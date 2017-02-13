@@ -177,6 +177,23 @@ static int fis_proof_verify(mpc_lowmc_t const* lowmc, mzd_t const* p, mzd_t cons
   mzd_local_init_multiple(ys_f, NUM_ROUNDS, 1, lowmc->n);
 
   START_TIMING;
+#pragma omp parallel for
+  for (unsigned int i = 0; i < FIS_NUM_ROUNDS; ++i) {
+    mzd_t** rv[2];
+    rv[0] = mzd_init_random_vectors_from_seed(prf->keys[i][0], lowmc->n, lowmc->r);
+    rv[1] = mzd_init_random_vectors_from_seed(prf->keys[i][1], lowmc->n, lowmc->r);
+
+    mpc_lowmc_verify_keys(lowmc, p, false, prf->views[i], rv, prf->ch[i], prf->keys[i]);
+
+    mzd_local_free_multiple(rv[1]);
+    free(rv[1]);
+    mzd_local_free_multiple(rv[0]);
+    free(rv[0]);
+  }
+  END_TIMING(timing_and_size->verify.verify);
+
+
+  START_TIMING;
   unsigned char ch[FIS_NUM_ROUNDS];
   unsigned char hash[FIS_NUM_ROUNDS][2][COMMITMENT_LENGTH];
 #pragma omp parallel for
@@ -225,24 +242,6 @@ static int fis_proof_verify(mpc_lowmc_t const* lowmc, mzd_t const* p, mzd_t cons
   END_TIMING(timing_and_size->verify.output_views);
 
   mzd_local_free_multiple(ys_f);
-
-  START_TIMING;
-#pragma omp parallel for reduction(| : view_verify_status)
-  for (unsigned int i = 0; i < FIS_NUM_ROUNDS; ++i) {
-    mzd_t** rv[2];
-    rv[0] = mzd_init_random_vectors_from_seed(prf->keys[i][0], lowmc->n, lowmc->r);
-    rv[1] = mzd_init_random_vectors_from_seed(prf->keys[i][1], lowmc->n, lowmc->r);
-
-    if (mpc_lowmc_verify(lowmc, p, false, prf->views[i], rv, ch[i], prf->keys[i])) {
-      view_verify_status |= -1;
-    }
-
-    mzd_local_free_multiple(rv[1]);
-    free(rv[1]);
-    mzd_local_free_multiple(rv[0]);
-    free(rv[0]);
-  }
-  END_TIMING(timing_and_size->verify.verify);
 
 #ifdef VERBOSE
   if (output_share_status)

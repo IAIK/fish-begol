@@ -171,13 +171,10 @@ static bg_signature_t* bg_prove(public_parameters_t* pp, bg_private_key_t* priva
   mpc_lowmc_key_t lowmc_key_s[BG_NUM_ROUNDS] = {MZD_SHARED_EMPTY};
 
   START_TIMING;
-  aes_prng_t aes_prng;
-  aes_prng_init(&aes_prng, secret_sharing_key);
   for (unsigned i = 0; i < BG_NUM_ROUNDS; ++i) {
     mzd_shared_init(&lowmc_key_s[i], private_key->s);
-    mzd_shared_share_prng(&lowmc_key_s[i], &aes_prng);
+    mzd_shared_share_from_keys(&lowmc_key_s[i], keys_y[i]);
   }
-  aes_prng_clear(&aes_prng);
   END_TIMING(timing_and_size->sign.secret_sharing);
 
   mzd_t** c_mpc_y[BG_NUM_ROUNDS];
@@ -252,8 +249,8 @@ static int verify_views(mpc_lowmc_t const* lowmc, mzd_t const* p, mzd_t const* b
     rv_c[0] = mzd_init_random_vectors_from_seed(proof_c->keys[i][0], lowmc->n, lowmc->r);
     rv_c[1] = mzd_init_random_vectors_from_seed(proof_c->keys[i][1], lowmc->n, lowmc->r);
 
-    if (mpc_lowmc_verify(lowmc, p, true, proof_y->views[i], rv_y, ch[i], proof_y->keys[i]) ||
-        mpc_lowmc_verify(lowmc, beta, true, proof_c->views[i], rv_c, ch[i], proof_c->keys[i])) {
+    if (mpc_lowmc_verify_keys(lowmc, p, true, proof_y->views[i], rv_y, ch[i], proof_y->keys[i]) ||
+        mpc_lowmc_verify(lowmc, beta, true, proof_c->views[i], rv_c, ch[i])) {
       view_verify_status |= -1;
     }
 
