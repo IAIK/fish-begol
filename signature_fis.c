@@ -211,25 +211,14 @@ static int fis_proof_verify(mpc_lowmc_t const* lowmc, mzd_t const* p, mzd_t cons
     H(prf->keys[i][0], ys[i], prf->views[i], 0, view_count, prf->r[i][0], hash[i][0]);
     H(prf->keys[i][1], ys[i], prf->views[i], 1, view_count, prf->r[i][1], hash[i][1]);
   }
-  fis_H3_verify(hash, prf->hashes, prf->ch, m, m_len, ch);
+  int success_status = fis_H3_verify(hash, prf->hashes, prf->ch, m, m_len, ch);
   END_TIMING(timing_and_size->verify.challenge);
 
 #ifdef VERBOSE
-  if (output_share_status)
-    printf("[FAIL] Output shares do not match\n");
+  if (success_status)
+    printf("[FAIL] Verification failed\n");
   else
-    printf("[ OK ] Output shares match.\n");
-
-  if (reconstruct_status)
-    printf("[FAIL] MPC ciphertext does not match reference implementation.\n");
-  else
-    printf("[ OK ] MPC ciphertext matches.\n");
-
-  if (view_verify_status)
-    printf("[FAIL] Proof does not match reconstructed views.\n");
-  else
-    printf("[ OK ] Proof matches reconstructed views.\n");
-  printf("\n");
+    printf("[ OK ] Verification Succeeded.\n");
 #endif
 
   return output_share_status || reconstruct_status || view_verify_status;
