@@ -203,6 +203,7 @@ static int fis_proof_verify(mpc_lowmc_t const* lowmc, mzd_t const* p, mzd_t cons
   const unsigned int last_view_index = lowmc->r + 1;
 
   mzd_t* ys[3] = {NULL};
+  mzd_t* yc = mzd_local_init(1, lowmc->n);
 
   START_TIMING;
   unsigned char ch[FIS_NUM_ROUNDS];
@@ -251,12 +252,11 @@ static int fis_proof_verify(mpc_lowmc_t const* lowmc, mzd_t const* p, mzd_t cons
     ys[b_i] = prf->views[i][last_view_index].s[1];
     ys[c_i] = (mzd_t*)c;
 
-    ys[c_i] = mpc_reconstruct_from_share(0, ys);
+    ys[c_i] = mpc_reconstruct_from_share(yc, ys);
 
     H(prf->keys[i][0], ys, prf->views[i], 0, view_count, prf->r[i][0], hash[i][0]);
     H(prf->keys[i][1], ys, prf->views[i], 1, view_count, prf->r[i][1], hash[i][1]);
 
-    mzd_local_free(ys[c_i]);
 #ifdef WITH_OPENMP
     mzd_local_free_multiple(rv[1]);
     free(rv[1]);
@@ -265,6 +265,15 @@ static int fis_proof_verify(mpc_lowmc_t const* lowmc, mzd_t const* p, mzd_t cons
 #endif
   }
   fis_H3_verify(hash, prf->hashes, prf->ch, m, m_len, ch);
+
+#ifndef WITH_OPENMP
+  for (unsigned int i = 0; i < SC_VERIFY; ++i) {
+    mzd_local_free_multiple(rv[i]);
+    free(rv[i]);
+  }
+#endif
+  mzd_local_free(yc);
+
   unsigned char ch_collapsed[(FIS_NUM_ROUNDS + 3)/4] = { 0 };
   for (unsigned int i = 0; i < FIS_NUM_ROUNDS; ++i) {
     const unsigned int idx = i / 4;
@@ -283,7 +292,7 @@ static int fis_proof_verify(mpc_lowmc_t const* lowmc, mzd_t const* p, mzd_t cons
   }
   printf("\n");
 #endif
-  int success_status = memcmp(ch_collapsed, prf->ch, ((FIS_NUM_ROUNDS + 3) / 4) * sizeof(unsigned char));
+  const int success_status = memcmp(ch_collapsed, prf->ch, ((FIS_NUM_ROUNDS + 3) / 4) * sizeof(unsigned char));
   END_TIMING(timing_and_size->verify.verify);
 
   START_TIMING;
@@ -293,13 +302,6 @@ static int fis_proof_verify(mpc_lowmc_t const* lowmc, mzd_t const* p, mzd_t cons
     printf("[FAIL] Verification failed\n");
   else
     printf("[ OK ] Verification Succeeded.\n");
-#endif
-
-#ifndef WITH_OPENMP
-  for (unsigned int i = 0; i < SC_VERIFY; ++i) {
-    mzd_local_free_multiple(rv[i]);
-    free(rv[i]);
-  }
 #endif
 
   return success_status;
