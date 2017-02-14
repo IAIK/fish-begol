@@ -24,7 +24,7 @@
 // Output of size of the random oracle (\rho)
 #define COMMITMENT_LENGTH SHA256_DIGEST_LENGTH
 // Size of the randomness for the commitment (\nu)
-#define COMMITMENT_RAND_LENGTH 17
+#define COMMITMENT_RAND_LENGTH 0
 
 // Repetition count (\gamma)
 #ifdef WITH_PQ_PARAMETERS

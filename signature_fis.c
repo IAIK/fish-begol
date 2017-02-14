@@ -29,9 +29,9 @@ unsigned fis_compute_sig_size(unsigned m, unsigned n, unsigned r, unsigned k) {
   unsigned full_view_size  = n;
   unsigned int_view_size   = 3 * m;
   // views for mpc_and in sbox, intial view and last view
-  unsigned views = 2 * (r * int_view_size + first_view_size + full_view_size);
+  unsigned views = r * int_view_size + first_view_size + full_view_size;
   // commitment and r and seed
-  unsigned int commitment = 8 * (COMMITMENT_LENGTH + 2 * (COMMITMENT_RAND_LENGTH + 16));
+  unsigned int commitment = 8 * (COMMITMENT_LENGTH + 2 * (COMMITMENT_RAND_LENGTH + PRNG_KEYSIZE));
   unsigned int challenge  = (FIS_NUM_ROUNDS + 3) / 4;
 
   return (FIS_NUM_ROUNDS * (commitment + views) + full_view_size + challenge + 7) / 8;
