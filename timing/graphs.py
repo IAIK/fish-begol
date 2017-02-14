@@ -399,17 +399,21 @@ def create_omp_graphs(args, style=None):
       ol = fix_h5py_strings(list(timings.get('labels')))
 
       fis_sum = np.array(timings.get('fis_mean'))
-      bg_sum = np.array(timings.get('bg_mean'))
+      if timings.get('bg_mean') is not None:
+        bg_sum = np.array(timings.get('bg_mean'))
+      else:
+        bg_sum = None
 
       size, sign, verify, l =  prepare_data(fis_sum[2:], ol[2:])
       all_fis_sign.append(sign)
       all_fis_verify.append(verify)
       all_fis_size.append(size)
 
-      size, sign, verify, l =  prepare_data(bg_sum[2:], ol[2:])
-      all_bg_sign.append(sign)
-      all_bg_verify.append(verify)
-      all_bg_size.append(size)
+      if bg_sum is not None:
+        size, sign, verify, l =  prepare_data(bg_sum[2:], ol[2:])
+        all_bg_sign.append(sign)
+        all_bg_verify.append(verify)
+        all_bg_size.append(size)
 
       if labels is None:
         labels = l
@@ -418,10 +422,11 @@ def create_omp_graphs(args, style=None):
       max_num_threads, title='(Sign)')
   create_omp_graph('{0}-fis-verify'.format(prefix), n, k, all_fis_verify, all_fis_size[0], labels,
       max_num_threads, title='(Verify)')
-  create_omp_graph('{0}-bg-sign'.format(prefix), n, k, all_bg_sign, all_bg_size[0], labels,
-      max_num_threads, title='(Sign)')
-  create_omp_graph('{0}-bg-verify'.format(prefix), n, k, all_bg_verify, all_bg_size[0], labels,
-      max_num_threads, title='(Verify)')
+  if len(all_bg_sign):
+    create_omp_graph('{0}-bg-sign'.format(prefix), n, k, all_bg_sign, all_bg_size[0], labels,
+        max_num_threads, title='(Sign)')
+    create_omp_graph('{0}-bg-verify'.format(prefix), n, k, all_bg_verify, all_bg_size[0], labels,
+        max_num_threads, title='(Verify)')
 
 
 def create_graphs(args, style=None):
