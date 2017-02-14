@@ -19,7 +19,7 @@ timings-omp:
 	# adds a lot of noise.
 	set -ex && for n in $(shell seq 1 $(MAXTHREADS)) ; do \
 		env OMP_NUM_THREADS=$$n \
-			python3 timing.py lowmc-inst-256-256-256.txt -i $(ITER) \
+			python3 timing.py lowmc-inst-256-256-256.txt -k 256 -i $(ITER) \
 				-p omp-timings-$$n -x ../mpc_lowmc_openmp; \
 	done
 
