@@ -189,32 +189,37 @@ def create_graph(prefix, fis_n, bg_n, fis_k, bg_k, fis_data, bg_data, fis_labels
   annotate = []
 
   t_fis_size, t_fis_sign, t_fis_verify, t_fis_labels = prepare_data(fis_data, fis_labels)
-  t_bg_size, t_bg_sign, t_bg_verify, t_bg_labels = prepare_data(bg_data, bg_labels)
+  if bg_data is not None:
+    t_bg_size, t_bg_sign, t_bg_verify, t_bg_labels = prepare_data(bg_data, bg_labels)
 
   if fis_annotate is not None:
     fis_index = t_fis_labels.index(fis_annotate)
   else:
     fis_index = len(t_fis_labels) / 2 - 1
 
-  if bg_annotate is not None:
-    bg_index = t_bg_labels.index(bg_annotate)
-  else:
-    bg_index = len(t_bg_labels) / 2 - 1
+  if bg_data is not None:
+    if bg_annotate is not None:
+      bg_index = t_bg_labels.index(bg_annotate)
+    else:
+      bg_index = len(t_bg_labels) / 2 - 1
 
   t_fis_labels = ['{0}-{1}-{2}'.format(fis_n, fis_k, l) for l in t_fis_labels]
-  t_bg_labels = ['{0}-{1}-{2}'.format(bg_n, bg_k, l) for l in t_bg_labels]
+  if bg_data is not None:
+    t_bg_labels = ['{0}-{1}-{2}'.format(bg_n, bg_k, l) for l in t_bg_labels]
 
   dataframes['fis_sign_{0}'.format(fis_n)] = pd.Series(t_fis_sign, index=t_fis_labels)
   dataframes['fis_verify_{0}'.format(fis_n)] = pd.Series(t_fis_verify, index=t_fis_labels)
   dataframes['fis_size_{0}'.format(fis_n)] = pd.Series(t_fis_size, index=t_fis_labels)
-  dataframes['bg_sign_{0}'.format(bg_n)] = pd.Series(t_bg_sign, index=t_bg_labels)
-  dataframes['bg_verify_{0}'.format(bg_n)] = pd.Series(t_bg_verify, index=t_bg_labels)
-  dataframes['bg_size_{0}'.format(bg_n)] = pd.Series(t_bg_size, index=t_bg_labels)
+  if bg_data is not None:
+    dataframes['bg_sign_{0}'.format(bg_n)] = pd.Series(t_bg_sign, index=t_bg_labels)
+    dataframes['bg_verify_{0}'.format(bg_n)] = pd.Series(t_bg_verify, index=t_bg_labels)
+    dataframes['bg_size_{0}'.format(bg_n)] = pd.Series(t_bg_size, index=t_bg_labels)
 
   fis_min_index = t_fis_size.index(min(t_fis_size))
   fis_max_index = t_fis_size.index(max(t_fis_size))
-  bg_min_index = t_bg_size.index(min(t_bg_size))
-  bg_max_index = t_bg_size.index(max(t_bg_size))
+  if bg_data is not None:
+    bg_min_index = t_bg_size.index(min(t_bg_size))
+    bg_max_index = t_bg_size.index(max(t_bg_size))
 
   annotate.append(Annotation(t_fis_labels[fis_min_index],
                              (t_fis_size[fis_min_index], t_fis_sign[fis_min_index]),
@@ -222,12 +227,13 @@ def create_graph(prefix, fis_n, bg_n, fis_k, bg_k, fis_data, bg_data, fis_labels
   annotate.append(Annotation(None,
                              (t_fis_size[fis_min_index], t_fis_verify[fis_min_index]),
                              annotation_color_e))
-  annotate.append(Annotation(t_bg_labels[bg_min_index],
-                             (t_bg_size[bg_min_index], t_bg_sign[bg_min_index]),
-                             annotation_color_e))
-  annotate.append(Annotation(None,
-                             (t_bg_size[bg_min_index], t_bg_verify[bg_min_index]),
-                             annotation_color_e))
+  if bg_data is not None:
+    annotate.append(Annotation(t_bg_labels[bg_min_index],
+                               (t_bg_size[bg_min_index], t_bg_sign[bg_min_index]),
+                               annotation_color_e))
+    annotate.append(Annotation(None,
+                               (t_bg_size[bg_min_index], t_bg_verify[bg_min_index]),
+                               annotation_color_e))
 
   annotate.append(Annotation(t_fis_labels[fis_max_index],
                              (t_fis_size[fis_max_index], t_fis_sign[fis_max_index]),
@@ -235,12 +241,13 @@ def create_graph(prefix, fis_n, bg_n, fis_k, bg_k, fis_data, bg_data, fis_labels
   annotate.append(Annotation(None,
                              (t_fis_size[fis_max_index], t_fis_verify[fis_max_index]),
                              annotation_color_e))
-  annotate.append(Annotation(t_bg_labels[bg_max_index],
-                             (t_bg_size[bg_max_index], t_bg_sign[bg_max_index]),
-                             annotation_color_e))
-  annotate.append(Annotation(None,
-                             (t_bg_size[bg_max_index], t_bg_verify[bg_max_index]),
-                             annotation_color_e))
+  if bg_data is not None:
+    annotate.append(Annotation(t_bg_labels[bg_max_index],
+                               (t_bg_size[bg_max_index], t_bg_sign[bg_max_index]),
+                               annotation_color_e))
+    annotate.append(Annotation(None,
+                               (t_bg_size[bg_max_index], t_bg_verify[bg_max_index]),
+                               annotation_color_e))
 
   annotate.append(Annotation(t_fis_labels[fis_index],
                              (t_fis_size[fis_index], t_fis_sign[fis_index]),
@@ -248,15 +255,19 @@ def create_graph(prefix, fis_n, bg_n, fis_k, bg_k, fis_data, bg_data, fis_labels
   annotate.append(Annotation(None,
                              (t_fis_size[fis_index], t_fis_verify[fis_index]),
                              annotation_color_b))
-  annotate.append(Annotation(t_bg_labels[bg_index],
-                             (t_bg_size[bg_index], t_bg_sign[bg_index]),
-                             annotation_color_b))
-  annotate.append(Annotation(None,
-                             (t_bg_size[bg_index], t_bg_verify[bg_index]),
-                             annotation_color_b))
+  if bg_data is not None:
+    annotate.append(Annotation(t_bg_labels[bg_index],
+                               (t_bg_size[bg_index], t_bg_sign[bg_index]),
+                               annotation_color_b))
+    annotate.append(Annotation(None,
+                               (t_bg_size[bg_index], t_bg_verify[bg_index]),
+                               annotation_color_b))
 
-  combined_time = t_fis_sign + t_fis_verify + t_bg_sign + t_bg_verify
-  combined_size = t_fis_size + t_bg_size
+  combined_time = t_fis_sign + t_fis_verify
+  combined_size = t_fis_size
+  if bg_data is not None:
+    combined_time += t_bg_sign + t_bg_verify
+    combined_size += t_bg_size
 
   if include_sha and 'sha_proof' in kwargs and 'sha_verify' in kwargs and 'sha_size' in kwargs:
     sha_proof = kwargs['sha_proof']
@@ -422,9 +433,14 @@ def create_graphs(args, style=None):
     fis_labels = fix_h5py_strings(list(timings.get('labels')))
     fis_sum = np.array(timings.get('fis_mean'))
 
-  with h5py.File('{0}-{1}-{2}.mat'.format(prefix, bg_n, bg_k), 'r') as timings:
-    bg_labels = fix_h5py_strings(list(timings.get('labels')))
-    bg_sum = np.array(timings.get('bg_mean'))
+  if os.path.exists('{0}-{1}-{2}.mat'.format(prefix, bg_n, bg_k)):
+    with h5py.File('{0}-{1}-{2}.mat'.format(prefix, bg_n, bg_k), 'r') as timings:
+      if timings.get('bg_mean') is not None:
+        bg_labels = fix_h5py_strings(list(timings.get('labels')))
+        bg_sum = np.array(timings.get('bg_mean'))
+      else:
+        bg_labels = None
+        bg_sum = None
 
   create_graph('{0}'.format(prefix), fis_n, bg_n, fis_k, bg_k, fis_sum, bg_sum, fis_labels,
       bg_labels, args.fs_annotate, args.bg_annotate, style=style, sha_size=args.sha_size,
