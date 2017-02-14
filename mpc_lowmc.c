@@ -629,7 +629,7 @@ static mzd_t** _mpc_lowmc_call_bitsliced_verify(mpc_lowmc_t const* lowmc,
 #endif
   }
 
-  if (x && xor_p) {
+  if (xor_p) {
     mpc_const_add(x, x, p, SC_VERIFY, ch);
   }
 
