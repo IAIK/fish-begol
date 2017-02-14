@@ -201,8 +201,12 @@ static int fis_proof_verify(mpc_lowmc_t const* lowmc, mzd_t const* p, mzd_t cons
   const unsigned int view_count      = lowmc->r + 2;
   const unsigned int last_view_index = lowmc->r + 1;
 
-  mzd_t* ys[3] = {NULL};
+#ifdef WITH_OPENMP
+  mzd_t* ycs[FIS_NUM_ROUNDS] = {NULL};
+  mzd_local_init_multiple(ycs, FIS_NUM_ROUNDS, 1, lowmc->n);
+#else
   mzd_t* yc    = mzd_local_init(1, lowmc->n);
+#endif
 
   START_TIMING;
   unsigned char ch[FIS_NUM_ROUNDS];
@@ -247,10 +251,14 @@ static int fis_proof_verify(mpc_lowmc_t const* lowmc, mzd_t const* p, mzd_t cons
     }
 #endif
 
+    mzd_t* ys[3];
     ys[a_i] = prf->views[i][last_view_index].s[0];
     ys[b_i] = prf->views[i][last_view_index].s[1];
     ys[c_i] = (mzd_t*)c;
 
+#ifdef WITH_OPENMP
+    mzd_t* yc = ycs[i];
+#endif
     ys[c_i] = mpc_reconstruct_from_share(yc, ys);
 
     H(prf->keys[i][0], ys, prf->views[i], 0, view_count, prf->r[i][0], hash[i][0]);
@@ -265,13 +273,15 @@ static int fis_proof_verify(mpc_lowmc_t const* lowmc, mzd_t const* p, mzd_t cons
   }
   fis_H3_verify(hash, prf->hashes, prf->ch, m, m_len, ch);
 
-#ifndef WITH_OPENMP
+#ifdef WITH_OPENMP
+  mzd_local_free_multiple(ycs);
+#else
   for (unsigned int i = 0; i < SC_VERIFY; ++i) {
     mzd_local_free_multiple(rv[i]);
     free(rv[i]);
   }
-#endif
   mzd_local_free(yc);
+#endif
 
   unsigned char ch_collapsed[(FIS_NUM_ROUNDS + 3) / 4] = {0};
   for (unsigned int i = 0; i < FIS_NUM_ROUNDS; ++i) {
