@@ -4,8 +4,8 @@ MAXTHREADS?=$(shell grep "^processor"  /proc/cpuinfo | wc -l)
 PQOPTS=-p pq-timings -x ../mpc_lowmc_pq
 
 timings-preq:
-	python3 timing.py lowmc-inst-128-128-128.txt -k 128 -i $(ITER)
-	python3 timing.py lowmc-inst-192-192-192.txt -k 192 -i $(ITER)
+	# python3 timing.py lowmc-inst-128-128-128.txt -k 128 -i $(ITER)
+	# python3 timing.py lowmc-inst-192-192-192.txt -k 192 -i $(ITER)
 	python3 timing.py lowmc-inst-256-256-256.txt -k 256 -i $(ITER)
 	python3 timing.py lowmc-inst-512-512-512.txt -k 512 -i $(ITER)
 
