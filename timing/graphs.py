@@ -27,6 +27,7 @@ import seaborn as sns
 import math
 from operator import itemgetter
 import json
+import os.path
 
 
 # from ZKBoo (SHA-256, 219 rounds)
@@ -299,12 +300,13 @@ def create_graph(prefix, fis_n, bg_n, fis_k, bg_k, fis_data, bg_data, fis_labels
   df.plot(x='fis_size_{0}'.format(fis_n), y='fis_verify_{0}'.format(fis_n),
           label=('{Verify} ({FS})' + (' n={0}' if bg_n != fis_n else '')).format(fis_n, **strings),
           color=colors[-1], linestyle=':', **args)
-  df.plot(x='bg_size_{0}'.format(bg_n), y='bg_sign_{0}'.format(bg_n),
-          label=('{Sign} ({BG})'  + (' n={0}' if bg_n != fis_n else '')).format(bg_n, **strings),
-          color=colors[0], linestyle='--', **args)
-  df.plot(x='bg_size_{0}'.format(bg_n), y='bg_verify_{0}'.format(bg_n),
-          label=('{Verify} ({BG})'  + (' n={0}' if bg_n != fis_n else '')).format(bg_n, **strings),
-          color=colors[0], linestyle=':', **args)
+  if bg_data is not None:
+    df.plot(x='bg_size_{0}'.format(bg_n), y='bg_sign_{0}'.format(bg_n),
+            label=('{Sign} ({BG})'  + (' n={0}' if bg_n != fis_n else '')).format(bg_n, **strings),
+            color=colors[0], linestyle='--', **args)
+    df.plot(x='bg_size_{0}'.format(bg_n), y='bg_verify_{0}'.format(bg_n),
+            label=('{Verify} ({BG})'  + (' n={0}' if bg_n != fis_n else '')).format(bg_n, **strings),
+            color=colors[0], linestyle=':', **args)
 
   ax = args['ax']
   for a in annotate:
