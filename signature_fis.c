@@ -24,8 +24,6 @@
 #include "randomness.h"
 #include "timing.h"
 
-#define VERBOSE
-
 unsigned fis_compute_sig_size(unsigned m, unsigned n, unsigned r, unsigned k) {
   unsigned first_view_size = k;
   unsigned full_view_size  = n;
@@ -145,6 +143,7 @@ static proof_t* fis_prove(mpc_lowmc_t* lowmc, lowmc_key_t* lowmc_key, mzd_t* p, 
 #endif
     c_mpc[i] = mpc_lowmc_call(lowmc, &s[i], p, false, views[i], rvec);
 
+#ifdef VERBOSE
     printf("views prf:\n");
     for(int j = 0 ; j <= lowmc->r + 1 ; ++j) {
       printf("%d\n", j);
@@ -152,6 +151,7 @@ static proof_t* fis_prove(mpc_lowmc_t* lowmc, lowmc_key_t* lowmc_key, mzd_t* p, 
       mzd_print(views[i][j].s[1]);
       mzd_print(views[i][j].s[2]);
     }
+#endif
   }
   END_TIMING(timing_and_size->sign.lowmc_enc);
 
@@ -221,13 +221,15 @@ static int fis_proof_verify(mpc_lowmc_t const* lowmc, mzd_t const* p, mzd_t cons
     rv[1] = mzd_init_random_vectors_from_seed(prf->keys[i][1], lowmc->n, lowmc->r);
 
     mpc_lowmc_verify_keys(lowmc, p, false, prf->views[i], rv, a_i, prf->keys[i]);
- 
+
+#ifdef VERBOSE
     printf("views vrf:\n");
     for(int j = 0 ; j <= last_view_index ; ++j) {
       printf("%d\n", j);
       mzd_print(prf->views[i][j].s[0]);
       mzd_print(prf->views[i][j].s[1]);
     }
+#endif
 
     ys[a_i] = prf->views[i][last_view_index].s[0];
     ys[b_i] = prf->views[i][last_view_index].s[1];
