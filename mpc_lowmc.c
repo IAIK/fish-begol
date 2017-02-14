@@ -57,7 +57,7 @@ unsigned char* proof_to_char_array(mpc_lowmc_t* lowmc, proof_t* proof, unsigned*
   unsigned first_view_bytes = lowmc->k / 8;
   unsigned full_mzd_size    = lowmc->n / 8;
   unsigned single_mzd_bytes = ((3 * lowmc->m) + 7) / 8;
-  unsigned mzd_bytes        = lowmc->r * single_mzd_bytes + 2 * (first_view_bytes + full_mzd_size);
+  unsigned mzd_bytes        = lowmc->r * single_mzd_bytes + first_view_bytes + full_mzd_size;
   *len =
       NUM_ROUNDS * (COMMITMENT_LENGTH + 2 * (COMMITMENT_RAND_LENGTH + PRNG_KEYSIZE) + mzd_bytes) +
       (store_ch ? ((NUM_ROUNDS + 3) / 4) : 0);
@@ -85,7 +85,6 @@ unsigned char* proof_to_char_array(mpc_lowmc_t* lowmc, proof_t* proof, unsigned*
     temp += PRNG_KEYSIZE;
 
     unsigned char* v0;
-    unsigned char* v1;
   
     if(getChAt(proof->ch, i) != 0) {
       v0 = mzd_to_char_array(proof->views[i][0].s[getChAt(proof->ch, i) % 2], first_view_bytes);
@@ -103,16 +102,13 @@ unsigned char* proof_to_char_array(mpc_lowmc_t* lowmc, proof_t* proof, unsigned*
       free(v0);
     }
 
-    v0 = mzd_to_char_array(proof->views[i][1 + lowmc->r].s[0], full_mzd_size);
-    v1 = mzd_to_char_array(proof->views[i][1 + lowmc->r].s[1], full_mzd_size);
-
+    v0 = mzd_to_char_array(proof->views[i][1 + lowmc->r].s[1], full_mzd_size);
+    
     memcpy(temp, v0, full_mzd_size);
     temp += full_mzd_size;
-    memcpy(temp, v1, full_mzd_size);
-    temp += full_mzd_size;
-
+    
     free(v0);
-    free(v1);
+    
   }
 
   return result;
@@ -126,7 +122,7 @@ proof_t* proof_from_char_array(mpc_lowmc_t* lowmc, proof_t* proof, unsigned char
   unsigned first_view_bytes = lowmc->k / 8;
   unsigned full_mzd_size    = lowmc->n / 8;
   unsigned single_mzd_bytes = ((3 * lowmc->m) + 7) / 8;
-  unsigned mzd_bytes        = lowmc->r * single_mzd_bytes + first_view_bytes + 2 * full_mzd_size;
+  unsigned mzd_bytes        = lowmc->r * single_mzd_bytes + first_view_bytes + full_mzd_size;
   *len =
       NUM_ROUNDS * (COMMITMENT_LENGTH + 2 * (COMMITMENT_RAND_LENGTH + PRNG_KEYSIZE) + mzd_bytes) +
       (contains_ch ? ((NUM_ROUNDS + 3) / 4) : 0);
@@ -173,8 +169,7 @@ proof_t* proof_from_char_array(mpc_lowmc_t* lowmc, proof_t* proof, unsigned char
       temp += single_mzd_bytes;
       proof->views[i][j].s[2] = NULL;
     }
-    proof->views[i][1 + lowmc->r].s[0] = mzd_from_char_array(temp, full_mzd_size, lowmc->n);
-    temp += full_mzd_size;
+    proof->views[i][1 + lowmc->r].s[0] = mzd_local_init(1, lowmc->n);
     proof->views[i][1 + lowmc->r].s[1] = mzd_from_char_array(temp, full_mzd_size, lowmc->n);
     temp += full_mzd_size;
     proof->views[i][1 + lowmc->r].s[2] = NULL;
@@ -222,7 +217,7 @@ proof_t* create_proof(proof_t* proof, mpc_lowmc_t const* lowmc,
       proof->views[i][j].s[2] = NULL;
       mzd_local_free(views[i][j].s[c]);
     }
-    proof->views[i][last_round].s[0] = views[i][last_round].s[a];
+    proof->views[i][last_round].s[0] = NULL;
     proof->views[i][last_round].s[1] = views[i][last_round].s[b];
     proof->views[i][last_round].s[2] = NULL;
     mzd_local_free(views[i][last_round].s[c]);
