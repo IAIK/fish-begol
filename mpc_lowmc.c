@@ -276,19 +276,16 @@ static void _mpc_sbox_layer_bitsliced(mzd_t** out, mzd_t* const* in, view_t* vie
   bitsliced_step_2(SC_PROOF);
 }
 
-static int _mpc_sbox_layer_bitsliced_verify(mzd_t** out, mzd_t* const* in, view_t const* view,
+static void _mpc_sbox_layer_bitsliced_verify(mzd_t** out, mzd_t* const* in, view_t const* view,
                                             mzd_t* const* rvec, mask_t const* mask,
                                             sbox_vars_t const* vars) {
   bitsliced_step_1(SC_VERIFY);
 
-  if (mpc_and_verify(vars->r0m, vars->x0s, vars->x1s, vars->r2m, view, mask->x2, 0, vars->v) ||
-      mpc_and_verify(vars->r2m, vars->x1s, vars->x2m, vars->r0s, view, mask->x2, 2, vars->v) ||
-      mpc_and_verify(vars->r1m, vars->x0s, vars->x2m, vars->r1s, view, mask->x2, 1, vars->v)) {
-    return -1;
-  }
+  mpc_and_verify(vars->r0m, vars->x0s, vars->x1s, vars->r2m, view, mask->x2, 0, vars->v);
+  mpc_and_verify(vars->r2m, vars->x1s, vars->x2m, vars->r0s, view, mask->x2, 2, vars->v);
+  mpc_and_verify(vars->r1m, vars->x0s, vars->x2m, vars->r1s, view, mask->x2, 1, vars->v);
 
   bitsliced_step_2(SC_VERIFY);
-  return 0;
 }
 
 #ifdef WITH_OPT
@@ -371,20 +368,16 @@ _mpc_sbox_layer_bitsliced_sse(mzd_t** out, mzd_t* const* in, view_t const* view,
   bitsliced_mm_step_2(SC_PROOF, __m128i, _mm_and_si128, _mm_xor_si128, mm128_shift_right);
 }
 
-__attribute__((target("sse2"))) static int
+__attribute__((target("sse2"))) static void
 _mpc_sbox_layer_bitsliced_sse_verify(mzd_t** out, mzd_t* const* in, view_t const* view,
                                      mzd_t** rvec, mask_t const* mask) {
   bitsliced_mm_step_1(SC_VERIFY, __m128i, _mm_and_si128, mm128_shift_left);
 
-  if (mpc_and_verify_sse(r0m, x0s, x1s, r2m, view, mx2, 0) ||
-      mpc_and_verify_sse(r2m, x1s, x2m, r0s, view, mx2, 2) ||
-      mpc_and_verify_sse(r1m, x0s, x2m, r1s, view, mx2, 1)) {
-    return -1;
-  }
+  mpc_and_verify_sse(r0m, x0s, x1s, r2m, view, mx2, 0);
+  mpc_and_verify_sse(r2m, x1s, x2m, r0s, view, mx2, 2);
+  mpc_and_verify_sse(r1m, x0s, x2m, r1s, view, mx2, 1);
 
   bitsliced_mm_step_2(SC_VERIFY, __m128i, _mm_and_si128, _mm_xor_si128, mm128_shift_right);
-
-  return 0;
 }
 #endif
 
@@ -399,23 +392,18 @@ _mpc_sbox_layer_bitsliced_avx(mzd_t** out, mzd_t* const* in, view_t const* view,
   mpc_and_avx(r1m, x0s, x2m, r1s, view, 1);
 
   bitsliced_mm_step_2(SC_PROOF, __m256i, _mm256_and_si256, _mm256_xor_si256, mm256_shift_right);
- 
 }
 
-__attribute__((target("avx2"))) static int
+__attribute__((target("avx2"))) static void
 _mpc_sbox_layer_bitsliced_avx_verify(mzd_t** out, mzd_t** in, view_t const* view,
                                      mzd_t* const* rvec, mask_t const* mask) {
   bitsliced_mm_step_1(SC_VERIFY, __m256i, _mm256_and_si256, mm256_shift_left);
 
-  if (mpc_and_verify_avx(r0m, x0s, x1s, r2m, view, mx2, 0) ||
-      mpc_and_verify_avx(r2m, x1s, x2m, r0s, view, mx2, 2) ||
-      mpc_and_verify_avx(r1m, x0s, x2m, r1s, view, mx2, 1)) {
-    return -1;
-  }
+  mpc_and_verify_avx(r0m, x0s, x1s, r2m, view, mx2, 0);
+  mpc_and_verify_avx(r2m, x1s, x2m, r0s, view, mx2, 2);
+  mpc_and_verify_avx(r1m, x0s, x2m, r1s, view, mx2, 1);
 
   bitsliced_mm_step_2(SC_VERIFY, __m256i, _mm256_and_si256, _mm256_xor_si256, mm256_shift_right);
-   
-  return 0;
 }
 #endif
 #endif
@@ -611,27 +599,20 @@ static mzd_t** _mpc_lowmc_call_bitsliced_verify(mpc_lowmc_t const* lowmc,
     // TODO: fix for SC_VERIFY != 2
     mzd_t* r[SC_VERIFY] = {rvec[0][i], rvec[1][i]};
 
-    int ret = 0;
 #ifdef WITH_OPT
 #ifdef WITH_SSE2
     if (CPU_SUPPORTS_SSE2 && lowmc->n <= 128) {
-      ret = _mpc_sbox_layer_bitsliced_sse_verify(y, x, views, r, &lowmc->mask);
+      _mpc_sbox_layer_bitsliced_sse_verify(y, x, views, r, &lowmc->mask);
     } else
 #endif
 #ifdef WITH_AVX2
     if (CPU_SUPPORTS_AVX2 && lowmc->n <= 256) {
-      ret = _mpc_sbox_layer_bitsliced_avx_verify(y, x, views, r, &lowmc->mask);
+      _mpc_sbox_layer_bitsliced_avx_verify(y, x, views, r, &lowmc->mask);
     } else
 #endif
 #endif
     {
-      ret = _mpc_sbox_layer_bitsliced_verify(y, x, views, r, &lowmc->mask, &vars);
-    }
-    if (ret) {
-      mpc_free(x, SC_VERIFY);
-      x       = NULL;
-      *status = -1;
-      break;
+      _mpc_sbox_layer_bitsliced_verify(y, x, views, r, &lowmc->mask, &vars);
     }
 
 #ifdef NOSCR
