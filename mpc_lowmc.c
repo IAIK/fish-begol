@@ -650,6 +650,8 @@ int _mpc_lowmc_verify(mpc_lowmc_t const* lowmc, mpc_lowmc_key_t *lowmc_key, mzd_
   int status = 0;
   mzd_t** v =
       _mpc_lowmc_call_bitsliced_verify(lowmc, lowmc_key, p, xor_p, views, rvec, c, &status);
+  mpc_free(v, SC_VERIFY);
+#if 0
   if (v) {
     for (unsigned int i = 0; i < SC_VERIFY; ++i) {
       if (!mzd_local_equal(views[lowmc->r + 1].s[i], v[i])) {
@@ -659,6 +661,7 @@ int _mpc_lowmc_verify(mpc_lowmc_t const* lowmc, mpc_lowmc_key_t *lowmc_key, mzd_
     }
     mpc_free(v, SC_VERIFY);
   }
+#endif
   mzd_shared_clear(lowmc_key);
   return status;
 }
