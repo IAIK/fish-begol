@@ -219,6 +219,7 @@ proof_t* create_proof(proof_t* proof, mpc_lowmc_t const* lowmc,
     proof->views[i][last_round].s[0] = NULL;
     proof->views[i][last_round].s[1] = views[i][last_round].s[b];
     proof->views[i][last_round].s[2] = NULL;
+    mzd_local_free(views[i][last_round].s[a]);
     mzd_local_free(views[i][last_round].s[c]);
 
     const unsigned int idx   = i / 4;
