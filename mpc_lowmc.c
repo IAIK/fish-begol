@@ -56,7 +56,7 @@ unsigned char* proof_to_char_array(mpc_lowmc_t* lowmc, proof_t* proof, unsigned*
   unsigned first_view_bytes = lowmc->k / 8;
   unsigned full_mzd_size    = lowmc->n / 8;
   unsigned single_mzd_bytes = ((3 * lowmc->m) + 7) / 8;
-  unsigned mzd_bytes        = 2 * (lowmc->r * single_mzd_bytes + first_view_bytes + full_mzd_size);
+  unsigned mzd_bytes        = lowmc->r * single_mzd_bytes + 2 * (first_view_bytes + full_mzd_size);
   *len =
       NUM_ROUNDS * (COMMITMENT_LENGTH + 2 * (COMMITMENT_RAND_LENGTH + PRNG_KEYSIZE) + mzd_bytes) +
       (store_ch ? ((NUM_ROUNDS + 3) / 4) : 0);
@@ -124,7 +124,7 @@ proof_t* proof_from_char_array(mpc_lowmc_t* lowmc, proof_t* proof, unsigned char
   unsigned first_view_bytes = lowmc->k / 8;
   unsigned full_mzd_size    = lowmc->n / 8;
   unsigned single_mzd_bytes = ((3 * lowmc->m) + 7) / 8;
-  unsigned mzd_bytes        = 2 * (lowmc->r * single_mzd_bytes + first_view_bytes + full_mzd_size);
+  unsigned mzd_bytes        = lowmc->r * single_mzd_bytes + 2 * (first_view_bytes + full_mzd_size);
   *len =
       NUM_ROUNDS * (COMMITMENT_LENGTH + 2 * (COMMITMENT_RAND_LENGTH + PRNG_KEYSIZE) + mzd_bytes) +
       (contains_ch ? ((NUM_ROUNDS + 3) / 4) : 0);
