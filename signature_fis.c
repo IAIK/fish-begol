@@ -213,9 +213,9 @@ static int fis_proof_verify(mpc_lowmc_t const* lowmc, mzd_t const* p, mzd_t cons
     unsigned int b_i = (a_i + 1) % 3;
     unsigned int c_i = (a_i + 2) % 3;
 
-    mzd_local_free(ys[a_i]);
+    mzd_local_free(prf->views[i][last_view_index].s[0]);
     prf->views[i][last_view_index].s[0] = mzd_local_init(1, lowmc->n);
-    
+
     mzd_t** rv[2];
     rv[0] = mzd_init_random_vectors_from_seed(prf->keys[i][0], lowmc->n, lowmc->r);
     rv[1] = mzd_init_random_vectors_from_seed(prf->keys[i][1], lowmc->n, lowmc->r);
