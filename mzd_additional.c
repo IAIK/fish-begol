@@ -25,7 +25,7 @@
 #ifdef WITH_OPT
 #include "simd.h"
 
-#ifdef WITH_SSE2
+#if defined(WITH_SSE2) || defined(WITH_SSE4_1)
 static const unsigned int sse_bound = 128 / (8 * sizeof(word));
 #endif
 #if defined(WITH_SSE2) || defined(WITH_AVX2)
