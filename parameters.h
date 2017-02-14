@@ -28,9 +28,9 @@
 
 // Repetition count (\gamma)
 #ifdef WITH_PQ_PARAMETERS
-#define NUM_ROUNDS 419
+#define NUM_ROUNDS 438
 #else
-#define NUM_ROUNDS 238
+#define NUM_ROUNDS 219
 #endif
 
 #define FIS_NUM_ROUNDS NUM_ROUNDS
