@@ -75,11 +75,16 @@ def main():
 
           mat.append(map(int, line.split(',')))
 
-        fs = np.array(mat[:len(mat) / 2])
-        bg = np.array(mat[len(mat) / 2:])
+        if args.begol:
+            fs = np.array(mat[:len(mat) / 2])
+            bg = np.array(mat[len(mat) / 2:])
+        else:
+            fs = np.array(mat)
 
         all_timings_fs.append(np.mean(fs, axis=0))
-        all_timings_bg.append(np.mean(bg, axis=0))
+
+        if args.begol:
+            all_timings_bg.append(np.mean(bg, axis=0))
 
         fs_size = compute_size(fs)
         fs_gen = compute_gen(fs)
@@ -90,22 +95,24 @@ def main():
         all_timings_fs_mean.append(list(map(np.mean, [fs_gen, fs_sign, fs_verify,
             fs_size])))
 
-        bg_size = compute_size(bg)
-        bg_gen = compute_gen(bg)
-        bg_sign = compute_sign(bg)
-        bg_verify = compute_verify(bg)
-        all_timings_bg_median.append(list(map(np.median, [bg_gen, bg_sign, bg_verify,
-            bg_size])))
-        all_timings_bg_mean.append(list(map(np.mean, [bg_gen, bg_sign, bg_verify,
-            bg_size])))
+        if args.begol:
+            bg_size = compute_size(bg)
+            bg_gen = compute_gen(bg)
+            bg_sign = compute_sign(bg)
+            bg_verify = compute_verify(bg)
+            all_timings_bg_median.append(list(map(np.median, [bg_gen, bg_sign, bg_verify,
+                bg_size])))
+            all_timings_bg_mean.append(list(map(np.mean, [bg_gen, bg_sign, bg_verify,
+                bg_size])))
 
     with h5py.File('{0}-{1}-{2}.mat'.format(args.prefix, n, k), 'w') as timings:
         timings.create_dataset('fis_sum', data=np.array(all_timings_fs))
-        timings.create_dataset('bg_sum', data=np.array(all_timings_bg))
         timings.create_dataset('fis_median', data=np.array(all_timings_fs_median))
-        timings.create_dataset('bg_median', data=np.array(all_timings_bg_median))
         timings.create_dataset('fis_mean', data=np.array(all_timings_fs_mean))
-        timings.create_dataset('bg_mean', data=np.array(all_timings_bg_mean))
+        if args.begol:
+            timings.create_dataset('bg_sum', data=np.array(all_timings_bg))
+            timings.create_dataset('bg_median', data=np.array(all_timings_bg_median))
+            timings.create_dataset('bg_mean', data=np.array(all_timings_bg_mean))
         timings.create_dataset('labels', data=labels)
 
 
@@ -129,6 +136,8 @@ def parse_args():
                       default='100')
   parser.add_argument('-p', '--prefix', help='prefix of mat files',
                       default='timings')
+  parser.add_argument('-b', '--begol', help='alsp time Begol', default=False,
+                      action='store_true')
   args = parser.parse_args()
   return args
 
