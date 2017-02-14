@@ -232,6 +232,10 @@ static int fis_proof_verify(mpc_lowmc_t const* lowmc, mzd_t const* p, mzd_t cons
     }
 #endif
 
+    for (unsigned int j = 1; j < view_count - 1; ++j) {
+      mzd_local_clear(prf->views[i][j].s[0]);
+    }
+
     mpc_lowmc_verify_keys(lowmc, p, false, prf->views[i], rv, a_i, prf->keys[i]);
 
 #ifdef VERBOSE
