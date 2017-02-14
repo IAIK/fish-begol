@@ -144,6 +144,14 @@ static proof_t* fis_prove(mpc_lowmc_t* lowmc, lowmc_key_t* lowmc_key, mzd_t* p, 
     }
 #endif
     c_mpc[i] = mpc_lowmc_call(lowmc, &s[i], p, false, views[i], rvec);
+
+    printf("views prf:\n");
+    for(int j = 0 ; j <= lowmc->r + 1 ; ++j) {
+      printf("%d\n", j);
+      mzd_print(views[i][j].s[0]);
+      mzd_print(views[i][j].s[1]);
+      mzd_print(views[i][j].s[2]);
+    }
   }
   END_TIMING(timing_and_size->sign.lowmc_enc);
 
@@ -194,26 +202,7 @@ static int fis_proof_verify(mpc_lowmc_t const* lowmc, mzd_t const* p, mzd_t cons
   const unsigned int view_count      = lowmc->r + 2;
   const unsigned int last_view_index = lowmc->r + 1;
 
-  mzd_t* ys[NUM_ROUNDS][3] = {{NULL}};
-  mzd_t* ys_f[NUM_ROUNDS]  = {NULL};
-  mzd_local_init_multiple_ex(ys_f, NUM_ROUNDS, 1, lowmc->n, false);
-
-  START_TIMING;
-#pragma omp parallel for
-  for (unsigned int i = 0; i < FIS_NUM_ROUNDS; ++i) {
-    mzd_t** rv[2];
-    rv[0] = mzd_init_random_vectors_from_seed(prf->keys[i][0], lowmc->n, lowmc->r);
-    rv[1] = mzd_init_random_vectors_from_seed(prf->keys[i][1], lowmc->n, lowmc->r);
-
-    mpc_lowmc_verify_keys(lowmc, p, false, prf->views[i], rv, getChAt(prf->ch, i), prf->keys[i]);
-
-    mzd_local_free_multiple(rv[1]);
-    free(rv[1]);
-    mzd_local_free_multiple(rv[0]);
-    free(rv[0]);
-  }
-  END_TIMING(timing_and_size->verify.verify);
-
+  mzd_t* ys[3] = {NULL};
 
   START_TIMING;
   unsigned char ch[FIS_NUM_ROUNDS];
@@ -224,66 +213,59 @@ static int fis_proof_verify(mpc_lowmc_t const* lowmc, mzd_t const* p, mzd_t cons
     unsigned int b_i = (a_i + 1) % 3;
     unsigned int c_i = (a_i + 2) % 3;
 
-    ys[i][a_i] = prf->views[i][last_view_index].s[0];
-    ys[i][b_i] = prf->views[i][last_view_index].s[1];
-    ys[i][c_i] = (mzd_t*)c;
+    mzd_local_free(ys[a_i]);
+    prf->views[i][last_view_index].s[0] = mzd_local_init(1, lowmc->n);
+    
+    mzd_t** rv[2];
+    rv[0] = mzd_init_random_vectors_from_seed(prf->keys[i][0], lowmc->n, lowmc->r);
+    rv[1] = mzd_init_random_vectors_from_seed(prf->keys[i][1], lowmc->n, lowmc->r);
 
-    ys[i][c_i] = mpc_reconstruct_from_share(ys_f[i], ys[i]);
+    mpc_lowmc_verify_keys(lowmc, p, false, prf->views[i], rv, a_i, prf->keys[i]);
+ 
+    printf("views vrf:\n");
+    for(int j = 0 ; j <= last_view_index ; ++j) {
+      printf("%d\n", j);
+      mzd_print(prf->views[i][j].s[0]);
+      mzd_print(prf->views[i][j].s[1]);
+    }
 
-    H(prf->keys[i][0], ys[i], prf->views[i], 0, view_count, prf->r[i][0], hash[i][0]);
-    H(prf->keys[i][1], ys[i], prf->views[i], 1, view_count, prf->r[i][1], hash[i][1]);
+    ys[a_i] = prf->views[i][last_view_index].s[0];
+    ys[b_i] = prf->views[i][last_view_index].s[1];
+    ys[c_i] = (mzd_t*)c;
+
+    ys[c_i] = mpc_reconstruct_from_share(0, ys);
+
+    H(prf->keys[i][0], ys, prf->views[i], 0, view_count, prf->r[i][0], hash[i][0]);
+    H(prf->keys[i][1], ys, prf->views[i], 1, view_count, prf->r[i][1], hash[i][1]);
+
+    mzd_local_free_multiple(rv[1]);
+    free(rv[1]);
+    mzd_local_free_multiple(rv[0]);
+    free(rv[0]);
   }
   fis_H3_verify(hash, prf->hashes, prf->ch, m, m_len, ch);
-  END_TIMING(timing_and_size->verify.challenge);
-
-  int reconstruct_status  = 0;
-  int output_share_status = 0;
-  int view_verify_status  = 0;
-
-  // TODO: probably unnecessary now
-  START_TIMING;
-#pragma omp parallel for reduction(| : reconstruct_status)
-  for (unsigned int i = 0; i < FIS_NUM_ROUNDS; ++i) {
-    mzd_t* c_mpcr = mpc_reconstruct_from_share(NULL, ys[i]);
-    if (mzd_cmp(c, c_mpcr) != 0) {
-      reconstruct_status |= -1;
-    }
-    mzd_local_free(c_mpcr);
+  unsigned char ch_collapsed[(FIS_NUM_ROUNDS + 3)/4];
+  for (unsigned int i = 0; i < FIS_NUM_ROUNDS; i+=4) {
+    int idx        = i / 4;
+    ch_collapsed[idx] = 0;
+    ch_collapsed[idx] |= (ch[i] & 3);
+    ch_collapsed[idx] |= i + 1 < NUM_ROUNDS ? (ch[i + 1] & 3) << 2 : 0;
+    ch_collapsed[idx] |= i + 2 < NUM_ROUNDS ? (ch[i + 2] & 3) << 4 : 0;
+    ch_collapsed[idx] |= i + 3 < NUM_ROUNDS ? (ch[i + 3] & 3) << 6 : 0;
   }
-  END_TIMING(timing_and_size->verify.output_shares);
+  int success_status = memcmp(ch_collapsed, prf->ch, ((FIS_NUM_ROUNDS + 3) / 4) * sizeof(unsigned char));
+  END_TIMING(timing_and_size->verify.verify);
 
-  // TODO: probably unnecessary now
   START_TIMING;
-#pragma omp parallel for reduction(| : output_share_status)
-  for (unsigned int i = 0; i < FIS_NUM_ROUNDS; ++i) {
-    if (mzd_cmp(ys[i][ch[i]], prf->views[i][last_view_index].s[0]) ||
-        mzd_cmp(ys[i][(ch[i] + 1) % 3], prf->views[i][last_view_index].s[1])) {
-      output_share_status |= -1;
-    }
-  }
-  END_TIMING(timing_and_size->verify.output_views);
-
-  mzd_local_free_multiple(ys_f);
 
 #ifdef VERBOSE
-  if (output_share_status)
-    printf("[FAIL] Output shares do not match\n");
+  if (success_status)
+    printf("[FAIL] Verification failed\n");
   else
-    printf("[ OK ] Output shares match.\n");
-
-  if (reconstruct_status)
-    printf("[FAIL] MPC ciphertext does not match reference implementation.\n");
-  else
-    printf("[ OK ] MPC ciphertext matches.\n");
-
-  if (view_verify_status)
-    printf("[FAIL] Proof does not match reconstructed views.\n");
-  else
-    printf("[ OK ] Proof matches reconstructed views.\n");
-  printf("\n");
+    printf("[ OK ] Verification Succeeded.\n");
 #endif
 
-  return output_share_status || reconstruct_status || view_verify_status;
+  return success_status;
 }
 
 fis_signature_t* fis_sign(public_parameters_t* pp, fis_private_key_t* private_key, char* m) {
