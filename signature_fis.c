@@ -237,6 +237,7 @@ static int fis_proof_verify(mpc_lowmc_t const* lowmc, mzd_t const* p, mzd_t cons
     H(prf->keys[i][0], ys, prf->views[i], 0, view_count, prf->r[i][0], hash[i][0]);
     H(prf->keys[i][1], ys, prf->views[i], 1, view_count, prf->r[i][1], hash[i][1]);
 
+    mzd_local_free(ys[c_i]);
     mzd_local_free_multiple(rv[1]);
     free(rv[1]);
     mzd_local_free_multiple(rv[0]);
