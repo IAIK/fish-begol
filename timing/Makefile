@@ -7,12 +7,12 @@ timings-preq:
 	# python3 timing.py lowmc-inst-128-128-128.txt -k 128 -i $(ITER)
 	# python3 timing.py lowmc-inst-192-192-192.txt -k 192 -i $(ITER)
 	python3 timing.py lowmc-inst-256-256-256.txt -k 256 -i $(ITER)
-	python3 timing.py lowmc-inst-512-512-512.txt -k 512 -i $(ITER)
+	# python3 timing.py lowmc-inst-512-512-512.txt -k 512 -i $(ITER)
 
 timings-postq:
 	python3 timing.py pq-lowmc-inst-256-256-256.txt -k 256 -i $(ITER) $(PQOPTS)
-	python3 timing.py pq-lowmc-inst-384-384-384.txt -k 384 -i $(ITER) $(PQOPTS)
-	python3 timing.py pq-lowmc-inst-512-512-512.txt -k 512 -i $(ITER) $(PQOPTS)
+	# python3 timing.py pq-lowmc-inst-384-384-384.txt -k 384 -i $(ITER) $(PQOPTS)
+	# python3 timing.py pq-lowmc-inst-512-512-512.txt -k 512 -i $(ITER) $(PQOPTS)
 
 timings-omp:
 	# before running this benchmark, make sure to disable HyperThreading as it
