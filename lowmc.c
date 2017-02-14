@@ -32,16 +32,19 @@ static void sbox_layer_bitsliced(mzd_t* out, mzd_t* in, rci_t m, mask_t const* m
 
   mzd_and(out, in, mask->mask);
 
-  mzd_t* x0m = mzd_and(0, mask->x0, in);
-  mzd_t* x1m = mzd_and(0, mask->x1, in);
-  mzd_t* x2m = mzd_and(0, mask->x2, in);
+  mzd_t* buffer[6] = { NULL };
+  mzd_local_init_multiple_ex(buffer, 6, 1, in->ncols, false);
+
+  mzd_t* x0m = mzd_and(buffer[0], mask->x0, in);
+  mzd_t* x1m = mzd_and(buffer[1], mask->x1, in);
+  mzd_t* x2m = mzd_and(buffer[2], mask->x2, in);
 
   mzd_shift_left(x0m, x0m, 2);
   mzd_shift_left(x1m, x1m, 1);
 
-  mzd_t* t0 = mzd_and(0, x1m, x2m);
-  mzd_t* t1 = mzd_and(0, x0m, x2m);
-  mzd_t* t2 = mzd_and(0, x0m, x1m);
+  mzd_t* t0 = mzd_and(buffer[3], x1m, x2m);
+  mzd_t* t1 = mzd_and(buffer[4], x0m, x2m);
+  mzd_t* t2 = mzd_and(buffer[5], x0m, x1m);
 
   mzd_xor(t0, t0, x0m);
 
@@ -59,12 +62,7 @@ static void sbox_layer_bitsliced(mzd_t* out, mzd_t* in, rci_t m, mask_t const* m
   mzd_xor(out, out, t0);
   mzd_xor(out, out, t1);
 
-  mzd_local_free(t2);
-  mzd_local_free(t1);
-  mzd_local_free(t0);
-  mzd_local_free(x2m);
-  mzd_local_free(x1m);
-  mzd_local_free(x0m);
+  mzd_local_free_multiple(buffer);
 }
 
 #ifdef WITH_OPT
@@ -168,8 +166,8 @@ mzd_t* lowmc_call(lowmc_t const* lowmc, lowmc_key_t const* lowmc_key, mzd_t cons
     printf("p needs to have exactly one row!\n");
   }
 
-  mzd_t* x = mzd_local_init(1, lowmc->n);
-  mzd_t* y = mzd_local_init(1, lowmc->n);
+  mzd_t* x = mzd_local_init_ex(1, lowmc->n, false);
+  mzd_t* y = mzd_local_init_ex(1, lowmc->n, false);
 
   mzd_local_copy(x, p);
 #ifdef NOSCR

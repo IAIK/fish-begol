@@ -30,10 +30,10 @@ typedef mzd_shared_t mpc_lowmc_key_t;
 
 typedef lowmc_t mpc_lowmc_t;
 
-typedef struct { mzd_t** s; } view_t;
+typedef struct { mzd_t* s[SC_PROOF]; } view_t;
 
 typedef struct {
-  view_t** views;
+  view_t* views[NUM_ROUNDS];
   unsigned char keys[NUM_ROUNDS][SC_VERIFY][PRNG_KEYSIZE];
   unsigned char r[NUM_ROUNDS][SC_VERIFY][COMMITMENT_RAND_LENGTH];
   unsigned char hashes[NUM_ROUNDS][COMMITMENT_LENGTH];

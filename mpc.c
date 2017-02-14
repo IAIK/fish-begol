@@ -20,11 +20,13 @@
 #include "mzd_additional.h"
 #include "simd.h"
 
+#if 0
 void mpc_clear(mzd_t** res, unsigned sc) {
-  for (unsigned int i = 0; i < sc; i++)
-    for (int j = 0; j < res[i]->nrows; j++)
-      mzd_row_clear_offset(res[i], j, 0);
+  for (unsigned int i = 0; i < sc; i++) {
+    mzd_local_clear(res[i]);
+  }
 }
+#endif
 
 void mpc_shift_right(mzd_t* const* res, mzd_t* const* val, unsigned count, unsigned sc) {
   for (unsigned i = 0; i < sc; ++i)
@@ -286,8 +288,6 @@ void mpc_write_bit(mzd_t** vec, rci_t n, BIT* bit, unsigned sc) {
 #endif
 
 mzd_t** mpc_add(mzd_t** result, mzd_t** first, mzd_t** second, unsigned sc) {
-  if (result == 0)
-    result = mpc_init_empty_share_vector(first[0]->ncols, sc);
   for (unsigned i = 0; i < sc; i++) {
     mzd_xor(result[i], first[i], second[i]);
   }
@@ -295,8 +295,6 @@ mzd_t** mpc_add(mzd_t** result, mzd_t** first, mzd_t** second, unsigned sc) {
 }
 
 mzd_t** mpc_const_add(mzd_t** result, mzd_t** first, mzd_t const* second, unsigned sc, unsigned c) {
-  if (result == 0)
-    result = mpc_init_empty_share_vector(first[0]->ncols, sc);
   if (c == 0)
     mzd_xor(result[0], first[0], second);
   else if (c == sc)
@@ -305,17 +303,19 @@ mzd_t** mpc_const_add(mzd_t** result, mzd_t** first, mzd_t const* second, unsign
 }
 
 mzd_t** mpc_const_mat_mul(mzd_t** result, mzd_t const* matrix, mzd_t** vector, unsigned sc) {
-  if (result == 0)
-    result = mpc_init_empty_share_vector(vector[0]->ncols, sc);
   for (unsigned i = 0; i < sc; ++i) {
     mzd_mul_v(result[i], vector[i], matrix);
   }
   return result;
 }
 
+void mpc_const_addmat_mul_l(mzd_t** result, mzd_t const* matrix, mzd_t** vector, unsigned sc) {
+  for (unsigned i = 0; i < sc; ++i) {
+    mzd_addmul_vl(result[i], vector[i], matrix);
+  }
+}
+
 mzd_t** mpc_const_mat_mul_l(mzd_t** result, mzd_t const* matrix, mzd_t** vector, unsigned sc) {
-  if (result == 0)
-    result = mpc_init_empty_share_vector(vector[0]->ncols, sc);
   for (unsigned i = 0; i < sc; ++i) {
     mzd_mul_vl(result[i], vector[i], matrix);
   }
@@ -329,7 +329,10 @@ void mpc_copy(mzd_t** out, mzd_t* const* in, unsigned sc) {
 }
 
 mzd_t* mpc_reconstruct_from_share(mzd_t* dst, mzd_t** shared_vec) {
-  dst = mzd_xor(dst, shared_vec[0], shared_vec[1]);
+  if (!dst) {
+    dst = mzd_local_init_ex(shared_vec[0]->nrows, shared_vec[0]->ncols, false);
+  }
+  mzd_xor(dst, shared_vec[0], shared_vec[1]);
   return mzd_xor(dst, dst, shared_vec[2]);
 }
 
@@ -340,42 +343,42 @@ void mpc_print(mzd_t** shared_vec) {
 }
 
 void mpc_free(mzd_t** vec, unsigned sc) {
-  for (unsigned i = 0; i < sc; ++i) {
-    mzd_local_free(vec[i]);
-  }
+  (void) sc;
+  mzd_local_free_multiple(vec);
   free(vec);
 }
 
 mzd_t** mpc_init_empty_share_vector(rci_t n, unsigned sc) {
-  mzd_t** s = calloc(sc, sizeof(mzd_t*));
-  for (unsigned i = 0; i < sc; ++i) {
-    s[i] = mzd_local_init(1, n);
-  }
+  mzd_t** s = malloc(sc * sizeof(mzd_t*));
+  mzd_local_init_multiple(s, sc, 1, n);
   return s;
 }
 
 mzd_t** mpc_init_random_vector(rci_t n, unsigned sc) {
-  mzd_t** s = calloc(sc, sizeof(mzd_t*));
+  mzd_t** s = malloc(sc * sizeof(mzd_t*));
+  mzd_local_init_multiple_ex(s, sc, 1, n, false);
   for (unsigned i = 0; i < sc; ++i) {
-    s[i] = mzd_init_random_vector(n);
+    mzd_randomize_ssl(s[i]);
   }
   return s;
 }
 
 mzd_t** mpc_init_plain_share_vector(mzd_t const* v) {
-  mzd_t** s = calloc(3, sizeof(mzd_t*));
-  s[0]      = mzd_local_copy(NULL, v);
-  s[1]      = mzd_local_copy(NULL, v);
-  s[2]      = mzd_local_copy(NULL, v);
+  mzd_t** s = malloc(3 * sizeof(mzd_t*));
+  mzd_local_init_multiple_ex(s, 3, 1, v->ncols, false);
+  for (unsigned i = 0; i < 3; ++i) {
+    mzd_local_copy(s[i], v);
+  }
 
   return s;
 }
 
 mzd_t** mpc_init_share_vector(mzd_t const* v) {
-  mzd_t** s = calloc(3, sizeof(mzd_t*));
-  s[0]      = mzd_init_random_vector(v->ncols);
-  s[1]      = mzd_init_random_vector(v->ncols);
-  s[2]      = mzd_local_init(1, v->ncols);
+  mzd_t** s = malloc(3 * sizeof(mzd_t*));
+  mzd_local_init_multiple_ex(s, 3, 1, v->ncols, false);
+
+  mzd_randomize_ssl(s[0]);
+  mzd_randomize_ssl(s[1]);
 
   mzd_xor(s[2], s[0], s[1]);
   mzd_xor(s[2], s[2], v);

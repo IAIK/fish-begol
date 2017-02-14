@@ -42,26 +42,18 @@ void cleanup_EVP() {
 #endif
 }
 
-static void __attribute__((noreturn)) handleErrors(void) {
-  ERR_print_errors_fp(stderr);
-  abort();
-}
-
 void aes_prng_init(aes_prng_t* aes_prng, const unsigned char* key) {
   aes_prng->ctx = EVP_CIPHER_CTX_new();
 
   /* A 128 bit IV */
   static const unsigned char iv[16] = {'0', '1', '2', '3', '4', '5', '6', '7',
                                        '8', '9', '0', '1', '2', '3', '4', '5'};
-  if (1 != EVP_EncryptInit_ex(aes_prng->ctx, EVP_aes_128_ctr(), NULL, key, iv))
-    handleErrors();
+  EVP_EncryptInit_ex(aes_prng->ctx, EVP_aes_128_ctr(), NULL, key, iv);
 }
 
 void aes_prng_clear(aes_prng_t* aes_prng) {
   EVP_CIPHER_CTX_free(aes_prng->ctx);
 }
-
-#define unlikely(p) __builtin_expect(!!(p), 0)
 
 void aes_prng_get_randomness(aes_prng_t* aes_prng, unsigned char* dst, size_t count) {
   static const unsigned char plaintext[16] = {'0'};
@@ -70,15 +62,11 @@ void aes_prng_get_randomness(aes_prng_t* aes_prng, unsigned char* dst, size_t co
 
   int len = 0;
   for (; count >= 16; count -= 16, dst += 16) {
-    if (unlikely(1 != EVP_EncryptUpdate(ctx, dst, &len, plaintext, sizeof(plaintext)))) {
-      handleErrors();
-    }
+    EVP_EncryptUpdate(ctx, dst, &len, plaintext, sizeof(plaintext));
   }
 
   if (count) {
-    if (unlikely(1 != EVP_EncryptUpdate(ctx, dst, &len, plaintext, count))) {
-      handleErrors();
-    }
+    EVP_EncryptUpdate(ctx, dst, &len, plaintext, count);
   }
 }
 
