@@ -19,7 +19,7 @@ timings-omp:
 	# adds a lot of noise.
 	set -ex && for n in $(shell seq 1 $(MAXTHREADS)) ; do \
 		env OMP_NUM_THREADS=$$n \
-			python3 timing.py lowmc-inst-128-128-128.txt -i $(ITER) \
+			python3 timing.py lowmc-inst-256-256-256.txt -i $(ITER) \
 				-p omp-timings-$$n -x ../mpc_lowmc_openmp; \
 	done
 
@@ -37,7 +37,7 @@ graphs-postq:
 		--sha-proof 237 --sha-verify 137 --sha-size 2672.484375
 
 graphs-omp:
-	python3 graphs.py -p omp-timings omp --bg-blocksize 128 --bg-keysize 128 -t $(MAXTHREADS)
+	python3 graphs.py -p omp-timings omp --bg-blocksize 256 --bg-keysize 256 -t $(MAXTHREADS)
 
 graphs-qh:
 	python3 graphs.py -p timings qH \
