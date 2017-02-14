@@ -104,10 +104,9 @@ static proof_t* fis_prove(mpc_lowmc_t* lowmc, lowmc_key_t* lowmc_key, mzd_t* p, 
   }
   END_TIMING(timing_and_size->sign.rand);
 
+  START_TIMING;
   view_t* views[FIS_NUM_ROUNDS];
   init_view(lowmc, views);
-
-  START_TIMING;
 
   mzd_shared_t s[FIS_NUM_ROUNDS];
   for (unsigned int i = 0; i < FIS_NUM_ROUNDS; ++i) {
@@ -168,7 +167,6 @@ static proof_t* fis_prove(mpc_lowmc_t* lowmc, lowmc_key_t* lowmc_key, mzd_t* p, 
   START_TIMING;
   unsigned char ch[FIS_NUM_ROUNDS];
   fis_H3(hashes, m, m_len, ch);
-  END_TIMING(timing_and_size->sign.challenge);
 
   proof_t* proof = create_proof(NULL, lowmc, hashes, ch, r, keys, views);
 
@@ -191,6 +189,7 @@ static proof_t* fis_prove(mpc_lowmc_t* lowmc, lowmc_key_t* lowmc_key, mzd_t* p, 
 #endif
 
   free_view(lowmc, views);
+  END_TIMING(timing_and_size->sign.challenge);
 
   return proof;
 }
