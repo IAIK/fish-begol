@@ -55,7 +55,7 @@ unsigned char* proof_to_char_array(mpc_lowmc_t* lowmc, proof_t* proof, unsigned*
                                    bool store_ch) {
   unsigned first_view_bytes = lowmc->k / 8;
   unsigned full_mzd_size    = lowmc->n / 8;
-  unsigned single_mzd_bytes = full_mzd_size;//((3 * lowmc->m) + 7) / 8;
+  unsigned single_mzd_bytes = ((3 * lowmc->m) + 7) / 8;
   unsigned mzd_bytes        = 2 * (lowmc->r * single_mzd_bytes + first_view_bytes + full_mzd_size);
   *len =
       NUM_ROUNDS * (COMMITMENT_LENGTH + 2 * (COMMITMENT_RAND_LENGTH + PRNG_KEYSIZE) + mzd_bytes) +
@@ -123,7 +123,7 @@ proof_t* proof_from_char_array(mpc_lowmc_t* lowmc, proof_t* proof, unsigned char
 
   unsigned first_view_bytes = lowmc->k / 8;
   unsigned full_mzd_size    = lowmc->n / 8;
-  unsigned single_mzd_bytes = full_mzd_size;//((3 * lowmc->m) + 7) / 8;
+  unsigned single_mzd_bytes = ((3 * lowmc->m) + 7) / 8;
   unsigned mzd_bytes        = 2 * (lowmc->r * single_mzd_bytes + first_view_bytes + full_mzd_size);
   *len =
       NUM_ROUNDS * (COMMITMENT_LENGTH + 2 * (COMMITMENT_RAND_LENGTH + PRNG_KEYSIZE) + mzd_bytes) +
@@ -275,9 +275,6 @@ static void _mpc_sbox_layer_bitsliced(mzd_t** out, mzd_t* const* in, view_t* vie
   mpc_and(vars->r1m, vars->x0s, vars->x2m, vars->r1s, view, 1, vars->v);
 
   bitsliced_step_2(SC_PROOF);
-
-  mpc_xor(view->s, view->s, out, SC_PROOF);
-
 }
 
 static int _mpc_sbox_layer_bitsliced_verify(mzd_t** out, mzd_t* const* in, view_t const* view,
@@ -292,10 +289,6 @@ static int _mpc_sbox_layer_bitsliced_verify(mzd_t** out, mzd_t* const* in, view_
   }
 
   bitsliced_step_2(SC_VERIFY);
-
-  mzd_xor(view->s[0], view->s[0], out[0]);
-  mzd_copy(out[1], view->s[1]);
-
   return 0;
 }
 
@@ -377,8 +370,6 @@ _mpc_sbox_layer_bitsliced_sse(mzd_t** out, mzd_t* const* in, view_t const* view,
   mpc_and_sse(r1m, x0s, x2m, r1s, view, 1);
 
   bitsliced_mm_step_2(SC_PROOF, __m128i, _mm_and_si128, _mm_xor_si128, mm128_shift_right);
-  
-  mpc_xor(view->s, view->s, out, SC_PROOF);
 }
 
 __attribute__((target("sse2"))) static int
@@ -393,9 +384,6 @@ _mpc_sbox_layer_bitsliced_sse_verify(mzd_t** out, mzd_t* const* in, view_t const
   }
 
   bitsliced_mm_step_2(SC_VERIFY, __m128i, _mm_and_si128, _mm_xor_si128, mm128_shift_right);
-
-  mzd_xor(view->s[0], view->s[0], out[0]);
-  mzd_copy(out[1], view->s[1]);
 
   return 0;
 }
@@ -412,8 +400,6 @@ _mpc_sbox_layer_bitsliced_avx(mzd_t** out, mzd_t* const* in, view_t const* view,
   mpc_and_avx(r1m, x0s, x2m, r1s, view, 1);
 
   bitsliced_mm_step_2(SC_PROOF, __m256i, _mm256_and_si256, _mm256_xor_si256, mm256_shift_right);
-
-  mpc_xor(view->s, view->s, out, SC_PROOF);	
  
 }
 
@@ -429,9 +415,6 @@ _mpc_sbox_layer_bitsliced_avx_verify(mzd_t** out, mzd_t** in, view_t const* view
   }
 
   bitsliced_mm_step_2(SC_VERIFY, __m256i, _mm256_and_si256, _mm256_xor_si256, mm256_shift_right);
-
-  mzd_xor(view->s[0], view->s[0], out[0]);
-  mzd_copy(out[1], view->s[1]);
    
   return 0;
 }
