@@ -246,15 +246,24 @@ static int fis_proof_verify(mpc_lowmc_t const* lowmc, mzd_t const* p, mzd_t cons
     free(rv[0]);
   }
   fis_H3_verify(hash, prf->hashes, prf->ch, m, m_len, ch);
-  unsigned char ch_collapsed[(FIS_NUM_ROUNDS + 3)/4];
-  for (unsigned int i = 0; i < FIS_NUM_ROUNDS; i+=4) {
-    int idx        = i / 4;
-    ch_collapsed[idx] = 0;
-    ch_collapsed[idx] |= (ch[i] & 3);
-    ch_collapsed[idx] |= i + 1 < NUM_ROUNDS ? (ch[i + 1] & 3) << 2 : 0;
-    ch_collapsed[idx] |= i + 2 < NUM_ROUNDS ? (ch[i + 2] & 3) << 4 : 0;
-    ch_collapsed[idx] |= i + 3 < NUM_ROUNDS ? (ch[i + 3] & 3) << 6 : 0;
+  unsigned char ch_collapsed[(FIS_NUM_ROUNDS + 3)/4] = { 0 };
+  for (unsigned int i = 0; i < FIS_NUM_ROUNDS; ++i) {
+    const unsigned int idx = i / 4;
+    const unsigned int shift = (i % 4) << 1;
+
+    ch_collapsed[idx] |= ch[i] << shift;
   }
+#ifdef VERBOSE
+  printf("collapsed: ");
+  for (unsigned int i = 0; i < sizeof(ch_collapsed); ++i) {
+    printf("%x", ch_collapsed[i]);
+  }
+  printf("\nproof->ch: ");
+  for (unsigned int i = 0; i < sizeof(ch_collapsed); ++i) {
+    printf("%x", prf->ch[i]);
+  }
+  printf("\n");
+#endif
   int success_status = memcmp(ch_collapsed, prf->ch, ((FIS_NUM_ROUNDS + 3) / 4) * sizeof(unsigned char));
   END_TIMING(timing_and_size->verify.verify);
 
