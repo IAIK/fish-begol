@@ -32,25 +32,25 @@ void mpc_xor(mzd_t* const* res, mzd_t* const* first, mzd_t* const* second, unsig
 
 void mpc_clear(mzd_t** res, unsigned sc) __attribute__((nonnull));
 
-int mpc_and(mzd_t* const* res, mzd_t* const* first, mzd_t* const* second, mzd_t* const* r,
+void mpc_and(mzd_t* const* res, mzd_t* const* first, mzd_t* const* second, mzd_t* const* r,
             view_t* view, unsigned viewshift, mzd_t* const* buffer) __attribute__((nonnull));
 
-int mpc_and_verify(mzd_t* const* res, mzd_t* const* first, mzd_t* const* second, mzd_t* const* r,
+void mpc_and_verify(mzd_t* const* res, mzd_t* const* first, mzd_t* const* second, mzd_t* const* r,
                    view_t const* view, mzd_t const* mask, unsigned viewshift, mzd_t* const* buffer) __attribute__((nonnull));
 
 #ifdef WITH_OPT
 #include "simd.h"
 
-int mpc_and_sse(__m128i* res, __m128i const* first, __m128i const* second, __m128i const* r,
+void mpc_and_sse(__m128i* res, __m128i const* first, __m128i const* second, __m128i const* r,
                 view_t const* view, unsigned viewshift) __attribute__((nonnull));
 
-int mpc_and_avx(__m256i* res, __m256i const* first, __m256i const* second, __m256i const* r,
+void mpc_and_avx(__m256i* res, __m256i const* first, __m256i const* second, __m256i const* r,
                 view_t const* view, unsigned viewshift) __attribute__((nonnull));
 
-int mpc_and_verify_sse(__m128i* res, __m128i const* first, __m128i const* second, __m128i const* r,
+void mpc_and_verify_sse(__m128i* res, __m128i const* first, __m128i const* second, __m128i const* r,
                        view_t const* view, __m128i const mask, unsigned viewshift) __attribute__((nonnull));
 
-int mpc_and_verify_avx(__m256i* res, __m256i const* first, __m256i const* second, __m256i const* r,
+void mpc_and_verify_avx(__m256i* res, __m256i const* first, __m256i const* second, __m256i const* r,
                        view_t const* view, __m256i const mask, unsigned viewshift) __attribute__((nonnull));
 #endif
 
