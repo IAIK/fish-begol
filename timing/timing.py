@@ -23,8 +23,12 @@ import numpy as np
 import h5py
 
 
+def fix_h5py_strings(strings):
+    return [s.encode('utf-8') for s in strings]
+
+
 def compute_size(data):
-  return data[:, 12] / 1024.0
+    return data[:, 12] / 1024.0
 
 
 def compute_gen(data):
@@ -32,11 +36,11 @@ def compute_gen(data):
 
 
 def compute_sign(data):
-  return np.sum(data[:, 3:8], axis=1) / 1000.0
+    return np.sum(data[:, 3:8], axis=1) / 1000.0
 
 
 def compute_verify(data):
-  return np.sum(data[:, 8:12], axis=1) / 1000.0
+    return np.sum(data[:, 8:12], axis=1) / 1000.0
 
 
 def main():
@@ -113,7 +117,7 @@ def main():
             timings.create_dataset('bg_sum', data=np.array(all_timings_bg))
             timings.create_dataset('bg_median', data=np.array(all_timings_bg_median))
             timings.create_dataset('bg_mean', data=np.array(all_timings_bg_mean))
-        timings.create_dataset('labels', data=labels)
+        timings.create_dataset('labels', data=fix_h5py_strings(labels))
 
 
 def get_params(line):
