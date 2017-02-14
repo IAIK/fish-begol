@@ -283,11 +283,11 @@ static int fis_proof_verify(mpc_lowmc_t const* lowmc, mzd_t const* p, mzd_t cons
 #ifdef VERBOSE
   printf("collapsed: ");
   for (unsigned int i = 0; i < sizeof(ch_collapsed); ++i) {
-    printf("%x", ch_collapsed[i]);
+    printf("%02x", ch_collapsed[i]);
   }
   printf("\nproof->ch: ");
   for (unsigned int i = 0; i < sizeof(ch_collapsed); ++i) {
-    printf("%x", prf->ch[i]);
+    printf("%02x", prf->ch[i]);
   }
   printf("\n");
 #endif
