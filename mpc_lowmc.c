@@ -63,6 +63,12 @@ unsigned char* proof_to_char_array(mpc_lowmc_t* lowmc, proof_t* proof, unsigned*
   unsigned char* result = (unsigned char*)malloc(*len * sizeof(unsigned char));
 
   unsigned char* temp = result;
+  
+  if (store_ch) {
+    memcpy(temp, proof->ch, (NUM_ROUNDS + 3) / 4);
+    temp += (NUM_ROUNDS + 3) / 4;
+  }
+  
   memcpy(temp, proof->hashes, NUM_ROUNDS * COMMITMENT_LENGTH * sizeof(unsigned char));
   temp += NUM_ROUNDS * COMMITMENT_LENGTH;
 
@@ -110,9 +116,6 @@ unsigned char* proof_to_char_array(mpc_lowmc_t* lowmc, proof_t* proof, unsigned*
     free(v1);
   }
 
-  if (store_ch)
-    memcpy(temp, proof->ch, (NUM_ROUNDS + 3) / 4);
-
   return result;
 }
 
@@ -130,9 +133,13 @@ proof_t* proof_from_char_array(mpc_lowmc_t* lowmc, proof_t* proof, unsigned char
       (contains_ch ? ((NUM_ROUNDS + 3) / 4) : 0);
 
   unsigned char* temp = data;
+ 
+  if (contains_ch) {
+    memcpy(proof->ch, temp, (NUM_ROUNDS + 3) / 4);
+    temp += (NUM_ROUNDS + 3) / 4;
+  }
 
   proof->views = (view_t**)malloc(NUM_ROUNDS * sizeof(view_t*));
-
   memcpy(proof->hashes, temp, NUM_ROUNDS * COMMITMENT_LENGTH * sizeof(unsigned char));
   temp += NUM_ROUNDS * COMMITMENT_LENGTH;
 
@@ -167,9 +174,6 @@ proof_t* proof_from_char_array(mpc_lowmc_t* lowmc, proof_t* proof, unsigned char
     proof->views[i][1 + lowmc->r].s[1] = mzd_from_char_array(temp, full_mzd_size, lowmc->n);
     temp += full_mzd_size;
   }
-
-  if (contains_ch)
-    memcpy(proof->ch, temp, (NUM_ROUNDS + 3) / 4);
 
   return proof;
 }
