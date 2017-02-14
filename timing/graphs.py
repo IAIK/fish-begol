@@ -348,7 +348,7 @@ def create_graph(prefix, fis_n, bg_n, fis_k, bg_k, fis_data, bg_data, fis_labels
 
 def create_omp_graph(prefix, n, k, data, size, labels, max_num_threads, title=''):
   datadict = {'1 thread' if not i else '{0} threads'.format(i + 1):
-              pd.Series(data[i], index=labels) for i in xrange(max_num_threads)}
+              pd.Series(data[i], index=labels) for i in range(max_num_threads)}
   datadict['size'] = pd.Series(size, index=labels)
 
   df = pd.DataFrame(datadict)
@@ -358,7 +358,7 @@ def create_omp_graph(prefix, n, k, data, size, labels, max_num_threads, title=''
 
   colors = sns.color_palette(n_colors=max_num_threads)
   ax = None
-  for i in xrange(max_num_threads):
+  for i in range(max_num_threads):
     ax = df.plot(y='1 thread' if not i else '{0} threads'.format(i + 1), x='size', legend=True, ax=ax)
 
   # title and labels
