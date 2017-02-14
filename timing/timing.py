@@ -73,7 +73,7 @@ def main():
           if not len(line):
             continue
 
-          mat.append(map(int, line.split(',')))
+          mat.append(list(map(int, line.split(','))))
 
         if args.begol:
             fs = np.array(mat[:len(mat) / 2])
