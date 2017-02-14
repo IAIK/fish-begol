@@ -29,7 +29,6 @@ typedef struct {
   mzd_t* x1;
   mzd_t* x2;
   mzd_t* mask;
-  mzd_t* maskInv;
 } mask_t;
 
 typedef struct {
