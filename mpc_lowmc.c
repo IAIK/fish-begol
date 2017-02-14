@@ -166,6 +166,7 @@ proof_t* proof_from_char_array(mpc_lowmc_t* lowmc, proof_t* proof, unsigned char
       proof->views[i][0].s[1] = mzd_init_random_vector_from_seed(proof->keys[i][1], lowmc->k);
       temp += first_view_bytes;
     }
+    proof->views[i][0].s[2] = NULL;
     for (unsigned j = 1; j < 1 + lowmc->r; j++) {
       proof->views[i][j].s[0] = mzd_local_init(1, lowmc->n);
       proof->views[i][j].s[1] = mzd_from_char_array(temp, single_mzd_bytes, lowmc->n);
@@ -192,6 +193,8 @@ proof_t* create_proof(proof_t* proof, mpc_lowmc_t const* lowmc,
     proof = calloc(sizeof(proof_t), 1);
 
   const size_t num_views = 2 + lowmc->r;
+  const size_t last_round = 1 + lowmc->r;
+
   for (unsigned int i = 0; i < NUM_ROUNDS; i++) {
     unsigned int a = ch[i];
     unsigned int b = (a + 1) % 3;
@@ -210,17 +213,19 @@ proof_t* create_proof(proof_t* proof, mpc_lowmc_t const* lowmc,
     proof->views[i][0].s[1] = views[i][0].s[b];
     proof->views[i][0].s[2] = NULL;
     mzd_local_free(views[i][0].s[c]);
-    for (unsigned j = 1; j < 1 + lowmc->r; j++) {
+    for (unsigned j = 1; j < last_round; j++) {
       proof->views[i][j].s[0] = views[i][j].s[b];
       // we keep the reference to this pointer here and free it later
       // to circumvent the need for two clear functions. Note that 
       // this reference is not serialized withing proof_to_char_array
       proof->views[i][j].s[1] = views[i][j].s[a];
+      proof->views[i][j].s[2] = NULL;
       mzd_local_free(views[i][j].s[c]);
     }
-    proof->views[i][lowmc->r + 1].s[0] = views[i][lowmc->r + 1].s[a];
-    proof->views[i][lowmc->r + 1].s[1] = views[i][lowmc->r + 1].s[b];
-    mzd_local_free(views[i][lowmc->r + 1].s[c]);
+    proof->views[i][last_round].s[0] = views[i][last_round].s[a];
+    proof->views[i][last_round].s[1] = views[i][last_round].s[b];
+    proof->views[i][last_round].s[2] = NULL;
+    mzd_local_free(views[i][last_round].s[c]);
 
     const unsigned int idx = i / 4;
     const unsigned int shift = (i % 4) << 1;
@@ -745,13 +750,13 @@ sbox_vars_t* sbox_vars_init(sbox_vars_t* vars, rci_t n, unsigned sc) {
 }
 
 void clear_proof(mpc_lowmc_t const* lowmc, proof_t const* proof) {
+  const size_t numrounds = lowmc->r + 2;
+
   for (unsigned int i = 0; i < NUM_ROUNDS; ++i) {
-    mzd_local_free(proof->views[i][0].s[0]);
-    mzd_local_free(proof->views[i][0].s[1]);
-    free(proof->views[i][0].s);
-    for (unsigned int j = 1; j < 2 + lowmc->r; ++j) {
-      for (unsigned int k = 0; k < SC_VERIFY; ++k) {
+    for (unsigned int j = 0; j < numrounds; ++j) {
+      for (unsigned int k = 0; k < SC_PROOF; ++k) {
         mzd_local_free(proof->views[i][j].s[k]);
+        proof->views[i][j].s[k] = NULL;
       }
     }
     free(proof->views[i]);
