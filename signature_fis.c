@@ -175,7 +175,7 @@ static proof_t* fis_prove(mpc_lowmc_t* lowmc, lowmc_key_t* lowmc_key, mzd_t* p, 
   for (unsigned int j = 0; j < FIS_NUM_ROUNDS; ++j) {
     mzd_shared_clear(&s[j]);
 #ifdef WITH_OPENMP
-    for (unsigned int i = 0; i < 3; ++i) {
+    for (unsigned int i = 0; i < SC_PROOF; ++i) {
       mzd_local_free_multiple(rvecs[j][i]);
       free(rvecs[j][i]);
     }
@@ -203,19 +203,39 @@ static int fis_proof_verify(mpc_lowmc_t const* lowmc, mzd_t const* p, mzd_t cons
   const unsigned int last_view_index = lowmc->r + 1;
 
   mzd_t* ys[3] = {NULL};
+  mzd_t* yc = mzd_local_init(1, lowmc->n);
 
   START_TIMING;
   unsigned char ch[FIS_NUM_ROUNDS];
   unsigned char hash[FIS_NUM_ROUNDS][2][COMMITMENT_LENGTH];
+
+#ifndef WITH_OPENMP
+ mzd_t** rv[SC_VERIFY];
+  for (unsigned int i = 0; i < SC_VERIFY; ++i) {
+    rv[i] = malloc(sizeof(mzd_t*) * lowmc->r);
+    mzd_local_init_multiple_ex(rv[i], lowmc->r, 1, lowmc->n, false);
+  }
+#endif
+
 #pragma omp parallel for
   for (unsigned int i = 0; i < FIS_NUM_ROUNDS; ++i) {
     unsigned int a_i = getChAt(prf->ch, i);
     unsigned int b_i = (a_i + 1) % 3;
     unsigned int c_i = (a_i + 2) % 3;
 
+#ifdef WITH_OPENMP
     mzd_t** rv[2];
     rv[0] = mzd_init_random_vectors_from_seed(prf->keys[i][0], lowmc->n, lowmc->r);
     rv[1] = mzd_init_random_vectors_from_seed(prf->keys[i][1], lowmc->n, lowmc->r);
+#else
+    for (unsigned int j = 0; j < SC_VERIFY; ++j) {
+      mzd_randomize_multiple_from_seed(rv[j], lowmc->r, prf->keys[i][j]);
+    }
+#endif
+
+    for (unsigned int j = 1; j < view_count - 1; ++j) {
+      mzd_local_clear(prf->views[i][j].s[0]);
+    }
 
     mpc_lowmc_verify_keys(lowmc, p, false, prf->views[i], rv, a_i, prf->keys[i]);
 
@@ -232,18 +252,28 @@ static int fis_proof_verify(mpc_lowmc_t const* lowmc, mzd_t const* p, mzd_t cons
     ys[b_i] = prf->views[i][last_view_index].s[1];
     ys[c_i] = (mzd_t*)c;
 
-    ys[c_i] = mpc_reconstruct_from_share(0, ys);
+    ys[c_i] = mpc_reconstruct_from_share(yc, ys);
 
     H(prf->keys[i][0], ys, prf->views[i], 0, view_count, prf->r[i][0], hash[i][0]);
     H(prf->keys[i][1], ys, prf->views[i], 1, view_count, prf->r[i][1], hash[i][1]);
 
-    mzd_local_free(ys[c_i]);
+#ifdef WITH_OPENMP
     mzd_local_free_multiple(rv[1]);
     free(rv[1]);
     mzd_local_free_multiple(rv[0]);
     free(rv[0]);
+#endif
   }
   fis_H3_verify(hash, prf->hashes, prf->ch, m, m_len, ch);
+
+#ifndef WITH_OPENMP
+  for (unsigned int i = 0; i < SC_VERIFY; ++i) {
+    mzd_local_free_multiple(rv[i]);
+    free(rv[i]);
+  }
+#endif
+  mzd_local_free(yc);
+
   unsigned char ch_collapsed[(FIS_NUM_ROUNDS + 3)/4] = { 0 };
   for (unsigned int i = 0; i < FIS_NUM_ROUNDS; ++i) {
     const unsigned int idx = i / 4;
@@ -262,7 +292,7 @@ static int fis_proof_verify(mpc_lowmc_t const* lowmc, mzd_t const* p, mzd_t cons
   }
   printf("\n");
 #endif
-  int success_status = memcmp(ch_collapsed, prf->ch, ((FIS_NUM_ROUNDS + 3) / 4) * sizeof(unsigned char));
+  const int success_status = memcmp(ch_collapsed, prf->ch, ((FIS_NUM_ROUNDS + 3) / 4) * sizeof(unsigned char));
   END_TIMING(timing_and_size->verify.verify);
 
   START_TIMING;

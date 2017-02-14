@@ -136,7 +136,7 @@ __attribute__((target("sse2"))) int mpc_and_verify_sse(__m128i* res, __m128i con
   for (unsigned m = 0; m < (SC_VERIFY - 1); ++m) {
     const unsigned j = (m + 1);
 
-    __m128i* sm = __builtin_assume_aligned(CONST_FIRST_ROW(view->s[m]), 16);
+    __m128i* sm = __builtin_assume_aligned(FIRST_ROW(view->s[m]), 16);
 
     __m128i tmp1 = _mm_xor_si128(second[m], second[j]);
     __m128i tmp2 = _mm_and_si128(first[j], second[m]);
@@ -174,7 +174,7 @@ __attribute__((target("avx2"))) int mpc_and_verify_avx(__m256i* res, __m256i con
   for (unsigned m = 0; m < (SC_VERIFY - 1); ++m) {
     const unsigned j = (m + 1);
 
-    __m256i* sm = __builtin_assume_aligned(CONST_FIRST_ROW(view->s[m]), 32);
+    __m256i* sm = __builtin_assume_aligned(FIRST_ROW(view->s[m]), 32);
 
     __m256i tmp1 = _mm256_xor_si256(second[m], second[j]);
     __m256i tmp2 = _mm256_and_si256(first[j], second[m]);
