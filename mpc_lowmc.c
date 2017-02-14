@@ -17,11 +17,11 @@
  */
 
 #include "mpc_lowmc.h"
+#include "hashing_util.h"
 #include "io.h"
 #include "lowmc_pars.h"
 #include "mpc.h"
 #include "mzd_additional.h"
-#include "hashing_util.h"
 
 #include <stdalign.h>
 #include <stdbool.h>
@@ -64,12 +64,12 @@ unsigned char* proof_to_char_array(mpc_lowmc_t* lowmc, proof_t* proof, unsigned*
   unsigned char* result = (unsigned char*)malloc(*len * sizeof(unsigned char));
 
   unsigned char* temp = result;
-  
+
   if (store_ch) {
     memcpy(temp, proof->ch, (NUM_ROUNDS + 3) / 4);
     temp += (NUM_ROUNDS + 3) / 4;
   }
-  
+
   memcpy(temp, proof->hashes, NUM_ROUNDS * COMMITMENT_LENGTH * sizeof(unsigned char));
   temp += NUM_ROUNDS * COMMITMENT_LENGTH;
 
@@ -85,14 +85,14 @@ unsigned char* proof_to_char_array(mpc_lowmc_t* lowmc, proof_t* proof, unsigned*
     temp += PRNG_KEYSIZE;
 
     unsigned char* v0;
-  
-    if(getChAt(proof->ch, i) != 0) {
+
+    if (getChAt(proof->ch, i) != 0) {
       v0 = mzd_to_char_array(proof->views[i][0].s[getChAt(proof->ch, i) % 2], first_view_bytes);
       memcpy(temp, v0, first_view_bytes);
       temp += first_view_bytes;
       free(v0);
     }
-    
+
     for (unsigned j = 1; j < 1 + lowmc->r; j++) {
       v0 = mzd_to_char_array(proof->views[i][j].s[0], single_mzd_bytes);
 
@@ -103,12 +103,11 @@ unsigned char* proof_to_char_array(mpc_lowmc_t* lowmc, proof_t* proof, unsigned*
     }
 
     v0 = mzd_to_char_array(proof->views[i][1 + lowmc->r].s[1], full_mzd_size);
-    
+
     memcpy(temp, v0, full_mzd_size);
     temp += full_mzd_size;
-    
+
     free(v0);
-    
   }
 
   return result;
@@ -128,7 +127,7 @@ proof_t* proof_from_char_array(mpc_lowmc_t* lowmc, proof_t* proof, unsigned char
       (contains_ch ? ((NUM_ROUNDS + 3) / 4) : 0);
 
   unsigned char* temp = data;
- 
+
   if (contains_ch) {
     memcpy(proof->ch, temp, (NUM_ROUNDS + 3) / 4);
     temp += (NUM_ROUNDS + 3) / 4;
@@ -147,10 +146,10 @@ proof_t* proof_from_char_array(mpc_lowmc_t* lowmc, proof_t* proof, unsigned char
     temp += PRNG_KEYSIZE;
     memcpy(proof->keys[i][1], temp, PRNG_KEYSIZE * sizeof(char));
     temp += PRNG_KEYSIZE;
-    proof->views[i]         = malloc((2 + lowmc->r) * sizeof(view_t));
+    proof->views[i] = malloc((2 + lowmc->r) * sizeof(view_t));
 
     const unsigned char ch = getChAt(proof->ch, i);
-    if(ch == 0) {
+    if (ch == 0) {
       proof->views[i][0].s[0] = mzd_init_random_vector_from_seed(proof->keys[i][0], lowmc->k);
       proof->views[i][0].s[1] = mzd_init_random_vector_from_seed(proof->keys[i][1], lowmc->k);
     } else if (ch == 1) {
@@ -187,7 +186,7 @@ proof_t* create_proof(proof_t* proof, mpc_lowmc_t const* lowmc,
   if (!proof)
     proof = calloc(sizeof(proof_t), 1);
 
-  const size_t num_views = 2 + lowmc->r;
+  const size_t num_views  = 2 + lowmc->r;
   const size_t last_round = 1 + lowmc->r;
 
   for (unsigned int i = 0; i < NUM_ROUNDS; i++) {
@@ -203,7 +202,7 @@ proof_t* create_proof(proof_t* proof, mpc_lowmc_t const* lowmc,
     memcpy(proof->keys[i][0], keys[i][a], PRNG_KEYSIZE);
     memcpy(proof->keys[i][1], keys[i][b], PRNG_KEYSIZE);
 
-    proof->views[i] = malloc(num_views * sizeof(view_t));
+    proof->views[i]         = malloc(num_views * sizeof(view_t));
     proof->views[i][0].s[0] = views[i][0].s[a];
     proof->views[i][0].s[1] = views[i][0].s[b];
     proof->views[i][0].s[2] = NULL;
@@ -211,7 +210,7 @@ proof_t* create_proof(proof_t* proof, mpc_lowmc_t const* lowmc,
     for (unsigned j = 1; j < last_round; j++) {
       proof->views[i][j].s[0] = views[i][j].s[b];
       // we keep the reference to this pointer here and free it later
-      // to circumvent the need for two clear functions. Note that 
+      // to circumvent the need for two clear functions. Note that
       // this reference is not serialized withing proof_to_char_array
       proof->views[i][j].s[1] = views[i][j].s[a];
       proof->views[i][j].s[2] = NULL;
@@ -222,7 +221,7 @@ proof_t* create_proof(proof_t* proof, mpc_lowmc_t const* lowmc,
     proof->views[i][last_round].s[2] = NULL;
     mzd_local_free(views[i][last_round].s[c]);
 
-    const unsigned int idx = i / 4;
+    const unsigned int idx   = i / 4;
     const unsigned int shift = (i % 4) << 1;
 
     proof->ch[idx] |= a << shift;
@@ -245,7 +244,7 @@ proof_t* create_proof(proof_t* proof, mpc_lowmc_t const* lowmc,
   mpc_shift_left(vars->r0s, vars->r0m, 2, sc);                                                     \
                                                                                                    \
   mpc_shift_left(vars->x1s, vars->x1m, 1, sc);                                                     \
-  mpc_shift_left(vars->r1s, vars->r1m, 1, sc);
+  mpc_shift_left(vars->r1s, vars->r1m, 1, sc)
 
 #define bitsliced_step_2(sc)                                                                       \
   mpc_xor(vars->r2m, vars->r2m, vars->x0s, sc);                                                    \
@@ -261,8 +260,7 @@ proof_t* create_proof(proof_t* proof, mpc_lowmc_t const* lowmc,
                                                                                                    \
   mpc_xor(out, out, vars->r0m, sc);                                                                \
   mpc_xor(out, out, vars->x0s, sc);                                                                \
-  mpc_xor(out, out, vars->x1s, sc)                                                                
-
+  mpc_xor(out, out, vars->x1s, sc)
 
 static void _mpc_sbox_layer_bitsliced(mzd_t** out, mzd_t* const* in, view_t* view,
                                       mzd_t* const* rvec, mask_t const* mask,
@@ -277,8 +275,8 @@ static void _mpc_sbox_layer_bitsliced(mzd_t** out, mzd_t* const* in, view_t* vie
 }
 
 static void _mpc_sbox_layer_bitsliced_verify(mzd_t** out, mzd_t* const* in, view_t const* view,
-                                            mzd_t* const* rvec, mask_t const* mask,
-                                            sbox_vars_t const* vars) {
+                                             mzd_t* const* rvec, mask_t const* mask,
+                                             sbox_vars_t const* vars) {
   bitsliced_step_1(SC_VERIFY);
 
   mpc_and_verify(vars->r0m, vars->x0s, vars->x1s, vars->r2m, view, mask->x2, 0, vars->v);
@@ -645,11 +643,10 @@ mzd_t** mpc_lowmc_call(mpc_lowmc_t const* lowmc, mpc_lowmc_key_t* lowmc_key, mzd
   return _mpc_lowmc_call_bitsliced(lowmc, lowmc_key, p, xor_p, views, rvec, 0);
 }
 
-int _mpc_lowmc_verify(mpc_lowmc_t const* lowmc, mpc_lowmc_key_t *lowmc_key, mzd_t const* p, 
+int _mpc_lowmc_verify(mpc_lowmc_t const* lowmc, mpc_lowmc_key_t* lowmc_key, mzd_t const* p,
                       bool xor_p, view_t const* views, mzd_t*** rvec, int c) {
   int status = 0;
-  mzd_t** v =
-      _mpc_lowmc_call_bitsliced_verify(lowmc, lowmc_key, p, xor_p, views, rvec, c, &status);
+  mzd_t** v = _mpc_lowmc_call_bitsliced_verify(lowmc, lowmc_key, p, xor_p, views, rvec, c, &status);
   mpc_free(v, SC_VERIFY);
 #if 0
   if (v) {
@@ -666,21 +663,21 @@ int _mpc_lowmc_verify(mpc_lowmc_t const* lowmc, mpc_lowmc_key_t *lowmc_key, mzd_
   return status;
 }
 
-int mpc_lowmc_verify(mpc_lowmc_t const* lowmc, mzd_t const* p, bool xor_p, 
-                     view_t const* views, mzd_t*** rvec, int c) {
+int mpc_lowmc_verify(mpc_lowmc_t const* lowmc, mzd_t const* p, bool xor_p, view_t const* views,
+                     mzd_t*** rvec, int c) {
   mpc_lowmc_key_t lowmc_key;
   mzd_shared_from_shares(&lowmc_key, views[0].s, SC_VERIFY);
   lowmc_key.share_count = 2;
-  
+
   return _mpc_lowmc_verify(lowmc, &lowmc_key, p, xor_p, views, rvec, c);
 }
 
 int mpc_lowmc_verify_keys(mpc_lowmc_t const* lowmc, mzd_t const* p, bool xor_p, view_t const* views,
-                     mzd_t*** rvec, int c, const unsigned char keys[2][16]) {
+                          mzd_t*** rvec, int c, const unsigned char keys[2][16]) {
   mpc_lowmc_key_t lowmc_key;
   mzd_shared_from_shares(&lowmc_key, views[0].s, SC_VERIFY);
   lowmc_key.share_count = 2;
-  
+
   return _mpc_lowmc_verify(lowmc, &lowmc_key, p, xor_p, views, rvec, c);
 }
 

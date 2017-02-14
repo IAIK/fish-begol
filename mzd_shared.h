@@ -36,8 +36,7 @@ typedef struct {
 
 void mzd_shared_init(mzd_shared_t* shared_value, mzd_t const* value);
 void mzd_shared_copy(mzd_shared_t* dst, mzd_shared_t const* src);
-void mzd_shared_share_from_keys(mzd_shared_t* shared_value, 
-                                const unsigned char keys[2][16]);
+void mzd_shared_share_from_keys(mzd_shared_t* shared_value, const unsigned char keys[2][16]);
 void mzd_shared_from_shares(mzd_shared_t* shared_value, mzd_t* const* shares,
                             unsigned int share_count);
 void mzd_shared_share(mzd_shared_t* shared_value);

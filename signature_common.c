@@ -38,8 +38,7 @@ void destroy_instance(public_parameters_t* pp) {
 void init_view(mpc_lowmc_t const* mpc_lowmc, view_t* views[NUM_ROUNDS]) {
   const unsigned int view_count = 2 + mpc_lowmc->r;
 
-  unsigned char* buffer =
-      malloc((view_count * NUM_ROUNDS) * (sizeof(view_t)));
+  unsigned char* buffer = malloc((view_count * NUM_ROUNDS) * (sizeof(view_t)));
 
   for (unsigned int i = 0; i < NUM_ROUNDS; i++) {
     views[i] = (view_t*)buffer;
@@ -58,6 +57,6 @@ void init_view(mpc_lowmc_t const* mpc_lowmc, view_t* views[NUM_ROUNDS]) {
 }
 
 void free_view(mpc_lowmc_t const* mpc_lowmc, view_t* views[NUM_ROUNDS]) {
-  (void) mpc_lowmc;
+  (void)mpc_lowmc;
   free(views[0]);
 }

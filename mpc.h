@@ -22,36 +22,43 @@
 #include "mpc_lowmc.h"
 #include <m4ri/m4ri.h>
 
-void mpc_shift_right(mzd_t* const* res, mzd_t* const* val, unsigned count, unsigned sc) __attribute__((nonnull));
+void mpc_shift_right(mzd_t* const* res, mzd_t* const* val, unsigned count, unsigned sc)
+    __attribute__((nonnull));
 
-void mpc_shift_left(mzd_t* const* res, mzd_t* const* val, unsigned count, unsigned sc) __attribute__((nonnull));
+void mpc_shift_left(mzd_t* const* res, mzd_t* const* val, unsigned count, unsigned sc)
+    __attribute__((nonnull));
 
-void mpc_and_const(mzd_t* const* res, mzd_t* const* first, mzd_t const* second, unsigned sc) __attribute__((nonnull));
+void mpc_and_const(mzd_t* const* res, mzd_t* const* first, mzd_t const* second, unsigned sc)
+    __attribute__((nonnull));
 
-void mpc_xor(mzd_t* const* res, mzd_t* const* first, mzd_t* const* second, unsigned sc) __attribute__((nonnull));
+void mpc_xor(mzd_t* const* res, mzd_t* const* first, mzd_t* const* second, unsigned sc)
+    __attribute__((nonnull));
 
 void mpc_clear(mzd_t** res, unsigned sc) __attribute__((nonnull));
 
 void mpc_and(mzd_t* const* res, mzd_t* const* first, mzd_t* const* second, mzd_t* const* r,
-            view_t* view, unsigned viewshift, mzd_t* const* buffer) __attribute__((nonnull));
+             view_t* view, unsigned viewshift, mzd_t* const* buffer) __attribute__((nonnull));
 
 void mpc_and_verify(mzd_t* const* res, mzd_t* const* first, mzd_t* const* second, mzd_t* const* r,
-                   view_t const* view, mzd_t const* mask, unsigned viewshift, mzd_t* const* buffer) __attribute__((nonnull));
+                    view_t const* view, mzd_t const* mask, unsigned viewshift, mzd_t* const* buffer)
+    __attribute__((nonnull));
 
 #ifdef WITH_OPT
 #include "simd.h"
 
 void mpc_and_sse(__m128i* res, __m128i const* first, __m128i const* second, __m128i const* r,
-                view_t const* view, unsigned viewshift) __attribute__((nonnull));
+                 view_t const* view, unsigned viewshift) __attribute__((nonnull));
 
 void mpc_and_avx(__m256i* res, __m256i const* first, __m256i const* second, __m256i const* r,
-                view_t const* view, unsigned viewshift) __attribute__((nonnull));
+                 view_t const* view, unsigned viewshift) __attribute__((nonnull));
 
 void mpc_and_verify_sse(__m128i* res, __m128i const* first, __m128i const* second, __m128i const* r,
-                       view_t const* view, __m128i const mask, unsigned viewshift) __attribute__((nonnull));
+                        view_t const* view, __m128i const mask, unsigned viewshift)
+    __attribute__((nonnull));
 
 void mpc_and_verify_avx(__m256i* res, __m256i const* first, __m256i const* second, __m256i const* r,
-                       view_t const* view, __m256i const mask, unsigned viewshift) __attribute__((nonnull));
+                        view_t const* view, __m256i const mask, unsigned viewshift)
+    __attribute__((nonnull));
 #endif
 
 /**
@@ -156,7 +163,8 @@ void mpc_write_bit(mzd_t** vec, rci_t n, BIT* bit, unsigned sc);
  * \param  sc     the share count
  * \return        the result of the computation
  */
-mzd_t** mpc_add(mzd_t** result, mzd_t** first, mzd_t** second, unsigned sc) __attribute__((nonnull));
+mzd_t** mpc_add(mzd_t** result, mzd_t** first, mzd_t** second, unsigned sc)
+    __attribute__((nonnull));
 
 /**
  * Computes the addition in GF(2) of a secret shared
@@ -170,7 +178,8 @@ mzd_t** mpc_add(mzd_t** result, mzd_t** first, mzd_t** second, unsigned sc) __at
  * \param  c      the callenge for verification (0 if in proving mode)
  * \return        the result of the computation
  */
-mzd_t** mpc_const_add(mzd_t** result, mzd_t** first, mzd_t const* second, unsigned sc, unsigned c) __attribute__((nonnull));
+mzd_t** mpc_const_add(mzd_t** result, mzd_t** first, mzd_t const* second, unsigned sc, unsigned c)
+    __attribute__((nonnull));
 
 /**
  * Computes result = first * second in GF(2) of a
@@ -183,9 +192,11 @@ mzd_t** mpc_const_add(mzd_t** result, mzd_t** first, mzd_t const* second, unsign
  * \param  sc     the share count
  * \return        the result of the computation
  */
-mzd_t** mpc_const_mat_mul(mzd_t** result, mzd_t const* matrix, mzd_t** vector, unsigned sc) __attribute__((nonnull));
+mzd_t** mpc_const_mat_mul(mzd_t** result, mzd_t const* matrix, mzd_t** vector, unsigned sc)
+    __attribute__((nonnull));
 
-void mpc_const_addmat_mul_l(mzd_t** result, mzd_t const* matrix, mzd_t** vector, unsigned sc) __attribute__((nonnull));
+void mpc_const_addmat_mul_l(mzd_t** result, mzd_t const* matrix, mzd_t** vector, unsigned sc)
+    __attribute__((nonnull));
 
 /**
  * Computes result = first * second in GF(2) of a
@@ -198,7 +209,8 @@ void mpc_const_addmat_mul_l(mzd_t** result, mzd_t const* matrix, mzd_t** vector,
  * \param  sc     the share count
  * \return        the result of the computation
  */
-mzd_t** mpc_const_mat_mul_l(mzd_t** result, mzd_t const* matrix, mzd_t** vector, unsigned sc) __attribute__((nonnull));
+mzd_t** mpc_const_mat_mul_l(mzd_t** result, mzd_t const* matrix, mzd_t** vector, unsigned sc)
+    __attribute__((nonnull));
 
 /**
  * Deep copies a secret shared vector

@@ -40,7 +40,8 @@ void mzd_local_free(mzd_t* v);
 /**
  * Initialize multiple mzd_t instances using one large enough memory block.
  */
-void mzd_local_init_multiple_ex(mzd_t** dst, size_t n, rci_t r, rci_t c, bool clear) __attribute__((nonnull(1)));
+void mzd_local_init_multiple_ex(mzd_t** dst, size_t n, rci_t r, rci_t c, bool clear)
+    __attribute__((nonnull(1)));
 
 #define mzd_local_init_multiple(dst, n, r, c) mzd_local_init_multiple_ex(dst, n, r, c, true)
 
@@ -70,7 +71,8 @@ void mzd_randomize_from_seed(mzd_t* vector, const unsigned char key[16]) __attri
 
 mzd_t* mzd_init_random_vector_from_seed(const unsigned char key[16], rci_t n);
 
-void mzd_randomize_multiple_from_seed(mzd_t** vectors, unsigned int count, const unsigned char key[PRNG_KEYSIZE]);
+void mzd_randomize_multiple_from_seed(mzd_t** vectors, unsigned int count,
+                                      const unsigned char key[PRNG_KEYSIZE]);
 
 mzd_t** mzd_init_random_vectors_from_seed(const unsigned char key[PRNG_KEYSIZE], rci_t n,
                                           unsigned count);
@@ -118,13 +120,14 @@ mzd_t* mzd_addmul_vl(mzd_t* c, mzd_t const* v, mzd_t const* At) __attribute__((n
 /**
  * Compute v * A optimized for v being a vector.
  */
-void mzd_mul_vlm(mzd_t** c, mzd_t const* const* v, mzd_t const* At, unsigned int sc) __attribute__((nonnull));
+void mzd_mul_vlm(mzd_t** c, mzd_t const* const* v, mzd_t const* At, unsigned int sc)
+    __attribute__((nonnull));
 
 /**
  * Compute c + v * A optimized for c and v being vectors.
  */
-void mzd_addmul_vlm(mzd_t** c, mzd_t const* const* v, mzd_t const* At, unsigned int sc) __attribute__((nonnull));
-
+void mzd_addmul_vlm(mzd_t** c, mzd_t const* const* v, mzd_t const* At, unsigned int sc)
+    __attribute__((nonnull));
 
 /**
  * Pre-compute matrices for faster mzd_addmul_v computions.
@@ -132,7 +135,7 @@ void mzd_addmul_vlm(mzd_t** c, mzd_t const* const* v, mzd_t const* At, unsigned 
  */
 mzd_t* mzd_precompute_matrix_lookup(mzd_t const* A) __attribute__((nonnull));
 
-#define FIRST_ROW(v) ((word*) (((void*) (v)) + 64))
-#define CONST_FIRST_ROW(v) ((word const*) (((void const*) (v)) + 64))
+#define FIRST_ROW(v) ((word*)(((void*)(v)) + 64))
+#define CONST_FIRST_ROW(v) ((word const*)(((void const*)(v)) + 64))
 
 #endif

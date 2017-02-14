@@ -223,7 +223,7 @@ void mzd_local_clear(mzd_t* c) {
 void mzd_randomize_ssl(mzd_t* val) {
   // similar to mzd_randomize but using RAND_Bytes instead
   const word mask_end = val->high_bitmask;
-  const size_t len1 = val->width  - 1;
+  const size_t len1   = val->width - 1;
 
   for (rci_t i = 0; i < val->nrows; ++i) {
     rand_bytes((unsigned char*)val->rows[i], val->width * sizeof(word));
@@ -234,9 +234,10 @@ void mzd_randomize_ssl(mzd_t* val) {
 static void mzd_randomize_aes_prng(mzd_t* v, aes_prng_t* aes_prng) {
   // similar to mzd_randomize but using aes_prng_t instead
   const word mask_end = v->high_bitmask;
-  aes_prng_get_randomness(aes_prng, (unsigned char*) FIRST_ROW(v), v->width * sizeof(word) * v->nrows);
+  aes_prng_get_randomness(aes_prng, (unsigned char*)FIRST_ROW(v),
+                          v->width * sizeof(word) * v->nrows);
   if (mask_end != m4ri_ffff) {
-    const size_t len1 = v->width  - 1;
+    const size_t len1 = v->width - 1;
     for (rci_t i = 0; i < v->nrows; ++i) {
       v->rows[i][len1] &= mask_end;
     }
@@ -263,14 +264,14 @@ void mzd_randomize_from_seed(mzd_t* vector, const unsigned char key[16]) {
   aes_prng_clear(&aes_prng);
 }
 
-
 mzd_t* mzd_init_random_vector_from_seed(const unsigned char key[16], rci_t n) {
   mzd_t* vector = mzd_local_init_ex(1, n, false);
   mzd_randomize_from_seed(vector, key);
   return vector;
 }
 
-void mzd_randomize_multiple_from_seed(mzd_t** vectors, unsigned int count, const unsigned char key[16]) {
+void mzd_randomize_multiple_from_seed(mzd_t** vectors, unsigned int count,
+                                      const unsigned char key[16]) {
   aes_prng_t aes_prng;
   aes_prng_init(&aes_prng, key);
 
@@ -971,7 +972,7 @@ mzd_t* mzd_precompute_matrix_lookup(mzd_t const* A) {
 #ifdef WITH_OPT
 #ifdef WITH_SSE2
 __attribute__((target("sse2"))) static inline mzd_t* mzd_mul_vl_sse_128(mzd_t* c, mzd_t const* v,
-                                                                           mzd_t const* A) {
+                                                                        mzd_t const* A) {
   word const* vptr                = __builtin_assume_aligned(CONST_FIRST_ROW(v), 16);
   const unsigned int width        = v->width;
   static const unsigned int moff1 = sizeof(word) * 128;
@@ -989,11 +990,10 @@ __attribute__((target("sse2"))) static inline mzd_t* mzd_mul_vl_sse_128(mzd_t* c
     }
   }
 
-  __m128i* mcptr       = __builtin_assume_aligned(FIRST_ROW(c), 16);
-  *mcptr = mc;
+  __m128i* mcptr = __builtin_assume_aligned(FIRST_ROW(c), 16);
+  *mcptr         = mc;
   return c;
 }
-
 
 __attribute__((target("sse2"))) static inline mzd_t* mzd_addmul_vl_sse_128(mzd_t* c, mzd_t const* v,
                                                                            mzd_t const* A) {
@@ -1047,13 +1047,14 @@ __attribute__((target("sse2"))) static inline mzd_t* mzd_addmul_vl_sse(mzd_t* c,
 
 #ifdef WITH_AVX2
 __attribute__((target("avx2"))) static inline mzd_t* mzd_mul_vl_avx_256(mzd_t* c, mzd_t const* v,
-                                                                           mzd_t const* A) {
+                                                                        mzd_t const* A) {
   word const* vptr                = __builtin_assume_aligned(CONST_FIRST_ROW(v), 16);
   const unsigned int width        = v->width;
   static const unsigned int moff1 = sizeof(word) * 256;
   static const unsigned int moff2 = 256;
 
-  __m256i mc           = _mm256_setzero_si256();;
+  __m256i mc = _mm256_setzero_si256();
+  ;
   __m256i const* mAptr = __builtin_assume_aligned(CONST_FIRST_ROW(A), 32);
 
   for (unsigned int w = width; w; --w, ++vptr, mAptr += moff1) {
@@ -1065,8 +1066,8 @@ __attribute__((target("avx2"))) static inline mzd_t* mzd_mul_vl_avx_256(mzd_t* c
     }
   }
 
-  __m256i* mcptr       = __builtin_assume_aligned(FIRST_ROW(c), 32);
-  *mcptr = mc;
+  __m256i* mcptr = __builtin_assume_aligned(FIRST_ROW(c), 32);
+  *mcptr         = mc;
   return c;
 }
 
