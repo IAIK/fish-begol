@@ -29,8 +29,8 @@ ifneq ($(WITH_AVX2),0)
 CPPFLAGS+=-DWITH_AVX2
 endif
 
-SOURCES=$(wildcard *.c)
-HEADERS=$(wildcard *.h)
+SOURCES=$(sort $(wildcard *.c))
+HEADERS=$(sort $(wildcard *.h))
 
 TIMING_SOURCES=$(wildcard timing/*.py)
 TIMING_INSTANCES=$(wildcard timing/lowmc-*-*-*.txt) $(wildcard timing/pq-lowmc-*-*-*.txt)
