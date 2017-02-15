@@ -103,7 +103,7 @@ def round_down(x, f=5.0):
 
 
 def round_up_log(x):
-  return round_up(2**(math.ceil(math.log(x, 2))), f=4.0)
+  return round_up(2**(math.ceil(4 * math.log(x, 2)) / 4), f=4.0)
 
 
 def round_down_log(x):
@@ -224,8 +224,10 @@ def create_graph(prefix, fis_n, bg_n, fis_k, bg_k, fis_data, bg_data, fis_labels
 
 
   def annotate_and_print(scheme, labels, size, sign, verify, index, color=annotation_color_e):
-    annotate.append(Annotation(labels[index], (size[index], sign[index]), color))
-    annotate.append(Annotation(None, (size[index], verify[index]), color))
+    cstyle = lookup_style(style, 'default', scheme, labels[index])
+
+    annotate.append(Annotation(labels[index], (size[index], sign[index]), color, **cstyle))
+    annotate.append(Annotation(None, (size[index], verify[index]), color, **cstyle))
     print("Annotating {} {}: size={}, sign={}, verify={}".format(scheme, labels[index],
         size[index] * 1024, sign[index], verify[index]))
 

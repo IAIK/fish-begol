@@ -4,6 +4,14 @@
       "size": 6
     }
   },
+  "default": {
+    "Fish": {
+      "256-256-1-243": {
+        "horizontalalignment": "left",
+        "xytext": [5,-2]
+      }
+    }
+  },
   "omp": {
     "BG": {
       "256-256-2-232": {
