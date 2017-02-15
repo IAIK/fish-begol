@@ -41,13 +41,15 @@ graphs-postq:
 		--bg-blocksize 256 --bg-keysize 256 --bg-annotate 20-31 \
 		--sha-proof 237 --sha-verify 137 --sha-size 2672.484375
 	python3 graphs.py -p pq-timings-d1 default \
-		--fs-blocksize 256 --fs-keysize 256 --fs-annotate 20-31 \
-		--bg-blocksize 256 --bg-keysize 256 --bg-annotate 20-31 \
-		--sha-proof 237 --sha-verify 137 --sha-size 2672.484375
+		--fs-blocksize 256 --fs-keysize 256 --fs-annotate 10-29 \
+		--bg-blocksize 256 --bg-keysize 256 --bg-annotate 10-29 \
+		--sha-proof 237 --sha-verify 137 --sha-size 2672.484375 \
+		--no-sha-annotation
 	python3 graphs.py -p pq-timings-d1.3 default \
-		--fs-blocksize 256 --fs-keysize 256 --fs-annotate 20-31 \
-		--bg-blocksize 256 --bg-keysize 256 --bg-annotate 20-31 \
-		--sha-proof 237 --sha-verify 137 --sha-size 2672.484375
+		--fs-blocksize 256 --fs-keysize 256 --fs-annotate 10-38 \
+		--bg-blocksize 256 --bg-keysize 256 --bg-annotate 10-38 \
+		--sha-proof 237 --sha-verify 137 --sha-size 2672.484375 \
+		--no-sha-annotation
 
 
 graphs-omp:

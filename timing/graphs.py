@@ -427,7 +427,7 @@ def create_graphs(args, style=None):
 
   create_graph('{0}'.format(prefix), fis_n, bg_n, fis_k, bg_k, fis_sum, bg_sum, fis_labels,
       bg_labels, args.fs_annotate, args.bg_annotate, style=style, sha_size=args.sha_size,
-      sha_verify=args.sha_verify, sha_proof=args.sha_proof)
+      sha_verify=args.sha_verify, sha_proof=args.sha_proof, include_sha=args.annotate_sha)
 
 
 def create_qh_graphs(args, style=None):
@@ -612,6 +612,8 @@ def main():
                               dest='sha_verify', default=mpc_sha256_verify, type=float)
   default_parser.add_argument('--sha-proof', help='Runtime of the proof generation for SHA-256',
                               dest='sha_proof', default=mpc_sha256_proof, type=float)
+  default_parser.add_argument('--no-sha-annotation', help='Annotate SHA', dest='annotate_sha',
+                               action='store_false', default=True)
 
   qh_parser = subparsers.add_parser('qH', help='graphs for rising q_H')
   qh_parser.set_defaults(func=create_qh_graphs)
