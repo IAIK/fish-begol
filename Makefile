@@ -35,10 +35,11 @@ HEADERS=$(wildcard *.h)
 TIMING_SOURCES=$(wildcard timing/*.py)
 TIMING_INSTANCES=$(wildcard timing/lowmc-*-*-*.txt) $(wildcard timing/pq-lowmc-*-*-*.txt)
 
-all:
+all: $(SOURCES) $(HEADERS) Makefile
 	$(CC) $(CPPFLAGS) $(CFLAGS) $(SOURCES) $(LDFLAGS) $(LDLIBS) -o mpc_lowmc -Wno-unknown-pragmas
 	$(CC) $(CPPFLAGS) -DWITH_PQ_PARAMETERS $(CFLAGS) $(SOURCES) $(LDFLAGS) $(LDLIBS) -o mpc_lowmc_pq -Wno-unknown-pragmas
-	$(CC) $(CPPFLAGS) $(CFLAGS) $(SOURCES) $(LDFLAGS) $(LDLIBS) -o mpc_lowmc_openmp -fopenmp -DWITH_OPENMP
+	$(CC) $(CPPFLAGS) -DWITH_OPENMP $(CFLAGS) $(SOURCES) $(LDFLAGS) $(LDLIBS) -o mpc_lowmc_openmp -fopenmp
+	$(CC) $(CPPFLAGS) -DWITH_PQ_PARAMETERS -DWITH_OPENMP $(CFLAGS) $(SOURCES) $(LDFLAGS) $(LDLIBS) -o mpc_lowmc_pq_openmp -fopenmp
 
 clean:
 	rm -f *.o *.gch mpc_lowmc mpc_lowmc_pq mpc_lowmc_openmp
