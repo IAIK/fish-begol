@@ -196,13 +196,13 @@ def create_graph(prefix, fis_n, bg_n, fis_k, bg_k, fis_data, bg_data, fis_labels
   if fis_annotate is not None:
     fis_index = t_fis_labels.index(fis_annotate)
   else:
-    fis_index = len(t_fis_labels) / 2 - 1
+    fis_index = len(t_fis_labels) // 2
 
   if bg_data is not None:
     if bg_annotate is not None:
       bg_index = t_bg_labels.index(bg_annotate)
     else:
-      bg_index = len(t_bg_labels) / 2 - 1
+      bg_index = len(t_bg_labels) // 2
 
   t_fis_labels = ['{0}-{1}-{2}'.format(fis_n, fis_k, l) for l in t_fis_labels]
   if bg_data is not None:
