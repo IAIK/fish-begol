@@ -222,51 +222,23 @@ def create_graph(prefix, fis_n, bg_n, fis_k, bg_k, fis_data, bg_data, fis_labels
     bg_min_index = t_bg_size.index(min(t_bg_size))
     bg_max_index = t_bg_size.index(max(t_bg_size))
 
-  annotate.append(Annotation(t_fis_labels[fis_min_index],
-                             (t_fis_size[fis_min_index], t_fis_sign[fis_min_index]),
-                             annotation_color_e))
-  annotate.append(Annotation(None,
-                             (t_fis_size[fis_min_index], t_fis_verify[fis_min_index]),
-                             annotation_color_e))
-  if bg_data is not None:
-    annotate.append(Annotation(t_bg_labels[bg_min_index],
-                               (t_bg_size[bg_min_index], t_bg_sign[bg_min_index]),
-                               annotation_color_e))
-    annotate.append(Annotation(None,
-                               (t_bg_size[bg_min_index], t_bg_verify[bg_min_index]),
-                               annotation_color_e))
 
-  annotate.append(Annotation(t_fis_labels[fis_max_index],
-                             (t_fis_size[fis_max_index], t_fis_sign[fis_max_index]),
-                             annotation_color_e))
-  annotate.append(Annotation(None,
-                             (t_fis_size[fis_max_index], t_fis_verify[fis_max_index]),
-                             annotation_color_e))
-  if bg_data is not None:
-    annotate.append(Annotation(t_bg_labels[bg_max_index],
-                               (t_bg_size[bg_max_index], t_bg_sign[bg_max_index]),
-                               annotation_color_e))
-    annotate.append(Annotation(None,
-                               (t_bg_size[bg_max_index], t_bg_verify[bg_max_index]),
-                               annotation_color_e))
+  def annotate_and_print(scheme, labels, size, sign, verify, index, color=annotation_color_e):
+    annotate.append(Annotation(labels[index], (size[index], sign[index]), color))
+    annotate.append(Annotation(None, (size[index], verify[index]), color))
+    print("Annotating {} {}: size={}, sign={}, verify={}".format(scheme, labels[index],
+      size[index], sign[index], verify[index]))
 
-  annotate.append(Annotation(t_fis_labels[fis_index],
-                             (t_fis_size[fis_index], t_fis_sign[fis_index]),
-                             annotation_color_b))
-  annotate.append(Annotation(None,
-                             (t_fis_size[fis_index], t_fis_verify[fis_index]),
-                             annotation_color_b))
-  print("Annotating Fish {}: size={}, sign={}, verify={}".format(t_fis_labels[fis_index],
-    t_fis_size[fis_index], t_fis_sign[fis_index], t_fis_verify[fis_index]))
+  annotate_and_print("Fish", t_fis_labels, t_fis_size, t_fis_sign, t_fis_verify, fis_min_index)
+  annotate_and_print("Fish", t_fis_labels, t_fis_size, t_fis_sign, t_fis_verify, fis_max_index)
+  annotate_and_print("Fish", t_fis_labels, t_fis_size, t_fis_sign, t_fis_verify, fis_index,
+      color=annotation_color_b)
+
   if bg_data is not None:
-    annotate.append(Annotation(t_bg_labels[bg_index],
-                               (t_bg_size[bg_index], t_bg_sign[bg_index]),
-                               annotation_color_b))
-    annotate.append(Annotation(None,
-                               (t_bg_size[bg_index], t_bg_verify[bg_index]),
-                               annotation_color_b))
-    print("Annotating Begol {}: size={}, sign={}, verify={}".format(t_bg_labels[bg_index],
-      t_bg_size[bg_index], t_bg_sign[bg_index], t_bg_verify[bg_index]))
+    annotate_and_print("Begol", t_bg_labels, t_bg_size, t_bg_sign, t_bg_verify, bg_min_index)
+    annotate_and_print("Begol", t_bg_labels, t_bg_size, t_bg_sign, t_bg_verify, bg_max_index)
+    annotate_and_print("Begol", t_bg_labels, t_bg_size, t_bg_sign, t_bg_verify, bg_index,
+        color=annotation_color_b)
 
   combined_time = t_fis_sign + t_fis_verify
   combined_size = t_fis_size
