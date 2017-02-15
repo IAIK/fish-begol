@@ -9,7 +9,12 @@
       "256-256-1-243": {
         "horizontalalignment": "left",
         "xytext": [5,-2]
+      },
+      "256-256-1-316": {
+        "horizontalalignment": "left",
+        "xytext": [5,-2]
       }
+
     }
   },
   "omp": {
