@@ -35,14 +35,23 @@ HEADERS=$(wildcard *.h)
 TIMING_SOURCES=$(wildcard timing/*.py)
 TIMING_INSTANCES=$(wildcard timing/lowmc-*-*-*.txt) $(wildcard timing/pq-lowmc-*-*-*.txt)
 
-all: $(SOURCES) $(HEADERS) Makefile
-	$(CC) $(CPPFLAGS) $(CFLAGS) $(SOURCES) $(LDFLAGS) $(LDLIBS) -o mpc_lowmc -Wno-unknown-pragmas
-	$(CC) $(CPPFLAGS) -DWITH_PQ_PARAMETERS $(CFLAGS) $(SOURCES) $(LDFLAGS) $(LDLIBS) -o mpc_lowmc_pq -Wno-unknown-pragmas
-	$(CC) $(CPPFLAGS) -DWITH_OPENMP $(CFLAGS) $(SOURCES) $(LDFLAGS) $(LDLIBS) -o mpc_lowmc_openmp -fopenmp
-	$(CC) $(CPPFLAGS) -DWITH_PQ_PARAMETERS -DWITH_OPENMP $(CFLAGS) $(SOURCES) $(LDFLAGS) $(LDLIBS) -o mpc_lowmc_pq_openmp -fopenmp
+all: mpc_lowmc mpc_lowmc_pq mpc_lowmc_openmp mpc_lowmc_pq_openmp
+
+mpc_lowmc mpc_lowmc_pq mpc_lowmc_openmp mpc_lowmc_pq_openmp: $(SOURCES) $(HEADERS) Makefile
+
+mpc_lowmc: CFLAGS+=-Wno-unknown-pragmas
+mpc_lowmc_pq: CPPFLAGS+=-DWITH_PQ_PARAMETERS
+mpc_lowmc_pq: CFLAGS+=-Wno-unknown-pragmas
+mpc_lowmc_openmp: CPPFLAGS+=-DWITH_OPENMP
+mpc_lowmc_openmp: CFLAGS+=-fopenmp
+mpc_lowmc_pq_openmp: CPPFLAGS+=-DWITH_PQ_PARAMETERS -DWITH_OPENMP
+mpc_lowmc_pq_openmp: CFLAGS+=-fopenmp
+
+mpc_lowmc mpc_lowmc_pq mpc_lowmc_openmp mpc_lowmc_pq_openmp:
+	$(CC) $(CPPFLAGS) $(CFLAGS) $(SOURCES) $(LDFLAGS) $(LDLIBS) -o $@
 
 clean:
-	rm -f *.o *.gch mpc_lowmc mpc_lowmc_pq mpc_lowmc_openmp
+	rm -f *.o *.gch mpc_lowmc mpc_lowmc_pq mpc_lowmc_openmp mpc_lowmc_pq_openmp
 
 # create anonymized source files
 dist:
