@@ -227,7 +227,7 @@ def create_graph(prefix, fis_n, bg_n, fis_k, bg_k, fis_data, bg_data, fis_labels
     annotate.append(Annotation(labels[index], (size[index], sign[index]), color))
     annotate.append(Annotation(None, (size[index], verify[index]), color))
     print("Annotating {} {}: size={}, sign={}, verify={}".format(scheme, labels[index],
-      size[index], sign[index], verify[index]))
+        size[index] * 1024, sign[index], verify[index]))
 
   annotate_and_print("Fish", t_fis_labels, t_fis_size, t_fis_sign, t_fis_verify, fis_min_index)
   annotate_and_print("Fish", t_fis_labels, t_fis_size, t_fis_sign, t_fis_verify, fis_max_index)
