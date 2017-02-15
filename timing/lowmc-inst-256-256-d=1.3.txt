@@ -34,8 +34,8 @@ m:   10 blocksize:   256  ANDdepth:    38
 m:    9 blocksize:   256  ANDdepth:    42
 m:    8 blocksize:   256  ANDdepth:    46
 m:    7 blocksize:   256  ANDdepth:    51
-m:    6 blocksize:   256  ANDdepth:    45
-m:    5 blocksize:   256  ANDdepth:    59
+m:    6 blocksize:   256  ANDdepth:    59
+m:    5 blocksize:   256  ANDdepth:    69
 m:    4 blocksize:   256  ANDdepth:    85
 m:    3 blocksize:   256  ANDdepth:   111
 m:    2 blocksize:   256  ANDdepth:   163
