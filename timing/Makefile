@@ -1,7 +1,7 @@
 ITER?=100
 MAXTHREADS?=$(shell grep "^processor"  /proc/cpuinfo | wc -l)
 
-PQOPTS=-p pq-timings -x ../mpc_lowmc_pq
+PQEX=-x ../mpc_lowmc_pq
 
 timings-preq:
 	# python3 timing.py lowmc-inst-128-128-128.txt -k 128 -i $(ITER)
@@ -10,7 +10,9 @@ timings-preq:
 	# python3 timing.py lowmc-inst-512-512-512.txt -k 512 -i $(ITER)
 
 timings-postq:
-	python3 timing.py pq-lowmc-inst-256-256-256.txt -k 256 -i $(ITER) $(PQOPTS)
+	python3 timing.py pq-lowmc-inst-256-256-256.txt -k 256 -i $(ITER) $(PQEX) -p pq-timings
+	python3 timing.py lowmc-inst-256-256-d=1.txt -k 256 -i $(ITER) $(PQEX) -p pq-timings-d1
+	python3 timing.py lowmc-inst-256-256-d=1.3.txt -k 256 -i $(ITER) $(PQEX) -p pq-timings-d1.3
 	# python3 timing.py pq-lowmc-inst-384-384-384.txt -k 384 -i $(ITER) $(PQOPTS)
 	# python3 timing.py pq-lowmc-inst-512-512-512.txt -k 512 -i $(ITER) $(PQOPTS)
 
@@ -26,15 +28,27 @@ timings-omp:
 timings: timings-preq timings-postq timings-omp
 
 graphs-preq:
-	python3 graphs.py -p timings default \
+	# python3 graphs.py -p timings default \
 		--fs-blocksize 128 --fs-keysize 128 --fs-annotate 12-26 \
 		--bg-blocksize 128 --bg-keysize 128 --bg-annotate 12-26
+	python3 graphs.py -p timings default \
+		--fs-blocksize 256 --fs-keysize 256 --fs-annotate 20-31 \
+		--bg-blocksize 256 --bg-keysize 256 --bg-annotate 20-31
 
 graphs-postq:
 	python3 graphs.py -p pq-timings default \
 		--fs-blocksize 256 --fs-keysize 256 --fs-annotate 20-31 \
 		--bg-blocksize 256 --bg-keysize 256 --bg-annotate 20-31 \
 		--sha-proof 237 --sha-verify 137 --sha-size 2672.484375
+	python3 graphs.py -p pq-timings-d1 default \
+		--fs-blocksize 256 --fs-keysize 256 --fs-annotate 20-31 \
+		--bg-blocksize 256 --bg-keysize 256 --bg-annotate 20-31 \
+		--sha-proof 237 --sha-verify 137 --sha-size 2672.484375
+	python3 graphs.py -p pq-timings-d1.3 default \
+		--fs-blocksize 256 --fs-keysize 256 --fs-annotate 20-31 \
+		--bg-blocksize 256 --bg-keysize 256 --bg-annotate 20-31 \
+		--sha-proof 237 --sha-verify 137 --sha-size 2672.484375
+
 
 graphs-omp:
 	python3 graphs.py -p omp-timings omp --bg-blocksize 256 --bg-keysize 256 -t $(MAXTHREADS)
