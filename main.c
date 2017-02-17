@@ -80,6 +80,11 @@ void parse_args(int params[5], int argc, char** argv) {
   params[2] = atoi(argv[3]);
   params[3] = atoi(argv[4]);
   params[4] = atoi(argv[5]);
+
+  if (params[0] * 3 > params[1]) {
+    printf("Number of S-boxes * 3 exceeds block size!");
+    exit(-1);
+  }
 }
 
 static void fis_sign_verify(int args[5]) {
