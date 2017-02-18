@@ -96,9 +96,7 @@ static void test_mzd_mul(void) {
         mzd_t* r  = mzd_mul_v(c, v, A);
         mzd_t* r2 = mzd_mul(c2, v, A, __M4RI_STRASSEN_MUL_CUTOFF);
 
-        if (mzd_cmp(r, r2) == 0) {
-          printf("mul: ok [%u x %u]\n", i * 64, j * 64);
-        } else {
+        if (mzd_cmp(r, r2) != 0) {
           printf("mul: fail [%u x %u]\n", i * 64, j * 64);
           printf("r =  ");
           mzd_print(r);
@@ -139,6 +137,8 @@ static void test_mzd_shift(void) {
       if (mzd_cmp(r, w) != 0) {
         printf("lshift fail\nv = ");
         mzd_print(v);
+        printf("r = ");
+        mzd_print(r);
         printf("w = ");
         mzd_print(w);
       }
@@ -154,6 +154,8 @@ static void test_mzd_shift(void) {
       if (mzd_cmp(r, w) != 0) {
         printf("rshift fail\nv = ");
         mzd_print(v);
+        printf("r = ");
+        mzd_print(r);
         printf("w = ");
         mzd_print(w);
       }
@@ -181,6 +183,8 @@ static void test_mzd_shift(void) {
       if (mzd_cmp(r, w) != 0) {
         printf("lshift fail\nv = ");
         mzd_print(v);
+        printf("r = ");
+        mzd_print(r);
         printf("w = ");
         mzd_print(w);
       }
@@ -196,6 +200,8 @@ static void test_mzd_shift(void) {
       if (mzd_cmp(r, w) != 0) {
         printf("rshift fail\nv = ");
         mzd_print(v);
+        printf("r = ");
+        mzd_print(r);
         printf("w = ");
         mzd_print(w);
       }
