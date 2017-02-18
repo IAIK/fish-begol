@@ -976,8 +976,8 @@ __attribute__((target("sse2"))) static inline mzd_t* mzd_mul_vl_sse_128(mzd_t* c
                                                                         mzd_t const* A) {
   word const* vptr                = __builtin_assume_aligned(CONST_FIRST_ROW(v), 16);
   const unsigned int width        = v->width;
-  static const unsigned int moff1 = sizeof(word) * 128;
-  static const unsigned int moff2 = 128;
+  static const unsigned int moff1 = sizeof(word) * 256;
+  static const unsigned int moff2 = 256;
 
   __m128i mc           = _mm_setzero_si128();
   __m128i const* mAptr = __builtin_assume_aligned(CONST_FIRST_ROW(A), 16);
@@ -1000,8 +1000,8 @@ __attribute__((target("sse2"))) static inline mzd_t* mzd_addmul_vl_sse_128(mzd_t
                                                                            mzd_t const* A) {
   word const* vptr                = __builtin_assume_aligned(CONST_FIRST_ROW(v), 16);
   const unsigned int width        = v->width;
-  static const unsigned int moff1 = sizeof(word) * 128;
-  static const unsigned int moff2 = 128;
+  static const unsigned int moff1 = sizeof(word) * 256;
+  static const unsigned int moff2 = 256;
 
   __m128i* mcptr       = __builtin_assume_aligned(FIRST_ROW(c), 16);
   __m128i mc           = *mcptr;
