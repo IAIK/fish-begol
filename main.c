@@ -28,6 +28,7 @@
 #include "signature_bg.h"
 #include "signature_fis.h"
 #include "timing.h"
+#include "mpc_test.h"
 
 #include <inttypes.h>
 #include <time.h>
@@ -199,6 +200,8 @@ int main(int argc, char** argv) {
   init_rand_bytes();
   init_EVP();
   openmp_thread_setup();
+
+  run_tests();
 
   int args[5];
   parse_args(args, argc, argv);

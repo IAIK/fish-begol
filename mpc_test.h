@@ -20,13 +20,8 @@
 #define MPC_TEST_H
 
 /**
- * Tests the mpc secret sharing method
+ * Run tests
  */
-void test_mpc_share();
-
-/**
- * Tests the mpc add method
- */
-void test_mpc_add();
+void run_tests(void);
 
 #endif
