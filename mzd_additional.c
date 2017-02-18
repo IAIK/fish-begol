@@ -22,6 +22,12 @@
 // #include <assert.h>
 #include <stdlib.h>
 
+// sizeof(mzd_t) == 64 is only ensured after
+// a41f75a72f8a84d9318d44b6f01aac1453dfffe6, but a version including this
+// commit is not available on any recent Debian based distribution.
+static const size_t mzd_t_size = (sizeof(mzd_t) + 0x3f) & ~0x3f;
+static_assert(((sizeof(mzd_t) + 0x3f) & ~0x3f) == 64, "sizeof mzd_t not supported");
+
 #ifdef WITH_OPT
 #include "simd.h"
 
@@ -71,10 +77,6 @@ mzd_t* mzd_local_init_ex(rci_t r, rci_t c, bool clear) {
   const size_t row_alignment = calculate_row_alignment(width);
   const size_t buffer_size   = r * rowstride * sizeof(word);
   const size_t rows_size     = r * sizeof(word*);
-  // sizeof(mzd_t) == 64 is only ensured after
-  // a41f75a72f8a84d9318d44b6f01aac1453dfffe6, but a version including this
-  // commit is not available on any recent Debian based distribution.
-  const size_t mzd_t_size = (sizeof(mzd_t) + row_alignment - 1) & ~(row_alignment - 1);
 
   unsigned char* buffer = aligned_alloc(32, (mzd_t_size + buffer_size + rows_size + 31) & ~31);
 
@@ -130,7 +132,6 @@ void mzd_local_init_multiple_ex(mzd_t** dst, size_t n, rci_t r, rci_t c, bool cl
   const size_t row_alignment = calculate_row_alignment(width);
   const size_t buffer_size   = r * rowstride * sizeof(word);
   const size_t rows_size     = r * sizeof(word*);
-  const size_t mzd_t_size    = (sizeof(mzd_t) + row_alignment - 1) & ~(row_alignment - 1);
   const size_t size_per_elem = (mzd_t_size + buffer_size + rows_size + 31) & ~31;
 
   unsigned char* full_buffer = aligned_alloc(32, size_per_elem * n);
