@@ -1,9 +1,9 @@
-Fish and Begol signature schemes
-================================
+Fish and signature schemes
+==========================
 
-This code represents an implementation of the Fish and Begol signature schemes
-[1]. It uses (a bit-sliced version of) LowMC [3,4] in the setting of ZKBoo
-[2]. Some methods for MPC computations are based on [5].
+This code represents an implementation of the Fish signature scheme [1]. It uses
+(a bit-sliced version of) LowMC [3,4] in the setting of ZKBoo [2]. Some methods
+for MPC computations are based on [5].
 
 Building
 --------
@@ -33,7 +33,7 @@ Technology](https://www.iaik.tugraz.at). They can be contacted via
 References
 ----------
 
-* [1] https://eprint.iacr.org/2016/1085
+* [1] https://eprint.iacr.org/2017/1279
 * [2] https://eprint.iacr.org/2016/163
 * [3] https://eprint.iacr.org/2016/687
 * [4] https://bitbucket.org/malb/lowmc-helib
