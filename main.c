@@ -143,6 +143,7 @@ static void fis_sign_verify(int args[5]) {
   free(timings_fis);
 }
 
+#if 0
 static void bg_sign_verify(int args[5]) {
   timing_and_size_t* timings_bg = calloc(args[4], sizeof(timing_and_size_t));
 
@@ -200,6 +201,7 @@ static void bg_sign_verify(int args[5]) {
 
   free(timings_bg);
 }
+#endif
 
 int main(int argc, char** argv) {
   init_rand_bytes();
