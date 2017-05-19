@@ -20,7 +20,7 @@ Dependencies
 License
 -------
 
-The code is licensed under GPL-3+.
+The code is licensed under the MIT license.
 
 Authors
 -------
