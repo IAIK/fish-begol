@@ -626,8 +626,8 @@ mzd_t** mpc_lowmc_call(mpc_lowmc_t const* lowmc, mpc_lowmc_key_t* lowmc_key, mzd
   return _mpc_lowmc_call_bitsliced(lowmc, lowmc_key, p, xor_p, views, rvec, 0);
 }
 
-int _mpc_lowmc_verify(mpc_lowmc_t const* lowmc, mpc_lowmc_key_t* lowmc_key, mzd_t const* p,
-                      bool xor_p, view_t const* views, mzd_t*** rvec, int c) {
+static int _mpc_lowmc_verify(mpc_lowmc_t const* lowmc, mpc_lowmc_key_t* lowmc_key, mzd_t const* p,
+                             bool xor_p, view_t const* views, mzd_t*** rvec, int c) {
   int status = 0;
   mzd_t** v = _mpc_lowmc_call_bitsliced_verify(lowmc, lowmc_key, p, xor_p, views, rvec, c, &status);
   mpc_free(v, SC_VERIFY);
