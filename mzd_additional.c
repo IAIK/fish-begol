@@ -1020,7 +1020,6 @@ __attribute__((target("avx2"))) static inline mzd_t* mzd_mul_vl_avx_256(mzd_t* c
   static const unsigned int moff2 = 256;
 
   __m256i mc = _mm256_setzero_si256();
-  ;
   __m256i const* mAptr = __builtin_assume_aligned(CONST_FIRST_ROW(A), 32);
 
   for (unsigned int w = width; w; --w, ++vptr) {
