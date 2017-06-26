@@ -995,7 +995,7 @@ __attribute__((target("sse2"))) static inline mzd_t* mzd_addmul_vl_sse(mzd_t* c,
   const unsigned int width      = v->width;
   const unsigned int rowstride  = A->rowstride;
   const unsigned int mrowstride = rowstride * sizeof(word) / sizeof(__m128i);
-  const unsigned int moff2      = 128 * mrowstride;
+  const unsigned int moff2      = 256 * mrowstride;
 
   __m128i* mcptr       = __builtin_assume_aligned(FIRST_ROW(c), 16);
   __m128i const* mAptr = __builtin_assume_aligned(CONST_FIRST_ROW(A), 16);
