@@ -6,7 +6,6 @@
 
 #if defined(__APPLE__)
 #include <errno.h>
-#include <malloc.h>
 
 // aligned_alloc is not available on Mac, but posix_memalign is
 static void* aligned_alloc(size_t alignment, size_t size) {
@@ -16,7 +15,7 @@ static void* aligned_alloc(size_t alignment, size_t size) {
   }
 
   void* ptr = NULL;
-  const int err = posix_memalign(&ptr, alignment, size)
+  const int err = posix_memalign(&ptr, alignment, size);
   if (err) {
     errno = err;
     ptr = NULL;
