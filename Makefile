@@ -11,8 +11,9 @@ CFLAGS+=-std=c11
 CFLAGS+=-Wall
 CFLAGS+=-march=native
 CFLAGS+=-mtune=native
+CFLAGS+=$(shell pkg-config --cflags-only-I m4ri)
 LDFLAGS+=-flto
-LDLIBS+=-lm4ri
+LDLIBS+=$(shell pkg-config --libs m4ri)
 LDLIBS+=-lcrypto
 
 WITH_SSE2 ?= $(shell $(CC) $(CFLAGS) -dM -E - < /dev/null | grep -q "SSE2" && echo 1 || echo 0)
