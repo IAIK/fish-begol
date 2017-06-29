@@ -25,17 +25,6 @@ void fis_H3_verify(unsigned char const h[NUM_ROUNDS][SC_VERIFY][COMMITMENT_LENGT
                    unsigned char const ch_in[(NUM_ROUNDS + 3) / 4], const uint8_t* m, size_t m_len,
                    unsigned char* ch);
 
-void bg_H3(const mzd_t* beta, const mzd_t* c, const mzd_t* m, const mzd_t* y,
-           const unsigned char c1[NUM_ROUNDS][SC_PROOF][COMMITMENT_LENGTH],
-           const unsigned char c2[NUM_ROUNDS][SC_PROOF][COMMITMENT_LENGTH], unsigned char* ch);
-
-void bg_H3_verify(const mzd_t* beta, const mzd_t* c, const mzd_t* m, const mzd_t* y,
-                  unsigned char const h1[NUM_ROUNDS][2][COMMITMENT_LENGTH],
-                  unsigned char const hp1[NUM_ROUNDS][COMMITMENT_LENGTH],
-                  unsigned char const h2[NUM_ROUNDS][2][COMMITMENT_LENGTH],
-                  unsigned char const hp2[NUM_ROUNDS][COMMITMENT_LENGTH],
-                  unsigned char const ch_in[(NUM_ROUNDS + 3) / 4], unsigned char* ch);
-
 static inline unsigned int getChAt(unsigned char const* const ch, unsigned int i) {
   const unsigned int idx    = i >> 2;
   const unsigned int offset = (i & 0x3) << 1;
