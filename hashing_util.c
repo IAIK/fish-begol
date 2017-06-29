@@ -63,7 +63,7 @@ static void H3_compute(unsigned char hash[SHA256_DIGEST_LENGTH], unsigned char* 
       bitTracker = 0;
     }
 
-    unsigned char twobits = (hash[bitTracker / 8] >> (bitTracker % 8)) & 0x3;
+    unsigned char twobits = (hash[bitTracker >> 3] >> (bitTracker & 0x7)) & 0x3;
     if (twobits != 0x3) {
       *ch++ = twobits;
     }
