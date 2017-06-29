@@ -4,13 +4,22 @@
 #include "mpc_lowmc.h"
 #include "parameters.h"
 
+/**
+ * Computes commitments to the view of an execution.
+ */
 void H(const unsigned char k[PRNG_KEYSIZE], mzd_t* y[SC_PROOF], view_t const* v, unsigned vidx,
        unsigned vcnt, const unsigned char r[COMMITMENT_RAND_LENGTH],
        unsigned char hash[COMMITMENT_LENGTH]);
 
+/**
+ * Computes the challenge for Fish (when signing).
+ */
 void fis_H3(unsigned char const h[NUM_ROUNDS][SC_PROOF][COMMITMENT_LENGTH], const char* m,
             unsigned m_len, unsigned char* ch);
 
+/**
+ * Computes the challenge for Fish (when verifying).
+ */
 void fis_H3_verify(unsigned char const h[NUM_ROUNDS][SC_VERIFY][COMMITMENT_LENGTH],
                    unsigned char const hp[NUM_ROUNDS][COMMITMENT_LENGTH],
                    unsigned char const ch_in[(NUM_ROUNDS + 3) / 4], const char* m, unsigned m_len,

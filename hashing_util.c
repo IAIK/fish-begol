@@ -32,10 +32,6 @@ static void hash_mzd(SHA256_CTX* ctx, mzd_t const* v) {
 }
 #endif
 
-/*
- * Computes the SHA256 hash of a view using openssl (similar as in
- * https://github.com/Sobuno/ZKBoo/blob/master/MPC_SHA256/shared.h)
- */
 void H(const unsigned char k[PRNG_KEYSIZE], mzd_t* y[SC_PROOF], const view_t* v, unsigned vidx,
        unsigned vcnt, const unsigned char r[COMMITMENT_RAND_LENGTH],
        unsigned char hash[COMMITMENT_LENGTH]) {
@@ -109,9 +105,6 @@ void fis_H3_verify(unsigned char const h[NUM_ROUNDS][2][COMMITMENT_LENGTH],
   H3_compute(hash, ch);
 }
 
-/**
- * Computes the challenge.
- */
 void fis_H3(unsigned char const h[NUM_ROUNDS][SC_PROOF][COMMITMENT_LENGTH], const char* m,
             unsigned m_len, unsigned char* ch) {
 
