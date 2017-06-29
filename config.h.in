@@ -1,0 +1,14 @@
+#ifndef FISH_CONFIG_H
+#define FISH_CONFIG_H
+
+#cmakedefine HAVE_IMMINTRIN_H
+
+#cmakedefine HAVE_ALIGNED_ALLOC
+#cmakedefine HAVE_POSIX_MEMALIGN
+#cmakedefine HAVE_MEMALIGN
+
+#cmakedefine M4RI_VERSION @M4RI_VERSION_STRING@
+
+#include <compat.h>
+
+#endif

@@ -1,28 +1,12 @@
-#include "mzd_additional.h"
-#include "randomness.h"
+#ifdef HAVE_CONFIG_H
+#include <config.h>
+#endif
 
 // #include <assert.h>
 #include <stdlib.h>
 
-#if defined(__APPLE__)
-#include <errno.h>
-
-// aligned_alloc is not available on Mac, but posix_memalign is
-static void* aligned_alloc(size_t alignment, size_t size) {
-  if ((alignment & (alignment -1)) || (size & (alignment - 1))) {
-    errno = EINVAL;
-    return NULL;
-  }
-
-  void* ptr = NULL;
-  const int err = posix_memalign(&ptr, alignment, size);
-  if (err) {
-    errno = err;
-    ptr = NULL;
-  }
-  return ptr;
-}
-#endif
+#include "mzd_additional.h"
+#include "randomness.h"
 
 // sizeof(mzd_t) == 64 is only ensured after
 // a41f75a72f8a84d9318d44b6f01aac1453dfffe6, but a version including this

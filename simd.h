@@ -1,5 +1,9 @@
-#ifndef AVX_H
-#define AVX_H
+#ifndef SIMD_H
+#define SIMD_H
+
+#ifdef HAVE_CONFIG_H
+#include <config.h>
+#endif
 
 #include <immintrin.h>
 
@@ -16,16 +20,6 @@
 #define CPU_SUPPORTS_SSE2 1
 #else
 #define CPU_SUPPORTS_SSE2 __builtin_cpu_supports("sse2")
-#endif
-
-/* backwards compatibility macros for GCC 4.8 and 4.9
- *
- * bs{l,r}i was introduced in GCC 5 and in clang as macros sometime in 2015.
- * */
-#if (!defined(__clang__) && defined(__GNUC__) && __GNUC__ < 5) ||                                  \
-    (defined(__clang__) && !defined(_mm_bslli_si128))
-#define _mm_bslli_si128(a, imm) _mm_slli_si128((a), (imm))
-#define _mm_bsrli_si128(a, imm) _mm_srli_si128((a), (imm))
 #endif
 
 #ifdef WITH_AVX2
@@ -107,7 +101,7 @@ static inline __m128i FN_ATTRIBUTES_SSE2 mm128_shift_right(__m128i data, unsigne
 }
 
 /**
- * \brief xor multiple 128 bit values.
+ * \brief Computes dst ^= src for multiple 128 values and stores the result again.
  */
 static inline void FN_ATTRIBUTES_SSE2_NP mm128_xor_region(__m128i* restrict dst,
                                                           __m128i const* restrict src,
