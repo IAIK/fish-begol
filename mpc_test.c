@@ -1,7 +1,14 @@
-#include "mpc_test.h"
+#ifdef HAVE_CONFIG_H
+#include <config.h>
+#endif
+
 #include <m4ri/m4ri.h>
+
+#include "mpc_test.h"
+
 #include "mpc.h"
 #include "mzd_additional.h"
+#include "multithreading.h"
 
 static void test_mpc_share(void) {
   mzd_t* t1    = mzd_init_random_vector(10);
@@ -209,4 +216,18 @@ void run_tests(void) {
   // test_mzd_local_equal();
   // test_mzd_mul();
   test_mzd_shift();
+}
+
+int main() {
+  init_rand_bytes();
+  init_EVP();
+  openmp_thread_setup();
+
+  run_tests();
+
+  openmp_thread_cleanup();
+  cleanup_EVP();
+  deinit_rand_bytes();
+
+  return 0;
 }

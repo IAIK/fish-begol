@@ -138,9 +138,10 @@ if(WITH_PQ_PARAMETERS)
   target_compile_definitions(picnic PRIVATE WITH_PQ_PARAMETERS)
 endif()
 
-set(BENCH_SOURCES main.c mpc_test.c)
-
-add_executable(bench ${BENCH_SOURCES})
+add_executable(bench main.c)
 target_link_libraries(bench picnic)
-
 target_compile_definitions(bench PRIVATE HAVE_CONFIG_H)
+
+add_executable(mpc_test mpc_test.c)
+target_link_libraries(mpc_test picnic)
+target_compile_definitions(mpc_test PRIVATE HAVE_CONFIG_H)
