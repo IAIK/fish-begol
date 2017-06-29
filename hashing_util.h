@@ -37,8 +37,8 @@ void bg_H3_verify(const mzd_t* beta, const mzd_t* c, const mzd_t* m, const mzd_t
                   unsigned char const ch_in[(NUM_ROUNDS + 3) / 4], unsigned char* ch);
 
 static inline unsigned int getChAt(unsigned char const* const ch, unsigned int i) {
-  const unsigned int idx    = i / 4;
-  const unsigned int offset = (i % 4) * 2;
+  const unsigned int idx    = i >> 2;
+  const unsigned int offset = (i & 0x3) << 1;
 
   return (ch[idx] >> offset) & 0x3;
 }
