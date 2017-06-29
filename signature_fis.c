@@ -119,7 +119,7 @@ static proof_t* fis_prove(mpc_lowmc_t* lowmc, lowmc_key_t* lowmc_key, mzd_t* p, 
       mzd_randomize_multiple_from_seed(rvec[j], lowmc->r, keys[i][j]);
     }
 #endif
-    c_mpc[i] = mpc_lowmc_call(lowmc, &s[i], p, false, views[i], rvec);
+    c_mpc[i] = mpc_lowmc_call(lowmc, &s[i], p, views[i], rvec);
   }
   END_TIMING(timing_and_size->sign.lowmc_enc);
 
@@ -209,7 +209,7 @@ static int fis_proof_verify(mpc_lowmc_t const* lowmc, mzd_t const* p, mzd_t cons
       mzd_local_clear(prf->views[i][j].s[0]);
     }
 
-    mpc_lowmc_verify_keys(lowmc, p, false, prf->views[i], rv, a_i, prf->keys[i]);
+    mpc_lowmc_verify_keys(lowmc, p, prf->views[i], rv, a_i, prf->keys[i]);
 
     mzd_t* ys[3];
     ys[a_i] = prf->views[i][last_view_index].s[0];
