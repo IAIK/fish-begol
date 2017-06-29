@@ -48,6 +48,7 @@ set(WITH_MARCH_NATIVE ON CACHE BOOL "Build with -march=native -mtune=native (if 
 set(WITH_LTO ON CACHE BOOL "Enable link-time optimization (if supported).")
 set(WITH_PQ_PARAMETERS ON CACHE BOOL "Use PQ parameters.")
 set(WITH_OPENMP OFF CACHE BOOL "Use OpenMP.")
+set(ENABLE_VERBOSE_OUTPUT OFF CACHE BOOL "Enable verbose output.")
 
 # enable -march=native -mtune=native if supported
 if(WITH_MARCH_NATIVE)
@@ -141,6 +142,9 @@ endif()
 add_executable(bench main.c)
 target_link_libraries(bench picnic)
 target_compile_definitions(bench PRIVATE HAVE_CONFIG_H)
+if(ENABLE_VERBOSE_OUTPUT)
+  target_compile_definitions(bench PRIVATE VERBOSE)
+endif()
 
 add_executable(mpc_test mpc_test.c)
 target_link_libraries(mpc_test picnic)
