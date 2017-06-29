@@ -23,10 +23,11 @@ bool fis_create_key(public_parameters_t* pp, fis_private_key_t* private_key,
 
 void fis_destroy_key(fis_private_key_t* private_key, fis_public_key_t* public_key);
 
-fis_signature_t* fis_sign(public_parameters_t* pp, fis_private_key_t* private_key, char* m);
+fis_signature_t* fis_sign(public_parameters_t* pp, fis_private_key_t* private_key,
+                          const uint8_t* msg, size_t msglen);
 
-int fis_verify(public_parameters_t* pp, fis_public_key_t* public_key, char* m,
-               fis_signature_t* sig);
+int fis_verify(public_parameters_t* pp, fis_public_key_t* public_key, const uint8_t* msg,
+               size_t msglen, fis_signature_t* sig);
 
 void fis_free_signature(public_parameters_t* pp, fis_signature_t* signature);
 

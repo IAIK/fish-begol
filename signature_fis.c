@@ -64,7 +64,7 @@ void fis_destroy_key(fis_private_key_t* private_key, fis_public_key_t* public_ke
   public_key->pk = NULL;
 }
 
-static proof_t* fis_prove(mpc_lowmc_t* lowmc, lowmc_key_t* lowmc_key, mzd_t* p, char* m,
+static proof_t* fis_prove(mpc_lowmc_t* lowmc, lowmc_key_t* lowmc_key, mzd_t* p, const uint8_t* m,
                           unsigned m_len) {
   TIME_FUNCTION;
 
@@ -164,7 +164,7 @@ static proof_t* fis_prove(mpc_lowmc_t* lowmc, lowmc_key_t* lowmc_key, mzd_t* p, 
 }
 
 static int fis_proof_verify(mpc_lowmc_t const* lowmc, mzd_t const* p, mzd_t const* c,
-                            proof_t const* prf, const char* m, unsigned m_len) {
+                            proof_t const* prf, const uint8_t* m, unsigned m_len) {
   TIME_FUNCTION;
 
   const unsigned int view_count      = lowmc->r + 2;
@@ -260,18 +260,19 @@ static int fis_proof_verify(mpc_lowmc_t const* lowmc, mzd_t const* p, mzd_t cons
   return success_status;
 }
 
-fis_signature_t* fis_sign(public_parameters_t* pp, fis_private_key_t* private_key, char* m) {
+fis_signature_t* fis_sign(public_parameters_t* pp, fis_private_key_t* private_key,
+                          const uint8_t* msg, size_t msglen) {
   fis_signature_t* sig = malloc(sizeof(fis_signature_t));
   mzd_t* p             = mzd_local_init(1, pp->lowmc->n);
-  sig->proof           = fis_prove(pp->lowmc, private_key->k, p, m, strlen(m));
+  sig->proof           = fis_prove(pp->lowmc, private_key->k, p, msg, msglen);
   mzd_local_free(p);
   return sig;
 }
 
-int fis_verify(public_parameters_t* pp, fis_public_key_t* public_key, char* m,
-               fis_signature_t* sig) {
+int fis_verify(public_parameters_t* pp, fis_public_key_t* public_key, const uint8_t* msg,
+               size_t msglen, fis_signature_t* sig) {
   mzd_t* p = mzd_local_init(1, pp->lowmc->n);
-  int res  = fis_proof_verify(pp->lowmc, p, public_key->pk, sig->proof, m, strlen(m));
+  int res  = fis_proof_verify(pp->lowmc, p, public_key->pk, sig->proof, msg, msglen);
   mzd_local_free(p);
   return res;
 }

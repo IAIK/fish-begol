@@ -73,7 +73,7 @@ static void H3_compute(unsigned char hash[SHA256_DIGEST_LENGTH], unsigned char* 
 
 void fis_H3_verify(unsigned char const h[NUM_ROUNDS][2][COMMITMENT_LENGTH],
                    unsigned char const hp[NUM_ROUNDS][COMMITMENT_LENGTH],
-                   unsigned char const ch_in[(NUM_ROUNDS + 3) / 4], const char* m, unsigned m_len,
+                   unsigned char const ch_in[(NUM_ROUNDS + 3) / 4], const uint8_t* m, size_t m_len,
                    unsigned char* ch) {
   SHA256_CTX ctx;
   SHA256_Init(&ctx);
@@ -105,8 +105,8 @@ void fis_H3_verify(unsigned char const h[NUM_ROUNDS][2][COMMITMENT_LENGTH],
   H3_compute(hash, ch);
 }
 
-void fis_H3(unsigned char const h[NUM_ROUNDS][SC_PROOF][COMMITMENT_LENGTH], const char* m,
-            unsigned m_len, unsigned char* ch) {
+void fis_H3(unsigned char const h[NUM_ROUNDS][SC_PROOF][COMMITMENT_LENGTH], const uint8_t* m,
+            size_t m_len, unsigned char* ch) {
 
   unsigned char hash[SHA256_DIGEST_LENGTH];
   SHA256_CTX ctx;

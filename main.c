@@ -68,7 +68,8 @@ static void parse_args(int params[5], int argc, char** argv) {
 }
 
 static void fis_sign_verify(int args[5]) {
-  char m[11] = "1234567890";
+  static const uint8_t m[] = {1,  2,  3,  4,  5,  6,  7,  8,  9,  10, 11, 12, 13, 14, 15, 16,
+                              17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32};
 
   timing_and_size_t* timings_fis = calloc(args[4], sizeof(timing_and_size_t));
 
@@ -90,7 +91,7 @@ static void fis_sign_verify(int args[5]) {
       break;
     }
 
-    fis_signature_t* sig = fis_sign(&pp, &private_key, m);
+    fis_signature_t* sig = fis_sign(&pp, &private_key, m, sizeof(m));
     if (sig) {
       unsigned len        = 0;
       unsigned char* data = fis_sig_to_char_array(&pp, sig, &len);
@@ -100,7 +101,7 @@ static void fis_sign_verify(int args[5]) {
       sig = fis_sig_from_char_array(&pp, data);
       free(data);
 
-      if (fis_verify(&pp, &public_key, m, sig)) {
+      if (fis_verify(&pp, &public_key, m, sizeof(m), sig)) {
         printf("fis_verify: failed\n");
       }
 

@@ -14,15 +14,15 @@ void H(const unsigned char k[PRNG_KEYSIZE], mzd_t* y[SC_PROOF], view_t const* v,
 /**
  * Computes the challenge for Fish (when signing).
  */
-void fis_H3(unsigned char const h[NUM_ROUNDS][SC_PROOF][COMMITMENT_LENGTH], const char* m,
-            unsigned m_len, unsigned char* ch);
+void fis_H3(unsigned char const h[NUM_ROUNDS][SC_PROOF][COMMITMENT_LENGTH], const uint8_t* m,
+            size_t m_len, unsigned char* ch);
 
 /**
  * Computes the challenge for Fish (when verifying).
  */
 void fis_H3_verify(unsigned char const h[NUM_ROUNDS][SC_VERIFY][COMMITMENT_LENGTH],
                    unsigned char const hp[NUM_ROUNDS][COMMITMENT_LENGTH],
-                   unsigned char const ch_in[(NUM_ROUNDS + 3) / 4], const char* m, unsigned m_len,
+                   unsigned char const ch_in[(NUM_ROUNDS + 3) / 4], const uint8_t* m, size_t m_len,
                    unsigned char* ch);
 
 void bg_H3(const mzd_t* beta, const mzd_t* c, const mzd_t* m, const mzd_t* y,
