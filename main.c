@@ -50,7 +50,7 @@ static void print_detailed_timings(timing_and_size_t* timings, unsigned int iter
 
 #endif
 
-void parse_args(int params[5], int argc, char** argv) {
+static void parse_args(int params[5], int argc, char** argv) {
   if (argc != 6) {
     printf("Usage ./mpc_lowmc [Number of SBoxes] [Blocksize] [Rounds] [Keysize] [Numiter]\n");
     exit(-1);
