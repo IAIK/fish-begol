@@ -19,8 +19,7 @@ static void test_mpc_share(void) {
     printf("Share test successful.\n");
 
   mzd_local_free(t1);
-  for (unsigned i = 0; i < 3; i++)
-    mzd_local_free(s1[i]);
+  mzd_local_free_multiple(s1);
   mzd_local_free(t1cmb);
 }
 
@@ -41,12 +40,10 @@ static void test_mpc_add(void) {
 
   mzd_local_free(t1);
   mzd_local_free(t2);
-  mzd_local_free(res);
-  for (unsigned i = 0; i < 3; i++) {
-    mzd_local_free(s1[i]);
-    mzd_local_free(s2[i]);
-    mzd_local_free(ress[i]);
-  }
+  mzd_free(res);
+  mzd_local_free_multiple(s1);
+  mzd_local_free_multiple(s2);
+  mzd_local_free_multiple(ress);
   mzd_local_free(cmp);
 }
 
@@ -205,16 +202,10 @@ static void test_mzd_shift(void) {
 }
 
 void run_tests(void) {
-  (void) test_mpc_share;
-  (void) test_mpc_add;
-  (void) test_mzd_local_equal;
-  (void) test_mzd_mul;
-  (void) test_mzd_shift;
-
-  // test_mpc_share();
-  // test_mpc_add();
-  // test_mzd_local_equal();
-  // test_mzd_mul();
+  test_mpc_share();
+  test_mpc_add();
+  test_mzd_local_equal();
+  test_mzd_mul();
   test_mzd_shift();
 }
 
