@@ -7,7 +7,6 @@
 #include "multithreading.h"
 #include "mzd_additional.h"
 #include "randomness.h"
-#include "signature_bg.h"
 #include "signature_fis.h"
 #include "timing.h"
 
@@ -124,66 +123,6 @@ static void fis_sign_verify(int args[5]) {
   free(timings_fis);
 }
 
-#if 0
-static void bg_sign_verify(int args[5]) {
-  timing_and_size_t* timings_bg = calloc(args[4], sizeof(timing_and_size_t));
-
-  for (int i = 0; i != args[4]; ++i) {
-    timing_and_size = &timings_bg[i];
-
-    public_parameters_t pp;
-    bg_private_key_t private_key;
-    bg_public_key_t public_key;
-
-    if (!create_instance(&pp, args[0], args[1], args[2], args[3])) {
-      printf("Failed to create LowMC instance.\n");
-      break;
-    }
-
-    if (!bg_create_key(&pp, &private_key, &public_key)) {
-      printf("Failed to create keys.\n");
-      destroy_instance(&pp);
-      break;
-    }
-
-    mzd_t* m = mzd_init_random_vector(args[1]);
-
-    bg_signature_t* signature = bg_sign(&pp, &private_key, m);
-    if (signature) {
-      unsigned len        = 0;
-      unsigned char* data = bg_sig_to_char_array(&pp, signature, &len);
-      timing_and_size->size =
-          bg_compute_sig_size(pp.lowmc->m, pp.lowmc->n, pp.lowmc->r, pp.lowmc->k);
-      bg_free_signature(&pp, signature);
-      signature = bg_sig_from_char_array(&pp, data);
-      free(data);
-
-      if (bg_verify(&pp, &public_key, m, signature)) {
-        printf("bg_verify: failed!\n");
-      }
-
-      bg_free_signature(&pp, signature);
-    } else {
-      printf("bg_sign: failed!\n");
-    }
-
-    mzd_local_free(m);
-
-    destroy_instance(&pp);
-    bg_destroy_key(&private_key, &public_key);
-  }
-
-#ifndef VERBOSE
-  print_timings(timings_bg, args[4], 13);
-#else
-  printf("Begol Signature:\n\n");
-  print_detailed_timings(timings_bg, args[4]);
-#endif
-
-  free(timings_bg);
-}
-#endif
-
 int main(int argc, char** argv) {
   init_rand_bytes();
   init_EVP();
@@ -193,7 +132,6 @@ int main(int argc, char** argv) {
   parse_args(args, argc, argv);
 
   fis_sign_verify(args);
-  // bg_sign_verify(args);
 
   openmp_thread_cleanup();
   cleanup_EVP();
