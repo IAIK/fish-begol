@@ -79,9 +79,6 @@ static proof_t* fis_prove(mpc_lowmc_t* lowmc, lowmc_key_t* lowmc_key, mzd_t* p, 
   if (rand_bytes((unsigned char*)keys, sizeof(keys)) != 1 ||
       rand_bytes((unsigned char*)r, sizeof(r)) != 1 ||
       rand_bytes(secret_sharing_key, sizeof(secret_sharing_key)) != 1) {
-#ifdef VERBOSE
-    printf("rand_bytes failed crypto, aborting\n");
-#endif
     return 0;
   }
   END_TIMING(timing_and_size->sign.rand);
@@ -123,16 +120,6 @@ static proof_t* fis_prove(mpc_lowmc_t* lowmc, lowmc_key_t* lowmc_key, mzd_t* p, 
     }
 #endif
     c_mpc[i] = mpc_lowmc_call(lowmc, &s[i], p, false, views[i], rvec);
-
-#ifdef VERBOSE
-    printf("views prf:\n");
-    for (int j = 0; j <= lowmc->r + 1; ++j) {
-      printf("%d\n", j);
-      mzd_print(views[i][j].s[0]);
-      mzd_print(views[i][j].s[1]);
-      mzd_print(views[i][j].s[2]);
-    }
-#endif
   }
   END_TIMING(timing_and_size->sign.lowmc_enc);
 
@@ -224,15 +211,6 @@ static int fis_proof_verify(mpc_lowmc_t const* lowmc, mzd_t const* p, mzd_t cons
 
     mpc_lowmc_verify_keys(lowmc, p, false, prf->views[i], rv, a_i, prf->keys[i]);
 
-#ifdef VERBOSE
-    printf("views vrf:\n");
-    for (int j = 0; j <= last_view_index; ++j) {
-      printf("%d\n", j);
-      mzd_print(prf->views[i][j].s[0]);
-      mzd_print(prf->views[i][j].s[1]);
-    }
-#endif
-
     mzd_t* ys[3];
     ys[a_i] = prf->views[i][last_view_index].s[0];
     ys[b_i] = prf->views[i][last_view_index].s[1];
@@ -272,29 +250,12 @@ static int fis_proof_verify(mpc_lowmc_t const* lowmc, mzd_t const* p, mzd_t cons
 
     ch_collapsed[idx] |= ch[i] << shift;
   }
-#ifdef VERBOSE
-  printf("collapsed: ");
-  for (unsigned int i = 0; i < sizeof(ch_collapsed); ++i) {
-    printf("%02x", ch_collapsed[i]);
-  }
-  printf("\nproof->ch: ");
-  for (unsigned int i = 0; i < sizeof(ch_collapsed); ++i) {
-    printf("%02x", prf->ch[i]);
-  }
-  printf("\n");
-#endif
+
   const int success_status =
       memcmp(ch_collapsed, prf->ch, ((FIS_NUM_ROUNDS + 3) / 4) * sizeof(unsigned char));
   END_TIMING(timing_and_size->verify.verify);
 
   START_TIMING;
-
-#ifdef VERBOSE
-  if (success_status)
-    printf("[FAIL] Verification failed\n");
-  else
-    printf("[ OK ] Verification Succeeded.\n");
-#endif
 
   return success_status;
 }

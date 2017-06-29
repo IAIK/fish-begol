@@ -7,8 +7,6 @@
 #include "lowmc_pars.h"
 #include "mpc_lowmc.h"
 
-//#define VERBOSE
-
 typedef struct {
   // The LowMC instance.
   mpc_lowmc_t* lowmc;
