@@ -80,4 +80,8 @@ void lowmc_key_free(lowmc_key_t* lowmc_key);
  */
 void lowmc_secret_share(lowmc_t* lowmc, lowmc_key_t* lowmc_key);
 
+lowmc_t* readFile(size_t m, size_t n, size_t r, size_t k);
+bool writeFile(lowmc_t* lowmc);
+void writeMZD_TStructToFile(mzd_t* matrix, FILE* file);
+mzd_t* readMZD_TStructFromFile(FILE* file);
 #endif
