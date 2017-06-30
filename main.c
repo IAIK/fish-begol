@@ -11,13 +11,14 @@
 #include "timing.h"
 
 #include <inttypes.h>
+#include <stdint.h>
 #include <time.h>
 
 #ifndef VERBOSE
 static void print_timings(timing_and_size_t* timings, unsigned int iter, unsigned int numt) {
   for (unsigned i = 0; i < iter; i++) {
     for (unsigned j = 0; j < numt; j++) {
-      printf("%lu", timings[i].data[j]);
+      printf("%" PRIu64, timings[i].data[j]);
       if (j < numt - 1)
         printf(",");
     }
@@ -28,22 +29,22 @@ static void print_timings(timing_and_size_t* timings, unsigned int iter, unsigne
 static void print_detailed_timings(timing_and_size_t* timings, unsigned int iter) {
   for (unsigned int i = 0; i != iter; ++i, ++timings) {
     printf("Setup:\n");
-    printf("LowMC setup                   %6lu\n", timings->gen.lowmc_init);
-    printf("LowMC key generation          %6lu\n", timings->gen.keygen);
-    printf("Public key computation        %6lu\n", timings->gen.pubkey);
+    printf("LowMC setup                   %6" PRIu64 "\n", timings->gen.lowmc_init);
+    printf("LowMC key generation          %6" PRIu64 "\n", timings->gen.keygen);
+    printf("Public key computation        %6" PRIu64 "\n", timings->gen.pubkey);
     printf("\n");
     printf("Prove:\n");
-    printf("MPC randomess generation      %6lu\n", timings->sign.rand);
-    printf("MPC secret sharing            %6lu\n", timings->sign.secret_sharing);
-    printf("MPC LowMC encryption          %6lu\n", timings->sign.lowmc_enc);
-    printf("Hashing views                 %6lu\n", timings->sign.views);
-    printf("Generating challenge          %6lu\n", timings->sign.challenge);
+    printf("MPC randomess generation      %6" PRIu64 "\n", timings->sign.rand);
+    printf("MPC secret sharing            %6" PRIu64 "\n", timings->sign.secret_sharing);
+    printf("MPC LowMC encryption          %6" PRIu64 "\n", timings->sign.lowmc_enc);
+    printf("Hashing views                 %6" PRIu64 "\n", timings->sign.views);
+    printf("Generating challenge          %6" PRIu64 "\n", timings->sign.challenge);
     printf("\n");
     printf("Verify:\n");
-    printf("Recomputing challenge         %6lu\n", timings->verify.challenge);
-    printf("Verifying output shares       %6lu\n", timings->verify.output_shares);
-    printf("Comparing output views        %6lu\n", timings->verify.output_views);
-    printf("Verifying views               %6lu\n", timings->verify.verify);
+    printf("Recomputing challenge         %6" PRIu64 "\n", timings->verify.challenge);
+    printf("Verifying output shares       %6" PRIu64 "\n", timings->verify.output_shares);
+    printf("Comparing output views        %6" PRIu64 "\n", timings->verify.output_views);
+    printf("Verifying views               %6" PRIu64 "\n", timings->verify.verify);
     printf("\n");
   }
 }
