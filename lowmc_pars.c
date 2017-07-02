@@ -62,6 +62,11 @@ static mzd_t* mzd_sample_kmatrix(rci_t n, rci_t k) {
 }
 
 lowmc_t* lowmc_init(size_t m, size_t n, size_t r, size_t k) {
+  if (n - 3 * m < 2) {
+    printf("Bitsliced implementation requires in->ncols - 3 * m >= 2\n");
+    return NULL;
+  }
+
   lowmc_t* ret = readFile(m, n, r, k);
   if (ret) {
     return ret;

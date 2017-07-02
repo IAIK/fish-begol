@@ -7,11 +7,6 @@
 #endif
 
 static void sbox_layer_bitsliced(mzd_t* out, mzd_t* in, rci_t m, mask_t const* mask) {
-  if (in->ncols - 3 * m < 2) {
-    printf("Bitsliced implementation requires in->ncols - 3 * m >= 2\n");
-    return;
-  }
-
   mzd_and(out, in, mask->mask);
 
   mzd_t* buffer[6] = {NULL};
