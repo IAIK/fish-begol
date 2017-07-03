@@ -1,5 +1,5 @@
-Fish and signature schemes
-==========================
+Picnic-FS and -UR signature schemes
+===================================
 
 This code represents an implementation of the Fish signature scheme [1]. It uses
 (a bit-sliced version of) LowMC [3,4] in the setting of ZKBoo [2]. Some methods
