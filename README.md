@@ -8,8 +8,13 @@ for MPC computations are based on [5].
 Building
 --------
 
-To disable optimizations remove `-DWITH_OPT` from `CPPFLAGS` in `Makefile`.
-Verbose output can be enabled by adding `-DVERBOSE`.
+First configure the build cmake and then run make:
+
+```sh
+mkdir build; cd build
+cmake ..
+make
+```
 
 Dependencies
 ------------
