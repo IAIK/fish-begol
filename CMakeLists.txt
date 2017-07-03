@@ -7,8 +7,7 @@ set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 project(picnic C)
 
 if(NOT CMAKE_BUILD_TYPE)
-  set(CMAKE_BUILD_TYPE "RelWithDebInfo" CACHE STRING
-      "Choose the type of build." FORCE)
+  set(CMAKE_BUILD_TYPE "RelWithDebInfo" CACHE STRING "Choose the type of build." FORCE)
 endif()
 
 # set required C standard version
@@ -71,7 +70,7 @@ if(WITH_LTO)
 
     check_c_compiler_flag(-flto CC_SUPPORTS_FLTO)
     if(CC_SUPPORTS_FLTO)
-      set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -flto")
+      add_compile_options(-flto)
       set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -flto")
     endif()
   else()
@@ -89,7 +88,7 @@ if(WITH_OPENMP)
   if(NOT OPENMP_FOUND)
     message(WARNING "OpenMP requested, but not supported.")
   else()
-    set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} ${OpenMP_C_FLAGS}")
+    add_compile_options("${OpenMP_C_FLAGS}")
   endif()
 endif()
 
